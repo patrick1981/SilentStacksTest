@@ -223,3 +223,231 @@
           'Accept': 'application/json',
           'User-Agent': 'SilentStacks/1.2.0 (https://github.com/silentlibrarian/silentstacks)'
         }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`DOI not found: ${cleanDoi}`);
+        }
+        throw new Error(`CrossRef API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const work = data.message;
+      if (!work) {
+        throw new Error('No work data in CrossRef response');
+      }
+      
+      // Build metadata
+      const meta = {
+        doi: cleanDoi,
+        title: (work.title && work.title[0]) || '',
+        authors: (work.author || [])
+          .map(author => `${author.given || ''} ${author.family || ''}`.trim())
+          .filter(name => name)
+          .join('; '),
+        journal: (work['container-title'] && work['container-title'][0]) || '',
+        year: (work.published && work.published['date-parts'] && work.published['date-parts'][0] && work.published['date-parts'][0][0]) || '',
+        pmid: ''
+      };
+      
+      console.log('✅ CrossRef metadata retrieved:', meta);
+      return meta;
+      
+    } catch (error) {
+      console.error('❌ CrossRef fetch error:', error);
+      throw new Error(`CrossRef lookup failed: ${error.message}`);
+    }
+  }
+
+  // === Offline Support ===
+  function createOfflinePlaceholder(type, identifier) {
+    const placeholders = {
+      pmid: {
+        pmid: identifier,
+        title: `[QUEUED] Article ${identifier} - Will lookup when online`,
+        authors: 'Authors will be retrieved when online',
+        journal: 'Journal information pending',
+        year: 'Year pending',
+        doi: 'DOI pending'
+      },
+      doi: {
+        doi: identifier,
+        title: `[QUEUED] Article with DOI ${identifier} - Will lookup when online`,
+        authors: 'Authors will be retrieved when online',
+        journal: 'Journal information pending',
+        year: 'Year pending',
+        pmid: 'PMID pending'
+      }
+    };
+    
+    return placeholders[type] || {};
+  }
+
+  // === Public API Functions ===
+  async function lookupPMID() {
+    const pmidInput = document.getElementById('pmid');
+    if (!pmidInput) return;
+    
+    const pmid = pmidInput.value.trim();
+    if (!pmid) {
+      setStatus('Please enter a PMID', 'error');
+      return;
+    }
+    
+    if (!/^\d+$/.test(pmid)) {
+      setStatus('PMID must be numeric', 'error');
+      return;
+    }
+    
+    setStatus('Looking up PMID...', 'loading');
+    
+    try {
+      const pubmedData = await fetchPubMed(pmid);
+      
+      // Populate form with PubMed data
+      if (window.SilentStacks.modules.RequestManager?.populateForm) {
+        window.SilentStacks.modules.RequestManager.populateForm(pubmedData);
+      }
+      
+      // Success message with DOI status
+      if (pubmedData.doi && !pubmedData.doi.includes('pending')) {
+        setStatus(`Metadata populated successfully. DOI found: ${pubmedData.doi}`, 'success');
+      } else if (pubmedData.title.includes('[QUEUED]')) {
+        setStatus('Request queued for when online. Placeholder data populated.', 'loading');
+      } else {
+        setStatus('Metadata populated successfully. No DOI found for this article.', 'success');
+      }
+      
+      // Auto-advance progress step if available
+      if (window.SilentStacks.modules.MedicalFeatures?.autoAdvanceStep) {
+        window.SilentStacks.modules.MedicalFeatures.autoAdvanceStep(1);
+      }
+      
+    } catch (error) {
+      console.error('PMID lookup error:', error);
+      setStatus(`PMID lookup failed: ${error.message}`, 'error');
+    }
+  }
+
+  async function lookupDOI() {
+    const doiInput = document.getElementById('doi');
+    if (!doiInput) return;
+    
+    const doi = doiInput.value.trim();
+    if (!doi) {
+      setStatus('Please enter a DOI', 'error');
+      return;
+    }
+    
+    setStatus('Looking up DOI...', 'loading');
+    
+    try {
+      const crossrefData = await fetchCrossRef(doi);
+      
+      // Populate form with CrossRef data
+      if (window.SilentStacks.modules.RequestManager?.populateForm) {
+        window.SilentStacks.modules.RequestManager.populateForm(crossrefData);
+      }
+      
+      if (crossrefData.title.includes('[QUEUED]')) {
+        setStatus('Request queued for when online. Placeholder data populated.', 'loading');
+      } else {
+        setStatus('DOI lookup successful!', 'success');
+      }
+      
+      // Auto-advance progress step if available
+      if (window.SilentStacks.modules.MedicalFeatures?.autoAdvanceStep) {
+        window.SilentStacks.modules.MedicalFeatures.autoAdvanceStep(1);
+      }
+      
+    } catch (error) {
+      console.error('DOI lookup error:', error);
+      setStatus(`DOI lookup failed: ${error.message}`, 'error');
+    }
+  }
+
+  // === Utility Functions ===
+  function setStatus(message, type = '') {
+    if (window.SilentStacks.modules.UIController?.setStatus) {
+      window.SilentStacks.modules.UIController.setStatus(message, type);
+    } else {
+      // Fallback for direct status updates
+      const statusEl = document.getElementById('lookup-status');
+      if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.className = ['lookup-status', type].filter(Boolean).join(' ');
+      }
+    }
+  }
+
+  function getQueueStatus() {
+    return {
+      pubmed: {
+        pending: rateLimiters.pubmed.queue.length,
+        processing: rateLimiters.pubmed.processing,
+        lastRequest: rateLimiters.pubmed.lastRequest
+      },
+      crossref: {
+        pending: rateLimiters.crossref.queue.length,
+        processing: rateLimiters.crossref.processing,
+        lastRequest: rateLimiters.crossref.lastRequest
+      }
+    };
+  }
+
+  function clearQueues() {
+    rateLimiters.pubmed.queue.forEach(req => {
+      req.reject(new Error('Queue cleared'));
+    });
+    rateLimiters.crossref.queue.forEach(req => {
+      req.reject(new Error('Queue cleared'));
+    });
+    
+    rateLimiters.pubmed.queue = [];
+    rateLimiters.crossref.queue = [];
+    rateLimiters.pubmed.processing = false;
+    rateLimiters.crossref.processing = false;
+    
+    console.log('🧹 API queues cleared');
+  }
+
+  // === Module Interface ===
+  const APIIntegration = {
+    // Initialization
+    initialize() {
+      console.log('🔧 Initializing APIIntegration...');
+      
+      // Make API functions globally available for offline manager
+      window.fetchPubMed = fetchPubMed;
+      window.fetchCrossRef = fetchCrossRef;
+      
+      console.log('✅ APIIntegration initialized');
+    },
+
+    // Public API functions
+    lookupPMID,
+    lookupDOI,
+    
+    // Direct API access
+    fetchPubMed,
+    fetchCrossRef,
+    
+    // Utility functions
+    getQueueStatus,
+    clearQueues,
+    createOfflinePlaceholder,
+    
+    // Constants
+    RATE_LIMITS
+  };
+
+  // Register module
+  if (window.SilentStacks?.registerModule) {
+    window.SilentStacks.registerModule('APIIntegration', APIIntegration);
+  } else {
+    // Fallback for direct loading
+    window.SilentStacks = window.SilentStacks || { modules: {} };
+    window.SilentStacks.modules.APIIntegration = APIIntegration;
+  }
+})();
