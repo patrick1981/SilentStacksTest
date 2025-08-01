@@ -7,8 +7,8 @@
 5. Reserve enough room at the end of chat to provide:
    - Updated Changelog w/versioning
    - Feature Listing
-  - Readme
-  - Documentation to provide in new chat for seamless continuation.
+   - Readme
+   - Documentation to provide in new chat for seamless continuation.
   
 6. All data will be in `.md` format. 
 7. API calls will use publicly accessible endpoints.
