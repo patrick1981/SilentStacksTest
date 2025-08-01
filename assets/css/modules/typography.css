@@ -1,0 +1,254 @@
+/* SilentStacks Typography Module */
+
+/* === BASE TYPOGRAPHY === */
+body {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-lg); /* 18px for better readability */
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* === HEADINGS === */
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+}
+
+h1 {
+    font-size: var(--font-size-xxxl); /* 32px */
+    font-weight: var(--font-weight-bold);
+}
+
+h2 {
+    font-size: var(--font-size-xxl); /* 24px */
+    font-weight: var(--font-weight-semibold);
+}
+
+h3 {
+    font-size: var(--font-size-xl); /* 20px */
+    font-weight: var(--font-weight-semibold);
+}
+
+h4 {
+    font-size: var(--font-size-lg); /* 18px */
+    font-weight: var(--font-weight-medium);
+}
+
+h5 {
+    font-size: var(--font-size-base); /* 16px */
+    font-weight: var(--font-weight-medium);
+}
+
+h6 {
+    font-size: var(--font-size-sm); /* 14px */
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* === PARAGRAPHS === */
+p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    line-height: var(--line-height-normal);
+}
+
+p:last-child {
+    margin-bottom: 0;
+}
+
+/* === TEXT UTILITIES === */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-xxl { font-size: var(--font-size-xxl); }
+
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-light { color: var(--text-light); }
+
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.text-uppercase { text-transform: uppercase; }
+.text-lowercase { text-transform: lowercase; }
+.text-capitalize { text-transform: capitalize; }
+
+/* === LINKS === */
+a {
+    color: var(--primary-color);
+    text-decoration: underline;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: #0056b3;
+    text-decoration: none;
+}
+
+a:focus {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+
+/* === CODE AND MONOSPACE === */
+code,
+kbd,
+pre,
+samp {
+    font-family: var(--font-family-monospace);
+    font-size: 0.9em;
+}
+
+code {
+    padding: 0.125rem 0.25rem;
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.875em;
+    color: #e83e8c;
+}
+
+pre {
+    display: block;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow-x: auto;
+    line-height: 1.45;
+}
+
+pre code {
+    padding: 0;
+    background-color: transparent;
+    border: 0;
+    color: inherit;
+}
+
+/* === MEDICAL LIBRARY SPECIFIC TEXT === */
+.identifier-field {
+    font-family: var(--font-family-monospace);
+    letter-spacing: 0.025em;
+    font-variant-numeric: tabular-nums;
+}
+
+.tracking-field {
+    font-family: var(--font-family-monospace);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.title-field {
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-tight);
+}
+
+/* === FORM TYPOGRAPHY === */
+label {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+}
+
+.form-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    line-height: var(--line-height-normal);
+}
+
+legend {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin-bottom: 0.5rem;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    line-height: inherit;
+    color: var(--text-primary);
+    border: 0;
+}
+
+/* === STATUS AND PRIORITY TEXT === */
+.status-text {
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: var(--font-size-xs);
+}
+
+.priority-text {
+    font-weight: var(--font-weight-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: var(--font-size-xs);
+}
+
+/* === RESPONSIVE TYPOGRAPHY === */
+@media (max-width: 768px) {
+    body {
+        font-size: var(--font-size-base); /* 16px on mobile */
+    }
+    
+    h1 {
+        font-size: var(--font-size-xxl); /* 24px on mobile */
+    }
+    
+    h2 {
+        font-size: var(--font-size-xl); /* 20px on mobile */
+    }
+    
+    h3 {
+        font-size: var(--font-size-lg); /* 18px on mobile */
+    }
+}
+
+/* === PRINT TYPOGRAPHY === */
+@media print {
+    body {
+        font-size: 12pt;
+        line-height: 1.4;
+        color: #000;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #000;
+        page-break-after: avoid;
+    }
+    
+    p {
+        orphans: 3;
+        widows: 3;
+    }
+    
+    a {
+        color: #000;
+        text-decoration: underline;
+    }
+    
+    code,
+    pre {
+        background: #f5f5f5;
+        border: 1px solid #ccc;
+    }
+}
