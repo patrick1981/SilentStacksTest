@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilentStacks - Medical Library Request Management</title>
+    <meta name="description" content="Streamlined medical library request management system for librarians and researchers">
+    
+    <!-- Modular CSS Import -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- External Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.6.2/fuse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <!-- Skip Navigation for Accessibility -->
+    <a href="#main-content" class="sr-only skip-nav">Skip to main content</a>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header" role="banner">
+            <div class="header-content">
+                <img src="assets/images/silentstacks-logo.svg" alt="SilentStacks Logo" class="app-logo">
+                <div class="header-text">
+                    <h1>SilentStacks</h1>
+                    <p>Medical Library Request Management System</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs" role="tablist" aria-label="Main navigation">
+            <button class="nav-tab active" data-section="dashboard" role="tab" aria-selected="true" aria-controls="dashboard">
+                <span class="nav-icon">📊</span>
+                Dashboard
+            </button>
+            <button class="nav-tab" data-section="add-request" role="tab" aria-selected="false" aria-controls="add-request">
+                <span class="nav-icon">➕</span>
+                Add Request
+            </button>
+            <button class="nav-tab" data-section="all-requests" role="tab" aria-selected="false" aria-controls="all-requests">
+                <span class="nav-icon">📋</span>
+                All Requests
+            </button>
+            <button class="nav-tab" data-section="import-export" role="tab" aria-selected="false" aria-controls="import-export">
+                <span class="nav-icon">📁</span>
+                Import & Export
+            </button>
+            <button class="nav-tab" data-section="settings" role="tab" aria-selected="false" aria-controls="settings">
+                <span class="nav-icon">⚙️</span>
+                Settings
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main-content" role="main">
+            
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active" role="tabpanel" aria-labelledby="dashboard-tab">
+                <h2>Dashboard Overview</h2>
+                
+                <!-- Statistics Cards -->
+                <div class="stats-grid" role="region" aria-label="Request statistics">
+                    <div class="stat-card">
+                        <h3>Total Requests</h3>
+                        <div class="stat-number" id="total-requests">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending</h3>
+                        <div class="stat-number" id="pending-requests">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Fulfilled</h3>
+                        <div class="stat-number" id="fulfilled-requests">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Need Follow-up</h3>
+                        <div class="stat-number" id="followup-requests">0</div>
+                    </div>
+                </div>
+
+                <!-- Recent Requests -->
+                <div class="recent-requests-section">
+                    <h3>Recent Requests</h3>
+                    <div id="recent-requests" role="region" aria-label="Recent requests" aria-live="polite">
+                        <p class="empty-message">No recent requests</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add Request Section -->
+            <section id="add-request" class="section" role="tabpanel" aria-labelledby="add-request-tab">
+                <h2>Add New Request</h2>
+
+                <!-- Progress Indicator -->
+                <div class="form-progress" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1" aria-valuetext="Step 1 of 3">
+                    <div class="progress-steps">
+                        <div class="progress-step active" data-step="1" tabindex="0" role="button" aria-label="Step 1: Identifiers">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Identifiers</div>
+                        </div>
+                        <div class="progress-step" data-step="2" tabindex="0" role="button" aria-label="Step 2: Publication Details">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Publication Details</div>
+                        </div>
+                        <div class="progress-step" data-step="3" tabindex="0" role="button" aria-label="Step 3: Request Details">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Request Details</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 33%"></div>
+                    </div>
+                </div>
+
+                <!-- Request Form -->
+                <form id="request-form" class="request-form" novalidate>
+                    
+                    <!-- Step 1: Identifiers -->
+                    <fieldset id="identifiers-section" class="fieldset-enhanced">
+                        <legend>Publication Identifiers</legend>
+                        
+                        <div class="form-group">
+                            <label for="pmid" class="form-label">
+                                PubMed ID (PMID)
+                                <span class="field-priority preferred">PREFERRED</span>
+                            </label>
+                            <div class="input-with-button enhanced">
+                                <input type="text" id="pmid" name="pmid" class="form-control identifier-field" 
+                                       pattern="[0-9]+" title="PMID must be numeric"
+                                       aria-describedby="pmid-help">
+                                <button type="button" id="lookup-pmid" class="btn btn-primary lookup-btn" aria-label="Look up article by PMID">
+                                    <span class="btn-icon">🔍</span>
+                                    Lookup
+                                </button>
+                            </div>
+                            <small id="pmid-help" class="form-help">Enter the PubMed ID to automatically populate article details</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="doi" class="form-label">
+                                Digital Object Identifier (DOI)
+                                <span class="field-priority preferred">PREFERRED</span>
+                            </label>
+                            <div class="input-with-button enhanced">
+                                <input type="text" id="doi" name="doi" class="form-control identifier-field"
+                                       aria-describedby="doi-help">
+                                <button type="button" id="lookup-doi" class="btn btn-primary lookup-btn" aria-label="Look up article by DOI">
+                                    <span class="btn-icon">🔍</span>
+                                    Lookup
+                                </button>
+                            </div>
+                            <small id="doi-help" class="form-help">Enter the DOI to automatically populate article details</small>
+                        </div>
+
+                        <div id="lookup-status" class="lookup-status" role="status" aria-live="polite"></div>
+                    </fieldset>
+
+                    <!-- Step 2: Publication Details -->
+                    <fieldset id="details-section" class="fieldset-enhanced">
+                        <legend>Publication Details</legend>
+                        
+                        <div class="form-group">
+                            <label for="title" class="form-label required">
+                                Article Title
+                                <span class="field-priority required">REQUIRED</span>
+                            </label>
+                            <input type="text" id="title" name="title" class="form-control title-field" required
+                                   aria-describedby="title-help">
+                            <small id="title-help" class="form-help required">The complete title of the article or publication</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="authors" class="form-label">
+                                Authors
+                                <span class="field-priority preferred">PREFERRED</span>
+                            </label>
+                            <input type="text" id="authors" name="authors" class="form-control"
+                                   aria-describedby="authors-help">
+                            <small id="authors-help" class="form-help">Author names separated by semicolons (e.g., Smith J; Doe A; Johnson M)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="journal" class="form-label">
+                                Journal/Publication
+                                <span class="field-priority preferred">PREFERRED</span>
+                            </label>
+                            <input type="text" id="journal" name="journal" class="form-control"
+                                   aria-describedby="journal-help">
+                            <small id="journal-help" class="form-help">Full journal name or publication source</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="year" class="form-label">
+                                Publication Year
+                                <span class="field-priority optional">OPTIONAL</span>
+                            </label>
+                            <input type="number" id="year" name="year" class="form-control" min="1800" max="2025"
+                                   aria-describedby="year-help">
+                            <small id="year-help" class="form-help">Four-digit publication year</small>
+                        </div>
+                    </fieldset>
+
+                    <!-- Step 3: Request Details -->
+                    <fieldset id="request-section" class="fieldset-enhanced">
+                        <legend>Request Information</legend>
+                        
+                        <div class="form-group">
+                            <label for="patron-email" class="form-label optional">
+                                Patron Email
+                                <span class="field-priority optional">OPTIONAL</span>
+                            </label>
+                            <input type="email" id="patron-email" name="patron-email" class="form-control"
+                                   aria-describedby="patron-email-help">
+                            <small id="patron-email-help" class="form-help">Email address of the person making the request</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="docline" class="form-label optional">
+                                DOCLINE/ILL Number
+                                <span class="field-priority optional">OPTIONAL</span>
+                            </label>
+                            <input type="text" id="docline" name="docline" class="form-control tracking-field"
+                                   aria-describedby="docline-help">
+                            <small id="docline-help" class="form-help">Internal tracking number or DOCLINE identifier</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="priority" class="form-label">
+                                Priority Level
+                                <span class="field-priority optional">OPTIONAL</span>
+                            </label>
+                            <select id="priority" name="priority" class="form-control priority-select" 
+                                    aria-describedby="priority-help">
+                                <option value="normal">Normal</option>
+                                <option value="rush">Rush</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                            <small id="priority-help" class="form-help">Set request urgency level for processing priority</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status" class="form-label">
+                                Status
+                                <span class="field-priority optional">OPTIONAL</span>
+                            </label>
+                            <select id="status" name="status" class="form-control" aria-describedby="status-help">
+                                <option value="pending">Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="fulfilled">Fulfilled</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <small id="status-help" class="form-help">Current processing status of the request</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tags" class="form-label optional">
+                                Tags
+                                <span class="field-priority optional">OPTIONAL</span>
+                            </label>
+                            <input type="text" id="tags" name="tags" class="form-control"
+                                   aria-describedby="tags-help">
+                            <small id="tags-help" class="form-help">Comma-separated tags for categorization (e.g., cardiology, research, urgent)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes" class="form-label optional">
+                                Notes
+                                <span class="field-priority optional">OPTIONAL</span>
+                            </label>
+                            <textarea id="notes" name="notes" class="form-control" rows="3"
+                                      aria-describedby="notes-help"></textarea>
+                            <small id="notes-help" class="form-help">Additional notes or special instructions for this request</small>
+                        </div>
+                    </fieldset>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-icon">💾</span>
+                            Save Request
+                        </button>
+                        <button type="button" id="clear-form" class="btn btn-secondary">
+                            <span class="btn-icon">🧹</span>
+                            Clear Form
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- All Requests Section -->
+            <section id="all-requests" class="section" role="tabpanel" aria-labelledby="all-requests-tab">
+                <h2>All Requests</h2>
+
+                <!-- Enhanced Filters -->
+                <div class="enhanced-filters" role="region" aria-label="Filter and search options">
+                    <div class="filter-row">
+                        <label for="search-requests" class="sr-only">Search requests</label>
+                        <input type="text" id="search-requests" placeholder="Search requests..." class="search-input"
+                               aria-label="Search through all requests by title, author, journal, tags, or notes">
+                        
+                        <label for="filter-status" class="sr-only">Filter by status</label>
+                        <select id="filter-status" class="filter-select" aria-label="Filter requests by status">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="fulfilled">Fulfilled</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+
+                        <label for="priority-filter" class="sr-only">Filter by priority</label>
+                        <select id="priority-filter" class="filter-select priority-filter" aria-label="Filter requests by priority level">
+                            <option value="">All Priorities</option>
+                            <option value="normal">Normal</option>
+                            <option value="rush">Rush</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+
+                        <label for="date-range" class="sr-only">Filter by date range</label>
+                        <select id="date-range" class="filter-select" aria-label="Filter requests by date range">
+                            <option value="">All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="sort-controls">
+                            <span class="sort-label">Sort by:</span>
+                            <button class="sort-btn sort-desc" data-field="createdAt" aria-label="Sort by date created">Date</button>
+                            <button class="sort-btn" data-field="title" aria-label="Sort by title">Title</button>
+                            <button class="sort-btn" data-field="status" aria-label="Sort by status">Status</button>
+                            <button class="sort-btn" data-field="priority" aria-label="Sort by priority">Priority</button>
+                        </div>
+                        
+                        <div class="results-info">
+                            <span id="results-count" aria-live="polite">0 requests</span>
+                            <label class="select-all-label">
+                                <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)" 
+                                       aria-label="Select all visible requests">
+                                Select All
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <button id="filter-followup" class="btn btn-secondary" aria-label="Show only requests that need follow-up">
+                            Follow-up Needed
+                        </button>
+                        <button id="clear-filters" class="btn btn-secondary" aria-label="Clear all filters and search">
+                            Clear Filters
+                        </button>
+                        <button id="delete-selected-btn" class="btn btn-danger" onclick="deleteSelectedRequests()" 
+                                style="display: none;" aria-label="Delete all selected requests">
+                            🗑️ Delete Selected
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Request List -->
+                <div id="request-list" class="request-list" role="region" aria-label="Request list" aria-live="polite">
+                    <p class="empty-message">No requests found</p>
+                </div>
+            </section>
+
+            <!-- Import & Export Section -->
+            <section id="import-export" class="section" role="tabpanel" aria-labelledby="import-export-tab">
+                <h2>Import & Export</h2>
+
+                <div class="import-export-grid">
+                    <!-- Import Card -->
+                    <div class="card">
+                        <h3>Import Requests</h3>
+                        <p>Import requests from CSV or JSON files. CSV should include headers like PMID, DOI, Title, Authors, Journal, Year, Status, Priority, Tags, Notes.</p>
+                        
+                        <div class="button-group">
+                            <label for="import-file" class="btn btn-primary" tabindex="0" role="button" 
+                                   aria-label="Choose file to import requests from">
+                                📁 Choose File
+                            </label>
+                            <input type="file" id="import-file" accept=".csv,.json" class="file-input sr-only"
+                                   aria-describedby="import-help">
+                        </div>
+                        <small id="import-help" class="form-help">Supported formats: CSV, JSON. Maximum 100 requests per import.</small>
+                        
+                        <div id="import-status" class="import-status" role="status" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Export Card -->
+                    <div class="card">
+                        <h3>Export Requests</h3>
+                        <p>Export all your requests to CSV or JSON format for backup or external analysis.</p>
+                        
+                        <div class="button-group">
+                            <button id="export-csv" class="btn btn-secondary" aria-label="Export all requests as CSV file">
+                                📊 Export CSV
+                            </button>
+                            <button id="export-json" class="btn btn-secondary" aria-label="Export all requests as JSON file">
+                                📄 Export JSON
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Paste Card -->
+                    <div class="card">
+                        <h3>Bulk Paste with API Lookups</h3>
+                        <p>Paste CSV data directly and automatically lookup missing article details using PubMed and CrossRef APIs.</p>
+                        
+                        <label for="bulk-paste-data" class="form-label">CSV Data</label>
+                        <textarea id="bulk-paste-data" 
+                                  placeholder="Paste CSV data here with headers like: PMID, Title, Authors, Journal, Year, Priority..."
+                                  aria-describedby="bulk-paste-help"></textarea>
+                        <small id="bulk-paste-help" class="form-help">
+                            <strong>Tip:</strong> Include headers in your CSV data. The system will automatically look up missing article details using PMID or DOI.
+                        </small>
+                        
+                        <button id="bulk-paste-btn" class="btn btn-primary" 
+                                aria-label="Process pasted CSV data and lookup missing information">
+                            🚀 Process & Import
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section" role="tabpanel" aria-labelledby="settings-tab">
+                <h2>Settings</h2>
+
+                <form id="settings-form" class="settings-form">
+                    <fieldset class="fieldset-enhanced">
+                        <legend>Application Preferences</legend>
+                        
+                        <div class="form-group">
+                            <label for="theme" class="form-label">Theme</label>
+                            <select id="theme" name="theme" class="form-control" aria-describedby="theme-help">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="high-contrast">High Contrast</option>
+                            </select>
+                            <small id="theme-help" class="form-help">Choose your preferred visual theme</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="followup-days" class="form-label">Follow-up Reminder (Days)</label>
+                            <input type="number" id="followup-days" name="followup-days" class="form-control" 
+                                   min="1" max="365" value="5" aria-describedby="followup-help">
+                            <small id="followup-help" class="form-help">Number of days after which pending requests need follow-up</small>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="fieldset-enhanced">
+                        <legend>API Configuration</legend>
+                        
+                        <div class="form-group">
+                            <label for="api-key" class="form-label optional">PubMed API Key</label>
+                            <input type="password" id="api-key" name="api-key" class="form-control"
+                                   aria-describedby="api-key-help">
+                            <small id="api-key-help" class="form-help">Optional: Increases PubMed API rate limits. Get yours from NCBI.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="crossref-email" class="form-label optional">CrossRef Contact Email</label>
+                            <input type="email" id="crossref-email" name="crossref-email" class="form-control"
+                                   aria-describedby="crossref-email-help">
+                            <small id="crossref-email-help" class="form-help">Optional: Helps CrossRef provide better service. Use your institution email.</small>
+                        </div>
+                    </fieldset>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-icon">💾</span>
+                            Save Settings
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- Load Offline Manager First -->
+    <script src="assets/js/offline-manager.js"></script>
+    
+    <!-- Load Modules in Dependency Order -->
+    <script src="assets/js/modules/data-manager.js"></script>
+    <script src="assets/js/modules/theme-manager.js"></script>
+    <script src="assets/js/modules/api-integration.js"></script>
+    <script src="assets/js/modules/ui-controller.js"></script>
+    <script src="assets/js/modules/request-manager.js"></script>
+    <script src="assets/js/modules/search-filter.js"></script>
+    <script src="assets/js/modules/bulk-operations.js"></script>
+    <script src="assets/js/modules/medical-features.js"></script>
+    
+    <!-- Load Main App Orchestrator Last -->
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
