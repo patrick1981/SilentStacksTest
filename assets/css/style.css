@@ -1,31 +1,31 @@
-/* SilentStacks v1.2.0 - Main CSS Imports */
-/* This file imports all modular stylesheets */
+/* SilentStacks v1.2.0 - Main CSS with imports */
+/* Temporarily using consolidated version - modules commented out */
 
 /* === Base Styles === */
-@import url('modules/reset.css');
-@import url('modules/design-tokens.css');
-@import url('modules/typography.css');
+/* @import url('modules/reset.css'); */
+/* @import url('modules/design-tokens.css'); */
+/* @import url('modules/typography.css'); */
 
 /* === Layout === */
-@import url('modules/grid.css');
-@import url('modules/navigation.css');
-@import url('modules/responsive.css');
+/* @import url('modules/grid.css'); */
+/* @import url('modules/navigation.css'); */
+/* @import url('modules/responsive.css'); */
 
 /* === Components === */
-@import url('modules/buttons.css');
-@import url('modules/forms.css');
-@import url('modules/cards.css');
-@import url('modules/progress.css');
-@import url('modules/tables.css');
+/* @import url('modules/buttons.css'); */
+/* @import url('modules/forms.css'); */
+/* @import url('modules/cards.css'); */
+/* @import url('modules/progress.css'); */
+/* @import url('modules/tables.css'); */
 
 /* === Themes === */
-@import url('modules/light-theme.css');
-@import url('modules/dark-theme.css');
-@import url('modules/high-contrast-theme.css');
+/* @import url('modules/light-theme.css'); */
+/* @import url('modules/dark-theme.css'); */
+/* @import url('modules/high-contrast-theme.css'); */
 
 /* === Utilities === */
-@import url('modules/accessibility.css');
-@import url('modules/print.css');
+/* @import url('modules/accessibility.css'); */
+/* @import url('modules/print.css'); */
 
 /* === Accessibility Fixes for AAA Compliance === */
 
