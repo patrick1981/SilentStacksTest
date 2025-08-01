@@ -351,5 +351,3 @@ if (window.SilentStacks?.registerModule) {
   window.SilentStacks.modules.DataManager = DataManager;
 }
 
-// ES6 Module Export
-export default DataManager;
