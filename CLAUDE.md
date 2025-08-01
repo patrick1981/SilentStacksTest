@@ -10,6 +10,6 @@
   - Readme
   - Documentation to provide in new chat for seamless continuation.
   
-All data will be in `.md` format. 
-
-API calls will use publicly accessible endpoints.
+- All data will be in `.md` format. 
+- API calls will use publicly accessible endpoints.
+- Omit mention of AI in codebase.
