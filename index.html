@@ -1,18 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SilentStacks - Medical Library Request Management</title>
-    <meta name="description" content="Streamlined medical library request management system for librarians and researchers">
-    
-    <!-- Modular CSS Import -->
-    <!--<link rel="stylesheet" href="assets/css/modules/style.css">-->
-    <link rel="stylesheet" href="assets/css/style.css">
-    
-    <!-- External Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.6.2/fuse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SilentStacks - Document Request Management</title>
+  
+  <!-- Preload Critical Fonts -->
+  <link rel="preload" href="assets/fonts/reddit-sans/RedditSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/reddit-sans/RedditSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/reddit-sans/RedditSans-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+  
+  <!-- Font Loading -->
+  <link rel="stylesheet" href="assets/fonts/reddit-sans/reddit-sans.css">
+  
+  <!-- Main CSS (Modular Architecture) -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => console.log('SW registered:', registration))
+          .catch(error => console.log('SW registration failed:', error));
+      });
+    }
+  </script>
+  
+  <!-- Font Loading Optimization -->
+  <script>
+    document.documentElement.classList.add('font-loading');
+    document.fonts.ready.then(() => {
+      document.documentElement.classList.remove('font-loading');
+      document.documentElement.classList.add('font-loaded');
+    });
+  </script>
 </head>
 <body>
     <!-- Skip Navigation for Accessibility -->
@@ -31,28 +53,33 @@
         </header>
 
         <!-- Navigation -->
-        <nav class="nav-tabs" role="tablist" aria-label="Main navigation">
-            <button class="nav-tab active" data-section="dashboard" role="tab" aria-selected="true" aria-controls="dashboard">
-                <span class="nav-icon">📊</span>
-                Dashboard
-            </button>
-            <button class="nav-tab" data-section="add-request" role="tab" aria-selected="false" aria-controls="add-request">
-                <span class="nav-icon">➕</span>
-                Add Request
-            </button>
-            <button class="nav-tab" data-section="all-requests" role="tab" aria-selected="false" aria-controls="all-requests">
-                <span class="nav-icon">📋</span>
-                All Requests
-            </button>
-            <button class="nav-tab" data-section="import-export" role="tab" aria-selected="false" aria-controls="import-export">
-                <span class="nav-icon">📁</span>
-                Import & Export
-            </button>
-            <button class="nav-tab" data-section="settings" role="tab" aria-selected="false" aria-controls="settings">
-                <span class="nav-icon">⚙️</span>
-                Settings
-            </button>
-        </nav>
+        <nav class="nav-tabs" role="tablist">
+  <button class="nav-tab active" data-tab="dashboard" role="tab" aria-selected="true" aria-controls="dashboard">
+    <span class="nav-icon">📊</span>
+    Dashboard
+  </button>
+  <button class="nav-tab" data-tab="add-request" role="tab" aria-selected="false" aria-controls="add-request">
+    <span class="nav-icon">➕</span>
+    Add Request
+  </button>
+  <button class="nav-tab" data-tab="all-requests" role="tab" aria-selected="false" aria-controls="all-requests">
+    <span class="nav-icon">📋</span>
+    All Requests
+  </button>
+  <button class="nav-tab" data-tab="import-export" role="tab" aria-selected="false" aria-controls="import-export">
+    <span class="nav-icon">📁</span>
+    Import/Export
+  </button>
+  <button class="nav-tab" data-tab="settings" role="tab" aria-selected="false" aria-controls="settings">
+    <span class="nav-icon">⚙️</span>
+    Settings
+  </button>
+  
+  <!-- NEW: Connection Status Indicator -->
+  <div id="connection-status" class="connection-indicator online connection-clean" title="Connection status">
+    Online
+  </div>
+</nav>
 
         <!-- Main Content -->
         <main id="main-content" class="main-content" role="main">
@@ -469,6 +496,95 @@
                             <small id="crossref-email-help" class="form-help">Optional: Helps CrossRef provide better service. Use your institution email.</small>
                         </div>
                     </fieldset>
+                    
+<div class="fieldset-enhanced">
+  <legend>Performance & Memory</legend>
+  
+  <div class="form-group">
+    <label class="form-label">
+      Performance Mode
+      <span class="field-priority optional">Optional</span>
+    </label>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="performance-mode" name="performanceMode">
+        Enable performance mode (disables animations for better performance)
+      </label>
+    </div>
+  </div>
+  
+  <div class="form-group">
+    <label class="form-label">
+      Memory Management
+      <span class="field-priority optional">Optional</span>
+    </label>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="auto-cleanup" name="autoCleanup" checked>
+        Automatic memory cleanup
+      </label>
+      <label>
+        <input type="checkbox" id="memory-warnings" name="memoryWarnings" checked>
+        Show memory usage warnings
+      </label>
+    </div>
+  </div>
+  
+  <!-- Performance Stats Display -->
+  <div class="performance-stats" id="performance-stats">
+    <h4>Current Performance Stats</h4>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Memory Usage</h3>
+        <div class="stat-number" id="memory-usage">0 MB</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Requests</h3>
+        <div class="stat-number" id="total-requests">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Storage Used</h3>
+        <div class="stat-number" id="storage-used">0 KB</div>
+      </div>
+      <div class="stat-card">
+        <h3>Peak Memory</h3>
+        <div class="stat-number" id="peak-memory">0 MB</div>
+      </div>
+    </div>
+    
+    <div class="button-group">
+      <button type="button" id="cleanup-memory" class="btn btn-secondary">
+        <span class="btn-icon">🧹</span>
+        Clean Memory
+      </button>
+      <button type="button" id="refresh-stats" class="btn btn-secondary">
+        <span class="btn-icon">🔄</span>
+        Refresh Stats
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD THIS SECTION TOO -->
+<div class="fieldset-enhanced">
+  <legend>Data Management</legend>
+  
+  <div class="storage-info" id="storage-info">
+    <h4>Storage Usage Breakdown</h4>
+    <div id="storage-breakdown"></div>
+  </div>
+  
+  <div class="button-group">
+    <button type="button" id="cleanup-old-data" class="btn btn-warning">
+      <span class="btn-icon">🗑️</span>
+      Clean Old Data
+    </button>
+    <button type="button" id="clear-all-data" class="btn btn-danger">
+      <span class="btn-icon">⚠️</span>
+      Clear All Data
+    </button>
+  </div>
+</div>
 
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">
@@ -509,6 +625,63 @@ function waitForModules() {
     }
 }
 waitForModules();
+</script>
+    <!-- Core Libraries (Local/Offline versions) -->
+<script src="assets/js/fuse.min.js"></script>
+<script src="assets/js/papaparse.min.js"></script>
+
+<!-- SilentStacks Modules (Load in dependency order) -->
+<script src="assets/js/enhanced-data-manager.js"></script>
+<script src="assets/js/offline-manager.js"></script>
+<script src="assets/js/integrated-documentation.js"></script>
+
+<!-- Main Application (Load last) -->
+<script src="assets/js/silentstacks.js"></script>
+
+<!-- Initialize Enhanced Features -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize performance monitoring
+  if (window.EnhancedDataManager) {
+    EnhancedDataManager.initialize();
+    
+    // Update performance stats every 30 seconds
+    setInterval(updatePerformanceStats, 30000);
+    updatePerformanceStats(); // Initial load
+  }
+  
+  // Initialize offline manager
+  if (window.OfflineManager) {
+    OfflineManager.initialize();
+  }
+  
+  // Listen for offline manager events
+  document.addEventListener('offlineManager', function(event) {
+    const { type, data } = event.detail;
+    
+    switch (type) {
+      case 'QUEUED_REQUEST_SUCCESS':
+        console.log('✅ Queued request completed:', data.url);
+        break;
+        
+      case 'QUEUED_REQUEST_FAILED':
+        console.warn('❌ Queued request failed:', data.url, data.error);
+        break;
+        
+      case 'BACKGROUND_SYNC_SUCCESS':
+        console.log('🔄 Background sync completed:', data.request);
+        break;
+    }
+  });
+  
+  // Setup enhanced import/export event listeners
+  setupEnhancedImportExport();
+  
+  // Setup performance management event listeners
+  setupPerformanceManagement();
+});
+
+// [Include all the JavaScript functions from the artifact here]
 </script>
 </body>
 </html>
