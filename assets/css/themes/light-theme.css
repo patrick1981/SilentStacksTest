@@ -1,1 +1,15 @@
+/* Light Theme - Default */
+/* This is already defined in design-tokens.css as the root values */
 
+/* Light theme specific overrides */
+:root,
+[data-theme="light"] {
+    /* Light theme is the default, so all values are already set in design-tokens.css */
+}
+
+/* Light theme specific component adjustments */
+[data-theme="light"] .app-logo {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+}
