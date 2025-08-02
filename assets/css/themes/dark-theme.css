@@ -1,1 +1,219 @@
+/* Dark Theme */
+[data-theme="dark"] {
+    /* Override design tokens for dark theme */
+    --bg-primary: #1a1a1a !important;
+    --bg-secondary: #2d2d2d !important;
+    --bg-card: #2d2d2d !important;
+    --text-primary: #ffffff !important;
+    --text-secondary: #e0e0e0 !important;
+    --text-muted: #b0b0b0 !important;
+    --border-color: #495057 !important;
+}
 
+/* Dark theme body and container fixes */
+[data-theme="dark"] html {
+    background-color: #1a1a1a !important;
+}
+
+[data-theme="dark"] body {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .container,
+[data-theme="dark"] .main-content,
+[data-theme="dark"] .section,
+[data-theme="dark"] #dashboard,
+[data-theme="dark"] #add-request,
+[data-theme="dark"] #all-requests,
+[data-theme="dark"] #import-export,
+[data-theme="dark"] #settings {
+    background-color: #1a1a1a !important;
+}
+
+/* Dark theme text color fixes */
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] div,
+[data-theme="dark"] label, [data-theme="dark"] .form-label {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .form-help,
+[data-theme="dark"] small {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .empty-message {
+    color: #cccccc !important;
+    font-weight: 600 !important;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #666666;
+}
+
+/* Dark theme form elements */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .search-input, 
+[data-theme="dark"] .filter-select,
+[data-theme="dark"] #bulk-paste-data {
+    border: 2px solid #666666 !important;
+    color: #ffffff !important;
+    background: #2d2d2d !important;
+}
+
+[data-theme="dark"] .form-control::placeholder,
+[data-theme="dark"] #bulk-paste-data::placeholder {
+    color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .search-input:focus,
+[data-theme="dark"] .filter-select:focus,
+[data-theme="dark"] #bulk-paste-data:focus {
+    outline: 3px solid #66b3ff !important;
+    border-color: #66b3ff !important;
+}
+
+/* Dark theme file inputs */
+[data-theme="dark"] .file-input {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .file-input::file-selector-button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    margin-right: 12px;
+}
+
+/* Dark theme progress elements */
+[data-theme="dark"] .form-progress {
+    background: rgba(45, 45, 45, 0.98);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .field-priority {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .progress-bar {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .progress-container {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .progress-bar-container {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Dark theme navigation */
+[data-theme="dark"] .nav-tab:focus {
+    outline: 3px solid #66b3ff !important;
+}
+
+[data-theme="dark"] #connection-status {
+    color: #ffffff !important;
+    border-color: #495057 !important;
+}
+
+[data-theme="dark"] #connection-status:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Dark theme button adjustments */
+[data-theme="dark"] .sort-btn {
+    color: var(--text-primary);
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .sort-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+}
+
+/* Dark theme status colors */
+[data-theme="dark"] .priority-urgent {
+    background: rgba(244, 67, 54, 0.2) !important;
+    border-color: #f44336 !important;
+    color: #ffcdd2 !important;
+}
+
+[data-theme="dark"] .priority-rush {
+    background: rgba(255, 152, 0, 0.2) !important;
+    border-color: #ff9800 !important;
+    color: #ffe0b2 !important;
+}
+
+[data-theme="dark"] .priority-normal {
+    background: rgba(76, 175, 80, 0.2) !important;
+    border-color: #4caf50 !important;
+    color: #c8e6c9 !important;
+}
+
+[data-theme="dark"] .request-status-select.status-pending {
+    background: rgba(255, 193, 7, 0.2) !important;
+    border-color: #ffc107 !important;
+    color: #ffc107 !important;
+}
+
+[data-theme="dark"] .request-status-select.status-in-progress {
+    background: rgba(33, 150, 243, 0.2) !important;
+    border-color: #2196f3 !important;
+    color: #2196f3 !important;
+}
+
+[data-theme="dark"] .request-status-select.status-fulfilled {
+    background: rgba(76, 175, 80, 0.2) !important;
+    border-color: #4caf50 !important;
+    color: #4caf50 !important;
+}
+
+[data-theme="dark"] .request-status-select.status-cancelled {
+    background: rgba(158, 158, 158, 0.2) !important;
+    border-color: #9e9e9e !important;
+    color: #9e9e9e !important;
+}
+
+/* Dark theme tag color picker */
+[data-theme="dark"] .tag-color-picker {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .color-option.color-default {
+    background: linear-gradient(45deg, #333 25%, transparent 25%), 
+                linear-gradient(-45deg, #333 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #333 75%), 
+                linear-gradient(-45deg, transparent 75%, #333 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+}
+
+/* Dark theme import status */
+[data-theme="dark"] .import-status {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .import-status.success {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+[data-theme="dark"] .import-status.error {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+}
