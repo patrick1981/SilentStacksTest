@@ -385,13 +385,4 @@
     // Add this to the end of theme-manager.js to fix the syntax error
 
   }
-
-  // Register module
-  if (window.SilentStacks?.registerModule) {
-    window.SilentStacks.registerModule('ThemeManager', ThemeManager);
-  } else {
-    // Fallback for direct loading
-    window.SilentStacks = window.SilentStacks || { modules: {} };
-    window.SilentStacks.modules.ThemeManager = ThemeManager;
-  }
 })();
