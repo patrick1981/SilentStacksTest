@@ -4,6 +4,8 @@
 (() => {
   'use strict';
 
+  console.log('🔧 Loading FIXED BulkOperations v1.2.1...');
+
   // === Safety Configuration ===
   const SAFETY_LIMITS = {
     MAX_IMPORT_SIZE: 2000,
@@ -16,7 +18,7 @@
   };
 
   // === Enhanced Import/Export Functions ===
-  function exportCSV() {
+  async function exportCSV() {
     const requests = window.SilentStacks.modules.DataManager.getRequests();
     
     if (requests.length === 0) {
@@ -87,7 +89,7 @@
     }
   }
 
-  function exportJSON() {
+  async function exportJSON() {
     const requests = window.SilentStacks.modules.DataManager.getRequests();
     
     if (requests.length === 0) {
@@ -260,7 +262,10 @@
       window.SilentStacks.modules.RequestManager.refreshAllViews();
       
       // Clear file input
-      event.target.value = '';
+      const importFile = document.getElementById('import-file');
+      if (importFile) {
+        importFile.value = '';
+      }
       
       showImportStatus(
         `✅ Successfully imported ${addedCount} requests from ${filename}`, 
@@ -713,6 +718,8 @@
     }
   }
 
+  console.log('✅ All FIXED BulkOperations functions defined');
+
   // === Module Interface ===
   const BulkOperations = {
     // Initialization
@@ -758,14 +765,33 @@
     SAFETY_LIMITS
   };
 
-  // Register module
-  if (window.SilentStacks?.registerModule) {
-    window.SilentStacks.registerModule('BulkOperations', BulkOperations);
-  } else {
-    // Fallback for direct loading
-    window.SilentStacks = window.SilentStacks || { modules: {} };
-    window.SilentStacks.modules.BulkOperations = BulkOperations;
+  console.log('✅ FIXED BulkOperations interface created');
+
+  // === Enhanced Registration ===
+  try {
+    if (!window.SilentStacks) {
+      console.log('🔧 Creating SilentStacks object...');
+      window.SilentStacks = { modules: {} };
+    }
+    if (!window.SilentStacks.modules) {
+      console.log('🔧 Creating modules object...');
+      window.SilentStacks.modules = {};
+    }
+
+    if (window.SilentStacks.registerModule && typeof window.SilentStacks.registerModule === 'function') {
+      console.log('🔧 Using registerModule function...');
+      window.SilentStacks.registerModule('BulkOperations', BulkOperations);
+      console.log('✅ FIXED BulkOperations registered via registerModule');
+    } else {
+      console.log('🔧 Using direct registration...');
+      window.SilentStacks.modules.BulkOperations = BulkOperations;
+      console.log('✅ FIXED BulkOperations registered directly');
+    }
+
+    console.log('🎉 FIXED BulkOperations registration SUCCESSFUL!');
+
+  } catch (registrationError) {
+    console.error('❌ FIXED BulkOperations registration failed:', registrationError);
   }
 
-  console.log('✅ FIXED BulkOperations registered successfully');
 })();
