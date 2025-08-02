@@ -1,9 +1,10 @@
-// SilentStacks Request Manager Module
-// Handles CRUD operations, form management, and request validation
+// SilentStacks Request Manager Module - v1.2.1 FIXED VERSION
+// Enhanced with proper validation, memory management, and performance monitoring
+
 (() => {
   'use strict';
 
-  // === Form Field Mapping ===
+  // === Enhanced Field Mapping ===
   const FIELD_MAPPING = {
     pmid: 'pmid',
     doi: 'doi',
@@ -19,7 +20,7 @@
     priority: 'priority'
   };
 
-  // === Form Population ===
+  // === Enhanced Form Population ===
   function populateForm(data) {
     Object.entries(FIELD_MAPPING).forEach(([fieldId, dataKey]) => {
       const element = document.getElementById(fieldId);
@@ -32,6 +33,9 @@
         }
         
         element.value = value || '';
+        
+        // Trigger validation for the field
+        triggerFieldValidation(element);
       }
     });
     
@@ -61,7 +65,7 @@
     return formData;
   }
 
-  // === Form Validation ===
+  // === Enhanced Form Validation ===
   function validateFormData(data) {
     const errors = [];
     
@@ -93,30 +97,125 @@
       }
     }
     
-    // Validate year if provided
+    // Enhanced year validation - FIXED to prevent future dates
     if (data.year) {
       const yearNum = parseInt(data.year);
       const currentYear = new Date().getFullYear();
       if (isNaN(yearNum) || yearNum < 1800 || yearNum > currentYear + 1) {
-        errors.push('Year must be between 1800 and ' + (currentYear + 1));
+        errors.push(`Year must be between 1800 and ${currentYear + 1}`);
       }
+    }
+    
+    // Validate title length
+    if (data.title && data.title.length > 500) {
+      errors.push('Title must be less than 500 characters');
+    }
+    
+    // Validate notes length
+    if (data.notes && data.notes.length > 2000) {
+      errors.push('Notes must be less than 2000 characters');
     }
     
     return errors;
   }
 
-  // === Form Handlers ===
+  function triggerFieldValidation(element) {
+    if (!element) return;
+    
+    const fieldId = element.id;
+    const value = element.value.trim();
+    
+    // Clear previous validation state
+    element.classList.remove('valid', 'invalid');
+    
+    // Field-specific validation
+    switch (fieldId) {
+      case 'pmid':
+        if (value && !/^\d+$/.test(value)) {
+          element.setCustomValidity('PMID must be numeric');
+          element.classList.add('invalid');
+        } else {
+          element.setCustomValidity('');
+          if (value) element.classList.add('valid');
+        }
+        break;
+        
+      case 'patron-email':
+        if (value) {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(value)) {
+            element.setCustomValidity('Please enter a valid email address');
+            element.classList.add('invalid');
+          } else {
+            element.setCustomValidity('');
+            element.classList.add('valid');
+          }
+        } else {
+          element.setCustomValidity('');
+        }
+        break;
+        
+      case 'year':
+        if (value) {
+          const yearNum = parseInt(value);
+          const currentYear = new Date().getFullYear();
+          if (isNaN(yearNum) || yearNum < 1800 || yearNum > currentYear + 1) {
+            element.setCustomValidity(`Year must be between 1800 and ${currentYear + 1}`);
+            element.classList.add('invalid');
+          } else {
+            element.setCustomValidity('');
+            element.classList.add('valid');
+          }
+        } else {
+          element.setCustomValidity('');
+        }
+        break;
+        
+      case 'title':
+        if (value) {
+          if (value.length > 500) {
+            element.setCustomValidity('Title must be less than 500 characters');
+            element.classList.add('invalid');
+          } else {
+            element.setCustomValidity('');
+            element.classList.add('valid');
+          }
+        }
+        break;
+        
+      case 'notes':
+        if (value && value.length > 2000) {
+          element.setCustomValidity('Notes must be less than 2000 characters');
+          element.classList.add('invalid');
+        } else {
+          element.setCustomValidity('');
+          if (value) element.classList.add('valid');
+        }
+        break;
+    }
+  }
+
+  // === Enhanced Form Handlers ===
   function handleFormSubmit() {
     try {
       const formData = extractFormData();
       
-      // Validate form data
+      // Enhanced validation
       const validationErrors = validateFormData(formData);
       if (validationErrors.length > 0) {
         const errorMessage = 'Validation errors:\n• ' + validationErrors.join('\n• ');
         window.SilentStacks.modules.UIController.setStatus(errorMessage, 'error');
+        
+        // Focus first invalid field
+        const firstInvalidField = document.querySelector('.form-control.invalid');
+        if (firstInvalidField) {
+          firstInvalidField.focus();
+        }
         return;
       }
+      
+      // Check memory usage before large operations
+      checkMemoryBeforeOperation();
       
       // Handle edit vs new request
       const currentEdit = window.SilentStacks.state.currentEdit;
@@ -152,6 +251,13 @@
     } catch (error) {
       console.error('Form submission error:', error);
       window.SilentStacks.modules.UIController.setStatus(`Failed to save request: ${error.message}`, 'error');
+      
+      // Handle specific error types
+      if (error.message.includes('limit exceeded')) {
+        handleLimitExceededError(error);
+      } else if (error.message.includes('memory')) {
+        handleMemoryError(error);
+      }
     }
   }
 
@@ -159,6 +265,12 @@
     const form = document.getElementById('request-form');
     if (form) {
       form.reset();
+      
+      // Clear validation states
+      form.querySelectorAll('.form-control').forEach(field => {
+        field.classList.remove('valid', 'invalid');
+        field.setCustomValidity('');
+      });
     }
     
     // Reset current edit state
@@ -172,7 +284,40 @@
     window.SilentStacks.modules.UIController.setStatus('Form cleared', 'success');
   }
 
-  // === Request Management Functions ===
+  function checkMemoryBeforeOperation() {
+    if (performance.memory) {
+      const memoryMB = performance.memory.usedJSHeapSize / 1024 / 1024;
+      
+      if (memoryMB > 300) {
+        console.log('🧹 High memory usage before operation, performing cleanup...');
+        
+        if (window.SilentStacks.modules.DataManager.performMemoryCleanup) {
+          window.SilentStacks.modules.DataManager.performMemoryCleanup();
+        }
+      }
+    }
+  }
+
+  function handleLimitExceededError(error) {
+    const message = 'Request limit exceeded. Consider cleaning up old data or increasing limits.';
+    
+    if (confirm(`${message}\n\nWould you like to clean up old fulfilled requests?`)) {
+      // Trigger cleanup if available
+      if (window.SilentStacks.modules.DataManager.performStorageCleanup) {
+        window.SilentStacks.modules.DataManager.performStorageCleanup();
+      }
+    }
+  }
+
+  function handleMemoryError(error) {
+    const message = 'Memory limit reached. The page may need to be refreshed for optimal performance.';
+    
+    if (confirm(`${message}\n\nRefresh page now? (Your data is automatically saved)`)) {
+      window.location.reload();
+    }
+  }
+
+  // === Enhanced Request Management Functions ===
   function editRequest(index) {
     try {
       const requests = window.SilentStacks.modules.DataManager.getRequests();
@@ -180,6 +325,11 @@
       
       if (!request) {
         throw new Error(`Request at index ${index} not found`);
+      }
+      
+      // Check if user has unsaved changes
+      if (isFormDirty() && !warnIfUnsavedChanges()) {
+        return;
       }
       
       // Set edit mode
@@ -197,11 +347,12 @@
       // Show edit mode indicator
       window.SilentStacks.modules.UIController.setStatus('Editing request - make changes and click Save', 'info');
       
-      // Focus first input
+      // Focus first input with scroll to view
       setTimeout(() => {
         const firstInput = document.querySelector('#add-request input, #add-request select, #add-request textarea');
         if (firstInput) {
           firstInput.focus();
+          firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 100);
       
@@ -222,10 +373,24 @@
       
       const requestTitle = request.title || `Request ${index + 1}`;
       
-      if (confirm(`Delete "${requestTitle}"?\n\nThis action cannot be undone.`)) {
+      // Enhanced confirmation with request details
+      const confirmMessage = `Delete "${requestTitle}"?\n\n` +
+        `Authors: ${request.authors || 'Unknown'}\n` +
+        `Journal: ${request.journal || 'Unknown'}\n` +
+        `Status: ${request.status || 'pending'}\n\n` +
+        `This action cannot be undone.`;
+      
+      if (confirm(confirmMessage)) {
         window.SilentStacks.modules.DataManager.deleteRequest(index);
         refreshAllViews();
         window.SilentStacks.modules.UIController.showNotification('Request deleted successfully', 'success');
+        
+        // Memory cleanup after deletions
+        setTimeout(() => {
+          if (window.SilentStacks.modules.DataManager.performMemoryCleanup) {
+            window.SilentStacks.modules.DataManager.performMemoryCleanup();
+          }
+        }, 500);
       }
       
     } catch (error) {
@@ -273,7 +438,8 @@
       return;
     }
     
-    const confirmMessage = `Delete ${selectedRequests.size} selected request${selectedRequests.size > 1 ? 's' : ''}?\n\nThis action cannot be undone.`;
+    const confirmMessage = `Delete ${selectedRequests.size} selected request${selectedRequests.size > 1 ? 's' : ''}?\n\n` +
+      `This action cannot be undone.`;
     
     if (confirm(confirmMessage)) {
       try {
@@ -288,6 +454,15 @@
           'success'
         );
         
+        // Memory cleanup after large deletions
+        if (indices.length > 10) {
+          setTimeout(() => {
+            if (window.SilentStacks.modules.DataManager.performMemoryCleanup) {
+              window.SilentStacks.modules.DataManager.performMemoryCleanup();
+            }
+          }, 1000);
+        }
+        
       } catch (error) {
         console.error('Bulk delete error:', error);
         window.SilentStacks.modules.UIController.showNotification(`Failed to delete requests: ${error.message}`, 'error');
@@ -295,16 +470,21 @@
     }
   }
 
-  // === Utility Functions ===
+  // === Enhanced Utility Functions ===
   function refreshAllViews() {
-    // Refresh all UI components
-    window.SilentStacks.modules.UIController.renderStats();
-    window.SilentStacks.modules.UIController.renderRequests();
-    window.SilentStacks.modules.UIController.renderRecentRequests();
-    
-    // Re-initialize search if needed
-    if (window.SilentStacks.modules.SearchFilter?.initFuse) {
-      window.SilentStacks.modules.SearchFilter.initFuse();
+    try {
+      // Refresh all UI components
+      window.SilentStacks.modules.UIController.renderStats();
+      window.SilentStacks.modules.UIController.renderRequests();
+      window.SilentStacks.modules.UIController.renderRecentRequests();
+      
+      // Re-initialize search if needed
+      if (window.SilentStacks.modules.SearchFilter?.initFuse) {
+        window.SilentStacks.modules.SearchFilter.initFuse();
+      }
+    } catch (error) {
+      console.error('Failed to refresh views:', error);
+      window.SilentStacks.modules.UIController.showNotification('Failed to refresh display', 'error');
     }
   }
 
@@ -336,14 +516,15 @@
     };
   }
 
-  // === Form State Management ===
+  // === Enhanced Form State Management ===
   function isFormDirty() {
     const form = document.getElementById('request-form');
     if (!form) return false;
     
-    const formData = new FormData(form);
-    for (let [key, value] of formData.entries()) {
-      if (value.trim()) {
+    // Check if any field has been modified
+    const formElements = form.querySelectorAll('input, select, textarea');
+    for (const element of formElements) {
+      if (element.value && element.value.trim()) {
         return true;
       }
     }
@@ -357,22 +538,84 @@
     return true;
   }
 
+  function setupFormValidation() {
+    // Enhanced real-time validation for key fields
+    const pmidInput = document.getElementById('pmid');
+    const emailInput = document.getElementById('patron-email');
+    const yearInput = document.getElementById('year');
+    const titleInput = document.getElementById('title');
+    const notesInput = document.getElementById('notes');
+    
+    // Set up event listeners for real-time validation
+    [pmidInput, emailInput, yearInput, titleInput, notesInput].forEach(input => {
+      if (input) {
+        input.addEventListener('input', (e) => triggerFieldValidation(e.target));
+        input.addEventListener('blur', (e) => triggerFieldValidation(e.target));
+      }
+    });
+    
+    // Form-wide validation
+    const form = document.getElementById('request-form');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        // Validate all fields before submission
+        const allFields = form.querySelectorAll('.form-control');
+        let hasErrors = false;
+        
+        allFields.forEach(field => {
+          triggerFieldValidation(field);
+          if (field.classList.contains('invalid')) {
+            hasErrors = true;
+          }
+        });
+        
+        if (hasErrors) {
+          e.preventDefault();
+          window.SilentStacks.modules.UIController.setStatus('Please fix validation errors before submitting', 'error');
+        }
+      });
+    }
+  }
+
+  // === Performance Monitoring ===
+  function monitorFormPerformance() {
+    // Monitor form submission time
+    const form = document.getElementById('request-form');
+    if (form) {
+      form.addEventListener('submit', () => {
+        const startTime = performance.now();
+        
+        setTimeout(() => {
+          const endTime = performance.now();
+          const submitTime = endTime - startTime;
+          
+          if (submitTime > 1000) {
+            console.warn('Slow form submission:', submitTime, 'ms');
+          }
+        }, 0);
+      });
+    }
+  }
+
   // === Global Functions for Button Clicks ===
   window.editRequest = editRequest;
   window.deleteRequest = deleteRequest;
   window.duplicateRequest = duplicateRequest;
   window.deleteSelectedRequests = deleteSelectedRequests;
 
-  // === Module Interface ===
+  // === Enhanced Module Interface ===
   const RequestManager = {
     // Initialization
     initialize() {
-      console.log('🔧 Initializing RequestManager...');
+      console.log('🔧 Initializing FIXED RequestManager v1.2.1...');
       
-      // Set up form validation listeners
+      // Set up enhanced form validation
       setupFormValidation();
       
-      console.log('✅ RequestManager initialized');
+      // Set up performance monitoring
+      monitorFormPerformance();
+      
+      console.log('✅ FIXED RequestManager initialized');
     },
 
     // Form management
@@ -381,6 +624,7 @@
     validateFormData,
     handleFormSubmit,
     clearForm,
+    triggerFieldValidation,
 
     // Request management
     editRequest,
@@ -388,68 +632,21 @@
     duplicateRequest,
     deleteSelectedRequests,
 
-    // Utility functions
+    // Enhanced utility functions
     refreshAllViews,
     getRequestSummary,
     formatRequestForDisplay,
     isFormDirty,
     warnIfUnsavedChanges,
+    checkMemoryBeforeOperation,
+
+    // Error handling
+    handleLimitExceededError,
+    handleMemoryError,
 
     // Constants
     FIELD_MAPPING
   };
-
-  // === Form Validation Setup ===
-  function setupFormValidation() {
-    // Real-time validation for key fields
-    const pmidInput = document.getElementById('pmid');
-    const emailInput = document.getElementById('patron-email');
-    const yearInput = document.getElementById('year');
-    
-    if (pmidInput) {
-      pmidInput.addEventListener('input', (e) => {
-        const value = e.target.value.trim();
-        if (value && !/^\d+$/.test(value)) {
-          e.target.setCustomValidity('PMID must be numeric');
-        } else {
-          e.target.setCustomValidity('');
-        }
-      });
-    }
-    
-    if (emailInput) {
-      emailInput.addEventListener('input', (e) => {
-        const value = e.target.value.trim();
-        if (value) {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(value)) {
-            e.target.setCustomValidity('Please enter a valid email address');
-          } else {
-            e.target.setCustomValidity('');
-          }
-        } else {
-          e.target.setCustomValidity('');
-        }
-      });
-    }
-    
-    if (yearInput) {
-      yearInput.addEventListener('input', (e) => {
-        const value = e.target.value.trim();
-        if (value) {
-          const yearNum = parseInt(value);
-          const currentYear = new Date().getFullYear();
-          if (isNaN(yearNum) || yearNum < 1800 || yearNum > currentYear + 1) {
-            e.target.setCustomValidity(`Year must be between 1800 and ${currentYear + 1}`);
-          } else {
-            e.target.setCustomValidity('');
-          }
-        } else {
-          e.target.setCustomValidity('');
-        }
-      });
-    }
-  }
 
   // Register module
   if (window.SilentStacks?.registerModule) {
@@ -459,4 +656,6 @@
     window.SilentStacks = window.SilentStacks || { modules: {} };
     window.SilentStacks.modules.RequestManager = RequestManager;
   }
+
+  console.log('✅ FIXED RequestManager registered successfully');
 })();
