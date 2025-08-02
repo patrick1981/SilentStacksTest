@@ -1,18 +1,16 @@
-// SilentStacks Data Manager Module - v1.2.1 FIXED VERSION
-// Enhanced with memory management, performance monitoring, and safety limits
+// Complete Enhanced SilentStacks Data Manager
 
 (() => {
   'use strict';
-  console.log('🔧 Loading FIXED DataManager v1.2.1...');
 
   // === Enhanced Configuration ===
   const PERFORMANCE_LIMITS = {
-    MAX_IMPORT_SIZE: 2000,        // Maximum items per import
-    MEMORY_WARNING_THRESHOLD: 400, // MB
-    MEMORY_CRITICAL_THRESHOLD: 500, // MB
-    MAX_TOTAL_REQUESTS: 10000,    // Total app limit
-    CLEANUP_INTERVAL: 60000,      // 1 minute cleanup cycle
-    GC_FORCE_THRESHOLD: 300       // Force GC at 300MB
+    MAX_IMPORT_SIZE: 2000,
+    MEMORY_WARNING_THRESHOLD: 400,
+    MEMORY_CRITICAL_THRESHOLD: 500,
+    MAX_TOTAL_REQUESTS: 10000,
+    CLEANUP_INTERVAL: 60000,
+    GC_FORCE_THRESHOLD: 300
   };
 
   const DEFAULT_SETTINGS = {
@@ -36,7 +34,6 @@
     peakMemoryUsage: 0
   };
 
-  // Auto-cleanup interval
   let cleanupInterval = null;
 
   // === Storage Keys ===
@@ -44,165 +41,10 @@
     SETTINGS: 'silentstacks_settings',
     REQUESTS: 'silentstacks_requests', 
     TAGS: 'silentstacks_tags',
-    METRICS: 'silentstacks_metrics',
-    API_QUEUE: 'silentstacks_api_queue'
+    METRICS: 'silentstacks_metrics'
   };
 
-  // === Memory Management Functions ===
-  function initializeMemoryMonitoring() {
-    if (performance.memory) {
-      performanceMetrics.memoryBaseline = performance.memory.usedJSHeapSize;
-      console.log('📊 Memory baseline set:', Math.round(performanceMetrics.memoryBaseline / 1024 / 1024), 'MB');
-    }
-
-    // Start cleanup interval if auto-cleanup enabled
-    if (settings.autoCleanup) {
-      startAutoCleanup();
-    }
-
-    // Monitor memory every 30 seconds
-    setInterval(checkMemoryUsage, 30000);
-  }
-
-  function checkMemoryUsage() {
-    if (!performance.memory || !settings.memoryWarnings) return;
-
-    const currentMemory = performance.memory.usedJSHeapSize / 1024 / 1024;
-    
-    // Update peak usage
-    if (currentMemory > performanceMetrics.peakMemoryUsage) {
-      performanceMetrics.peakMemoryUsage = currentMemory;
-    }
-
-    // Warning threshold
-    if (currentMemory > PERFORMANCE_LIMITS.MEMORY_WARNING_THRESHOLD) {
-      showMemoryWarning(currentMemory);
-    }
-
-    // Critical threshold
-    if (currentMemory > PERFORMANCE_LIMITS.MEMORY_CRITICAL_THRESHOLD) {
-      handleCriticalMemoryUsage(currentMemory);
-    }
-
-    // Force garbage collection if available and threshold reached
-    if (currentMemory > PERFORMANCE_LIMITS.GC_FORCE_THRESHOLD && window.gc) {
-      console.log('🧹 Forcing garbage collection at', Math.round(currentMemory), 'MB');
-      window.gc();
-    }
-  }
-
-  function showMemoryWarning(memoryMB) {
-    if (window.SilentStacks?.modules?.UIController?.showNotification) {
-      window.SilentStacks.modules.UIController.showNotification(
-        `⚠️ High memory usage: ${Math.round(memoryMB)}MB. Consider refreshing page for better performance.`,
-        'warning',
-        10000
-      );
-    }
-    
-    console.warn('⚠️ Memory warning:', Math.round(memoryMB), 'MB');
-  }
-
-  function handleCriticalMemoryUsage(memoryMB) {
-    console.error('🚨 Critical memory usage:', Math.round(memoryMB), 'MB');
-    
-    // Force immediate cleanup
-    performAggressiveCleanup();
-    
-    // Offer page refresh
-    if (confirm(
-      `🚨 Critical memory usage detected (${Math.round(memoryMB)}MB).\n\n` +
-      `Your data is automatically saved. Refresh page to improve performance?\n\n` +
-      `Click OK to refresh, Cancel to continue.`
-    )) {
-      window.location.reload();
-    }
-  }
-
-  function performMemoryCleanup() {
-    const startTime = performance.now();
-    const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
-
-    console.log('🧹 Starting memory cleanup...');
-
-    // Clear temporary DOM elements
-    document.querySelectorAll('.temp-element, .temporary, [data-temporary="true"]').forEach(el => {
-      el.remove();
-    });
-
-    // Clear search cache if available
-    if (window.SilentStacks?.modules?.SearchFilter?.clearCache) {
-      window.SilentStacks.modules.SearchFilter.clearCache();
-    }
-
-    // Rebuild search index to clear memory fragments
-    if (window.SilentStacks?.modules?.SearchFilter?.initFuse) {
-      window.SilentStacks.modules.SearchFilter.initFuse();
-    }
-
-    // Force garbage collection if available
-    if (window.gc) {
-      window.gc();
-    }
-
-    // Update metrics
-    performanceMetrics.lastCleanup = Date.now();
-    
-    const endTime = performance.now();
-    const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
-    const memoryFreed = (startMemory - endMemory) / 1024 / 1024;
-    
-    console.log('✅ Memory cleanup completed in', Math.round(endTime - startTime), 'ms');
-    if (memoryFreed > 0) {
-      console.log('💾 Memory freed:', Math.round(memoryFreed), 'MB');
-    }
-
-    saveMetrics();
-  }
-
-  function performAggressiveCleanup() {
-    console.log('🚨 Performing aggressive cleanup...');
-    
-    // Standard cleanup
-    performMemoryCleanup();
-    
-    // Clear large temporary data structures
-    if (window.tempData) {
-      window.tempData = null;
-    }
-    
-    // Clear console if possible (in dev mode)
-    if (console.clear && window.location.hostname === 'localhost') {
-      console.clear();
-    }
-    
-    // Multiple GC attempts
-    if (window.gc) {
-      for (let i = 0; i < 3; i++) {
-        setTimeout(() => window.gc(), i * 100);
-      }
-    }
-  }
-
-  function startAutoCleanup() {
-    if (cleanupInterval) return;
-    
-    cleanupInterval = setInterval(() => {
-      performMemoryCleanup();
-    }, PERFORMANCE_LIMITS.CLEANUP_INTERVAL);
-    
-    console.log('🔄 Auto-cleanup started (every', PERFORMANCE_LIMITS.CLEANUP_INTERVAL / 1000, 'seconds)');
-  }
-
-  function stopAutoCleanup() {
-    if (cleanupInterval) {
-      clearInterval(cleanupInterval);
-      cleanupInterval = null;
-      console.log('⏹️ Auto-cleanup stopped');
-    }
-  }
-
-  // === Enhanced Data Loading Functions ===
+  // === Data Loading Functions ===
   function loadSettings() {
     try {
       console.log('🔧 Loading settings...');
@@ -224,11 +66,10 @@
       const saved = localStorage.getItem(STORAGE_KEYS.REQUESTS);
       requests = saved ? JSON.parse(saved) : [];
       
-      // Validate total request limit
       if (requests.length > PERFORMANCE_LIMITS.MAX_TOTAL_REQUESTS) {
         console.warn('⚠️ Request limit exceeded, truncating to', PERFORMANCE_LIMITS.MAX_TOTAL_REQUESTS);
         requests = requests.slice(0, PERFORMANCE_LIMITS.MAX_TOTAL_REQUESTS);
-        saveRequests(); // Save truncated data
+        saveRequests();
       }
       
       console.log('✅ Requests loaded:', requests.length, 'items');
@@ -265,7 +106,7 @@
     }
   }
 
-  // === Enhanced Data Saving Functions ===
+  // === Data Saving Functions ===
   function saveSettings() {
     try {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
@@ -278,9 +119,8 @@
 
   function saveRequests() {
     try {
-      // Check total size before saving
       const dataSize = JSON.stringify(requests).length;
-      if (dataSize > 5 * 1024 * 1024) { // 5MB limit
+      if (dataSize > 5 * 1024 * 1024) {
         console.warn('⚠️ Large data size detected:', Math.round(dataSize / 1024 / 1024), 'MB');
       }
       
@@ -326,10 +166,140 @@
     }
   }
 
+  // === Memory Management Functions ===
+  function initializeMemoryMonitoring() {
+    if (performance.memory) {
+      performanceMetrics.memoryBaseline = performance.memory.usedJSHeapSize;
+      console.log('📊 Memory baseline set:', Math.round(performanceMetrics.memoryBaseline / 1024 / 1024), 'MB');
+    }
+
+    if (settings.autoCleanup) {
+      startAutoCleanup();
+    }
+
+    setInterval(checkMemoryUsage, 30000);
+  }
+
+  function checkMemoryUsage() {
+    if (!performance.memory || !settings.memoryWarnings) return;
+
+    const currentMemory = performance.memory.usedJSHeapSize / 1024 / 1024;
+    
+    if (currentMemory > performanceMetrics.peakMemoryUsage) {
+      performanceMetrics.peakMemoryUsage = currentMemory;
+    }
+
+    if (currentMemory > PERFORMANCE_LIMITS.MEMORY_WARNING_THRESHOLD) {
+      showMemoryWarning(currentMemory);
+    }
+
+    if (currentMemory > PERFORMANCE_LIMITS.MEMORY_CRITICAL_THRESHOLD) {
+      handleCriticalMemoryUsage(currentMemory);
+    }
+
+    if (currentMemory > PERFORMANCE_LIMITS.GC_FORCE_THRESHOLD && window.gc) {
+      console.log('🧹 Forcing garbage collection at', Math.round(currentMemory), 'MB');
+      window.gc();
+    }
+  }
+
+  function showMemoryWarning(memoryMB) {
+    showNotification(
+      `⚠️ High memory usage: ${Math.round(memoryMB)}MB. Consider refreshing page for better performance.`,
+      'warning',
+      10000
+    );
+    
+    console.warn('⚠️ Memory warning:', Math.round(memoryMB), 'MB');
+  }
+
+  function handleCriticalMemoryUsage(memoryMB) {
+    console.error('🚨 Critical memory usage:', Math.round(memoryMB), 'MB');
+    
+    performAggressiveCleanup();
+    
+    if (confirm(
+      `🚨 Critical memory usage detected (${Math.round(memoryMB)}MB).\n\n` +
+      `Your data is automatically saved. Refresh page to improve performance?\n\n` +
+      `Click OK to refresh, Cancel to continue.`
+    )) {
+      window.location.reload();
+    }
+  }
+
+  function performMemoryCleanup() {
+    const startTime = performance.now();
+    const startMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+
+    console.log('🧹 Starting memory cleanup...');
+
+    document.querySelectorAll('.temp-element, .temporary, [data-temporary="true"]').forEach(el => {
+      el.remove();
+    });
+
+    if (window.SilentStacks?.modules?.SearchFilter?.clearCache) {
+      window.SilentStacks.modules.SearchFilter.clearCache();
+    }
+
+    if (window.SilentStacks?.modules?.SearchFilter?.initFuse) {
+      window.SilentStacks.modules.SearchFilter.initFuse();
+    }
+
+    if (window.gc) {
+      window.gc();
+    }
+
+    performanceMetrics.lastCleanup = Date.now();
+    
+    const endTime = performance.now();
+    const endMemory = performance.memory ? performance.memory.usedJSHeapSize : 0;
+    const memoryFreed = (startMemory - endMemory) / 1024 / 1024;
+    
+    console.log('✅ Memory cleanup completed in', Math.round(endTime - startTime), 'ms');
+    if (memoryFreed > 0) {
+      console.log('💾 Memory freed:', Math.round(memoryFreed), 'MB');
+    }
+
+    saveMetrics();
+  }
+
+  function performAggressiveCleanup() {
+    console.log('🚨 Performing aggressive cleanup...');
+    
+    performMemoryCleanup();
+    
+    if (window.tempData) {
+      window.tempData = null;
+    }
+    
+    if (window.gc) {
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => window.gc(), i * 100);
+      }
+    }
+  }
+
+  function startAutoCleanup() {
+    if (cleanupInterval) return;
+    
+    cleanupInterval = setInterval(() => {
+      performMemoryCleanup();
+    }, PERFORMANCE_LIMITS.CLEANUP_INTERVAL);
+    
+    console.log('🔄 Auto-cleanup started (every', PERFORMANCE_LIMITS.CLEANUP_INTERVAL / 1000, 'seconds)');
+  }
+
+  function stopAutoCleanup() {
+    if (cleanupInterval) {
+      clearInterval(cleanupInterval);
+      cleanupInterval = null;
+      console.log('⏹️ Auto-cleanup stopped');
+    }
+  }
+
   function performStorageCleanup() {
     console.log('🧹 Performing storage cleanup...');
     
-    // Remove old fulfilled requests (older than 6 months)
     const sixMonthsAgo = Date.now() - (6 * 30 * 24 * 60 * 60 * 1000);
     const initialCount = requests.length;
     
@@ -346,7 +316,6 @@
       saveRequests();
     }
     
-    // Clear old metrics
     performanceMetrics = {
       lastCleanup: Date.now(),
       importCount: 0,
@@ -356,13 +325,12 @@
     saveMetrics();
   }
 
-  // === Enhanced Request Management ===
+  // === Request Management Functions ===
   function validateImportSize(newRequests) {
     const currentCount = requests.length;
     const newCount = Array.isArray(newRequests) ? newRequests.length : 1;
     const totalAfterImport = currentCount + newCount;
 
-    // Check import size limit
     if (newCount > PERFORMANCE_LIMITS.MAX_IMPORT_SIZE) {
       const proceed = confirm(
         `⚠️ Large import detected (${newCount} items).\n\n` +
@@ -375,15 +343,11 @@
         throw new Error(`Import cancelled: Size limit exceeded (${newCount} > ${PERFORMANCE_LIMITS.MAX_IMPORT_SIZE})`);
       }
 
-      // Offer to split import
-      if (newCount > PERFORMANCE_LIMITS.MAX_IMPORT_SIZE * 2) {
-        if (confirm('Would you like to split this into smaller imports for better performance?')) {
-          return splitImportData(newRequests);
-        }
+      if (newCount > PERFORMANCE_LIMITS.MAX_IMPORT_SIZE) {
+        enablePerformanceMode();
       }
     }
 
-    // Check total limit
     if (totalAfterImport > PERFORMANCE_LIMITS.MAX_TOTAL_REQUESTS) {
       throw new Error(
         `Total request limit exceeded. ` +
@@ -395,69 +359,30 @@
     return newRequests;
   }
 
-  function splitImportData(data) {
-    const chunks = [];
-    const chunkSize = PERFORMANCE_LIMITS.MAX_IMPORT_SIZE;
-    
-    for (let i = 0; i < data.length; i += chunkSize) {
-      chunks.push(data.slice(i, i + chunkSize));
-    }
-    
-    console.log('📦 Split import into', chunks.length, 'chunks of max', chunkSize, 'items');
-    return chunks;
-  }
-
   function bulkAddRequests(newRequests) {
     try {
-      // Validate size limits
       const validatedData = validateImportSize(newRequests);
+      const validRequests = validatedData.filter(req => req.title || req.pmid || req.doi);
       
-      // Handle split data
-      if (Array.isArray(validatedData[0]) && Array.isArray(validatedData)) {
-        // Data was split into chunks
-        let totalAdded = 0;
-        
-        validatedData.forEach((chunk, index) => {
-          console.log(`📦 Processing chunk ${index + 1}/${validatedData.length} (${chunk.length} items)`);
-          
-          const validChunk = chunk.filter(req => req.title || req.pmid || req.doi);
-          requests.push(...validChunk);
-          totalAdded += validChunk.length;
-          
-          // Cleanup after each chunk
-          if (index < validatedData.length - 1) {
-            performMemoryCleanup();
-          }
-        });
-        
-        saveRequests();
-        performanceMetrics.importCount += totalAdded;
-        saveMetrics();
-        
-        return totalAdded;
-      } else {
-        // Normal single import
-        const validRequests = validatedData.filter(req => req.title || req.pmid || req.doi);
-        requests.push(...validRequests);
-        saveRequests();
-        
-        performanceMetrics.importCount += validRequests.length;
-        saveMetrics();
-        
-        // Cleanup after large imports
-        if (validRequests.length > 100) {
-          setTimeout(performMemoryCleanup, 1000);
-        }
-        
-        return validRequests.length;
+      requests.unshift(...validRequests);
+      saveRequests();
+      
+      performanceMetrics.importCount += validRequests.length;
+      saveMetrics();
+      
+      if (validRequests.length > 100) {
+        setTimeout(performMemoryCleanup, 1000);
       }
+      
+      console.log('✅ Bulk added', validRequests.length, 'requests');
+      return validRequests.length;
+      
     } catch (error) {
       console.error('Bulk add requests failed:', error);
       throw error;
     }
   }
 
-  // === Enhanced Validation ===
   function validateRequest(request) {
     const errors = [];
     
@@ -484,7 +409,6 @@
       }
     }
     
-    // Enhanced year validation - FIXED
     if (request.year) {
       const yearNum = parseInt(request.year);
       const currentYear = new Date().getFullYear();
@@ -496,14 +420,13 @@
     return errors;
   }
 
-  // === Performance Analytics ===
   function getPerformanceStats() {
     const currentMemory = performance.memory ? 
       Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) : 0;
     
     return {
       currentMemory,
-      peakMemory: Math.round(performanceMetrics.peakMemoryUsage),
+      peakMemory: Math.round(performanceMetrics.peakMemoryUsage / 1024 / 1024),
       baseline: Math.round(performanceMetrics.memoryBaseline / 1024 / 1024),
       totalRequests: requests.length,
       totalImports: performanceMetrics.importCount,
@@ -517,24 +440,42 @@
     settings.performanceMode = true;
     saveSettings();
     
-    // Disable animations
     document.documentElement.classList.add('performance-mode');
     
-    // Increase cleanup frequency
+    const style = document.createElement('style');
+    style.id = 'performance-mode-styles';
+    style.textContent = `
+      .performance-mode * {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+      }
+      
+      .performance-mode .request-card {
+        padding: 12px !important;
+        margin-bottom: 8px !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+      }
+      
+      .performance-mode .request-tags,
+      .performance-mode .request-notes {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
     if (cleanupInterval) {
       clearInterval(cleanupInterval);
-      cleanupInterval = setInterval(performMemoryCleanup, 30000); // Every 30 seconds
+      cleanupInterval = setInterval(performMemoryCleanup, 30000);
     }
     
     console.log('🚀 Performance mode enabled');
     
-    if (window.SilentStacks?.modules?.UIController?.showNotification) {
-      window.SilentStacks.modules.UIController.showNotification(
-        'Performance mode enabled. Animations disabled for better performance.',
-        'info',
-        5000
-      );
-    }
+    showNotification(
+      'Performance mode enabled. Animations disabled for better performance.',
+      'info',
+      5000
+    );
   }
 
   function disablePerformanceMode() {
@@ -543,7 +484,11 @@
     
     document.documentElement.classList.remove('performance-mode');
     
-    // Restore normal cleanup frequency
+    const performanceStyles = document.getElementById('performance-mode-styles');
+    if (performanceStyles) {
+      performanceStyles.remove();
+    }
+    
     if (cleanupInterval) {
       clearInterval(cleanupInterval);
       if (settings.autoCleanup) {
@@ -554,7 +499,7 @@
     console.log('🎨 Performance mode disabled');
   }
 
-  // === Original Functions (Enhanced) ===
+  // === Standard CRUD Functions ===
   function getSettings() {
     return { ...settings };
   }
@@ -563,7 +508,6 @@
     const oldSettings = { ...settings };
     settings = { ...settings, ...newSettings };
     
-    // Handle performance mode changes
     if (newSettings.performanceMode !== undefined) {
       if (newSettings.performanceMode && !oldSettings.performanceMode) {
         enablePerformanceMode();
@@ -572,7 +516,6 @@
       }
     }
     
-    // Handle auto-cleanup changes
     if (newSettings.autoCleanup !== undefined) {
       if (newSettings.autoCleanup && !oldSettings.autoCleanup) {
         startAutoCleanup();
@@ -629,7 +572,6 @@
       const deleted = requests.splice(index, 1)[0];
       saveRequests();
       
-      // Cleanup after deletions
       if (requests.length % 100 === 0) {
         setTimeout(performMemoryCleanup, 500);
       }
@@ -651,7 +593,6 @@
     
     saveRequests();
     
-    // Cleanup after bulk deletions
     if (deletedRequests.length > 10) {
       setTimeout(performMemoryCleanup, 500);
     }
@@ -725,14 +666,12 @@
 
   function clearAllData() {
     try {
-      // Stop cleanup first
       stopAutoCleanup();
       
       Object.values(STORAGE_KEYS).forEach(key => {
         localStorage.removeItem(key);
       });
       
-      // Reset in-memory data
       settings = { ...DEFAULT_SETTINGS };
       requests = [];
       globalTags = new Map();
@@ -745,7 +684,6 @@
       
       console.log('✅ All data cleared');
       
-      // Restart monitoring
       initializeMemoryMonitoring();
       
       return true;
@@ -755,22 +693,57 @@
     }
   }
 
-  console.log('✅ All FIXED DataManager functions defined');
+  // === Utility Functions ===
+  function showNotification(message, type = 'info', duration = 5000) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      padding: 15px 20px;
+      background: ${getNotificationColor(type)};
+      color: white;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      max-width: 350px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => notification.remove(), 300);
+    }, duration);
+  }
+
+  function getNotificationColor(type) {
+    const colors = {
+      success: '#28a745',
+      error: '#dc3545',
+      warning: '#ffc107',
+      info: '#17a2b8'
+    };
+    return colors[type] || colors.info;
+  }
 
   // === Enhanced Module Interface ===
-  const DataManager = {
-    // Initialization
+  const EnhancedDataManager = {
     initialize() {
-      console.log('🔧 Initializing FIXED DataManager v1.2.1...');
+      console.log('🔧 Initializing Enhanced DataManager...');
       try {
         loadSettings();
         loadRequests();
         loadGlobalTags();
         loadMetrics();
         initializeMemoryMonitoring();
-        console.log('✅ FIXED DataManager initialized successfully');
+        console.log('✅ Enhanced DataManager initialized successfully');
       } catch (error) {
-        console.error('❌ FIXED DataManager initialization failed:', error);
+        console.error('❌ Enhanced DataManager initialization failed:', error);
         throw error;
       }
     },
@@ -796,7 +769,7 @@
     // Statistics
     getStats,
 
-    // Performance management - NEW
+    // Performance management
     getPerformanceStats,
     performMemoryCleanup,
     performAggressiveCleanup,
@@ -813,35 +786,23 @@
     },
     getStorageUsage,
     clearAllData,
+    performStorageCleanup,
 
     // Constants
     STORAGE_KEYS,
     PERFORMANCE_LIMITS
   };
 
-  console.log('✅ FIXED DataManager interface created');
-
-  // === Enhanced Registration ===
-  try {
-    if (!window.SilentStacks) {
-      window.SilentStacks = { modules: {} };
-    }
-    if (!window.SilentStacks.modules) {
-      window.SilentStacks.modules = {};
-    }
-
-    if (window.SilentStacks.registerModule && typeof window.SilentStacks.registerModule === 'function') {
-      window.SilentStacks.registerModule('DataManager', DataManager);
-      console.log('✅ FIXED DataManager registered via registerModule');
-    } else {
-      window.SilentStacks.modules.DataManager = DataManager;
-      console.log('✅ FIXED DataManager registered directly');
-    }
-
-    console.log('🎉 FIXED DataManager registration SUCCESSFUL!');
-
-  } catch (registrationError) {
-    console.error('❌ FIXED DataManager registration failed:', registrationError);
+  // Auto-initialize
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      EnhancedDataManager.initialize();
+    });
+  } else {
+    EnhancedDataManager.initialize();
   }
+
+  // Export for global access
+  window.EnhancedDataManager = EnhancedDataManager;
 
 })();
