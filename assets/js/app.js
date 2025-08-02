@@ -2,12 +2,14 @@
 // Coordinates all modules and handles initialization
 (() => {
   'use strict';
-
   // === Application State ===
+  // Preserve existing modules (like DataManager) during initialization
+  const existingModules = window.SilentStacks?.modules || {};
+  
   window.SilentStacks = {
     version: '1.2.0',
     initialized: false,
-    modules: {},
+    modules: existingModules,  // ← Keep the existing modules!
     state: {
       currentEdit: null,
       selectedRequests: new Set(),
@@ -18,7 +20,6 @@
       currentSortDirection: 'desc'
     }
   };
-
   // === DOM Element Cache ===
   const elements = {
     // Form elements
