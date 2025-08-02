@@ -1,1 +1,209 @@
+/* Accessibility Utilities */
 
+/* Focus Management */
+:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Screen Reader Only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Skip Links */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--primary-color);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 1000;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* High Contrast Media Query Support */
+@media (prefers-contrast: high) {
+    :root {
+        --border-color: #000000;
+        --text-primary: #000000;
+        --bg-primary: #ffffff;
+    }
+}
+
+/* Forced Colors Mode (Windows High Contrast) */
+@media (forced-colors: active) {
+    .btn {
+        forced-color-adjust: none;
+        border: 2px solid ButtonText;
+    }
+    
+    .form-control {
+        forced-color-adjust: none;
+        border: 2px solid ButtonText;
+    }
+}
+
+/* Touch Target Sizes (WCAG AAA) */
+.btn,
+.nav-tab,
+.form-control,
+.progress-step {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Large Touch Targets for Primary Actions */
+.btn-primary,
+.lookup-btn {
+    min-height: 48px;
+    min-width: 48px;
+}
+
+/* Color Contrast Helpers */
+.text-contrast-high {
+    color: var(--text-primary) !important;
+    font-weight: var(--font-weight-semibold);
+}
+
+.bg-contrast-high {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Focus Indicators for Different Interaction Methods */
+.mouse-user *:focus {
+    outline: none;
+}
+
+.keyboard-user *:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Announcement Region for Screen Readers */
+.sr-live-region {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+[aria-live="polite"],
+[aria-live="assertive"] {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Ensure Interactive Elements are Keyboard Accessible */
+[role="button"],
+[role="tab"],
+.clickable {
+    cursor: pointer;
+}
+
+[role="button"]:focus,
+[role="tab"]:focus,
+.clickable:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Text Spacing for Readability */
+.readable-text {
+    line-height: 1.5;
+    letter-spacing: 0.12em;
+    word-spacing: 0.16em;
+}
+
+/* Color-only Information Alternatives */
+.status-indicator::before {
+    content: attr(data-status-text);
+    position: absolute;
+    left: -10000px;
+}
+
+/* Error Message Styling */
+.error-message {
+    color: var(--danger-color);
+    font-weight: var(--font-weight-semibold);
+    margin-top: var(--space-xs);
+}
+
+[aria-invalid="true"] {
+    border-color: var(--danger-color) !important;
+}
+
+[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3) !important;
+}
+
+/* Loading State Announcements */
+[aria-busy="true"]::after {
+    content: " (Loading...)";
+    position: absolute;
+    left: -10000px;
+}
+
+/* Landmark Regions */
+main {
+    outline: none;
+}
+
+main:focus {
+    outline: 2px solid transparent;
+}
+
+/* Ensure Sufficient Color Contrast for Links */
+a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+}
+
+a:hover,
+a:focus {
+    text-decoration-thickness: 3px;
+}
+
+/* High Contrast Specific Accessibility */
+[data-theme="high-contrast"] .sr-only {
+    color: #ffffff !important;
+}
+
+[data-theme="high-contrast"] .error-message {
+    color: #ff0000 !important;
+    background: #000000 !important;
+    padding: 4px 8px;
+    border: 2px solid #ff0000 !important;
+}
