@@ -1,37 +1,28 @@
-<style>
-@font-face {
-    font-family: 'Reddit Sans';
-    src: url('assets/fonts/reddit-sans/RedditSans-Regular.woff2') format('woff2'),
-         url('assets/fonts/reddit-sans/RedditSans-Regular.woff') format('woff');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
+/* SilentStacks v1.2.0 - Modular CSS Architecture */
+/* Main orchestrator file - imports all modules */
 
-@font-face {
-    font-family: 'Reddit Sans';
-    src: url('assets/fonts/reddit-sans/RedditSans-Medium.woff2') format('woff2'),
-         url('assets/fonts/reddit-sans/RedditSans-Medium.woff') format('woff');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
-}
+/* Base Styles */
+@import url('./base/reset.css');
+@import url('./base/design-tokens.css');
+@import url('./base/typography.css');
 
-@font-face {
-    font-family: 'Reddit Sans';
-    src: url('assets/fonts/reddit-sans/RedditSans-SemiBold.woff2') format('woff2'),
-         url('assets/fonts/reddit-sans/RedditSans-SemiBold.woff') format('woff');
-    font-weight: 600;
-    font-style: normal;
-    font-display: swap;
-}
+/* Layout */
+@import url('./layout/grid.css');
+@import url('./layout/navigation.css');
+@import url('./layout/responsive.css');
 
-@font-face {
-    font-family: 'Reddit Sans';
-    src: url('assets/fonts/reddit-sans/RedditSans-Bold.woff2') format('woff2'),
-         url('assets/fonts/reddit-sans/RedditSans-Bold.woff') format('woff');
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-</style>
+/* Components */
+@import url('./components/buttons.css');
+@import url('./components/forms.css');
+@import url('./components/cards.css');
+@import url('./components/progress.css');
+@import url('./components/tables.css');
+
+/* Themes */
+@import url('./themes/light-theme.css');
+@import url('./themes/dark-theme.css');
+@import url('./themes/high-contrast-theme.css');
+
+/* Utilities */
+@import url('./utilities/accessibility.css');
+@import url('./utilities/print.css');
