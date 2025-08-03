@@ -20,7 +20,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js')
           .then(registration => console.log('SW registered:', registration))
           .catch(error => console.log('SW registration failed:', error));
       });
@@ -34,6 +34,623 @@
       document.documentElement.classList.remove('font-loading');
       document.documentElement.classList.add('font-loaded');
     });
+  </script>
+  <script>
+    // Complete Performance Management Functions
+// Add this complete JavaScript section to your HTML before </body>
+
+function updatePerformanceStats() {
+  if (!window.EnhancedDataManager) {
+    console.warn('EnhancedDataManager not available for performance stats');
+    return;
+  }
+  
+  try {
+    const stats = EnhancedDataManager.getPerformanceStats();
+    const storageUsage = EnhancedDataManager.getStorageUsage();
+    
+    // Update display elements
+    const elements = {
+      'memory-usage': stats.currentMemory + ' MB',
+      'total-requests': stats.totalRequests,
+      'peak-memory': stats.peakMemory + ' MB',
+      'storage-used': calculateTotalStorageSize(storageUsage)
+    };
+    
+    Object.entries(elements).forEach(([id, value]) => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = value;
+      }
+    });
+    
+    // Update storage breakdown
+    updateStorageBreakdown(storageUsage);
+    
+    // Update performance mode checkbox
+    const perfModeCheckbox = document.getElementById('performance-mode');
+    if (perfModeCheckbox) {
+      perfModeCheckbox.checked = stats.performanceMode;
+    }
+    
+    // Update auto-cleanup checkbox
+    const autoCleanupCheckbox = document.getElementById('auto-cleanup');
+    if (autoCleanupCheckbox) {
+      autoCleanupCheckbox.checked = stats.autoCleanup;
+    }
+    
+    console.log('📊 Performance stats updated:', stats);
+    
+  } catch (error) {
+    console.error('Failed to update performance stats:', error);
+  }
+}
+
+function calculateTotalStorageSize(usage) {
+  if (!usage || typeof usage !== 'object') {
+    return '0 B';
+  }
+  
+  const totalBytes = Object.values(usage).reduce((sum, item) => {
+    return sum + (item && item.size ? item.size : 0);
+  }, 0);
+  
+  if (totalBytes < 1024) return totalBytes + ' B';
+  if (totalBytes < 1024 * 1024) return Math.round(totalBytes / 1024) + ' KB';
+  return Math.round(totalBytes / (1024 * 1024)) + ' MB';
+}
+
+function updateStorageBreakdown(usage) {
+  const breakdown = document.getElementById('storage-breakdown');
+  if (!breakdown) return;
+  
+  if (!usage || typeof usage !== 'object') {
+    breakdown.innerHTML = '<div class="storage-item">No storage data available</div>';
+    return;
+  }
+  
+  const html = Object.entries(usage).map(([key, data]) => {
+    if (!data || typeof data !== 'object') {
+      return `
+        <div class="storage-item">
+          <span class="storage-label">${key}:</span>
+          <span class="storage-size">0 B</span>
+          <span class="storage-items">(0 items)</span>
+        </div>
+      `;
+    }
+    
+    const size = data.size < 1024 ? data.size + ' B' : 
+                 data.size < 1024 * 1024 ? Math.round(data.size / 1024) + ' KB' :
+                 Math.round(data.size / (1024 * 1024)) + ' MB';
+    
+    return `
+      <div class="storage-item">
+        <span class="storage-label">${key}:</span>
+        <span class="storage-size">${size}</span>
+        <span class="storage-items">(${data.items || 0} items)</span>
+      </div>
+    `;
+  }).join('');
+  
+  breakdown.innerHTML = html || '<div class="storage-item">No storage data available</div>';
+}
+
+function setupEnhancedImportExport() {
+  console.log('🔧 Setting up enhanced import/export...');
+  
+  // Enhanced import with progress tracking
+  const importBtn = document.getElementById('import-data');
+  if (importBtn) {
+    importBtn.addEventListener('click', async function() {
+      const fileInput = document.getElementById('import-file');
+      if (!fileInput) {
+        console.error('Import file input not found');
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Please select a file to import.');
+        return;
+      }
+      
+      showImportProgress(true);
+      
+      try {
+        await processImportWithProgress(file);
+        // Refresh stats after import
+        setTimeout(updatePerformanceStats, 1000);
+      } catch (error) {
+        console.error('Import failed:', error);
+        showImportStatus('Import failed: ' + error.message, 'error');
+      } finally {
+        showImportProgress(false);
+      }
+    });
+    console.log('✅ Import button listener added');
+  } else {
+    console.warn('Import button not found');
+  }
+  
+  // Enhanced export with options
+  const exportBtn = document.getElementById('export-data');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      const format = document.getElementById('export-format')?.value || 'json';
+      const statusFilter = document.getElementById('export-status-filter')?.value || 'all';
+      const dateStart = document.getElementById('export-date-start')?.value || '';
+      const dateEnd = document.getElementById('export-date-end')?.value || '';
+      
+      exportDataWithOptions(format, { statusFilter, dateStart, dateEnd });
+    });
+    console.log('✅ Export button listener added');
+  } else {
+    console.warn('Export button not found');
+  }
+  
+  // Quick action buttons
+  const backupBtn = document.getElementById('backup-all');
+  if (backupBtn) {
+    backupBtn.addEventListener('click', () => {
+      exportDataWithOptions('json', {});
+    });
+  }
+  
+  const exportPendingBtn = document.getElementById('export-pending');
+  if (exportPendingBtn) {
+    exportPendingBtn.addEventListener('click', () => {
+      exportDataWithOptions('xlsx', { statusFilter: 'pending' });
+    });
+  }
+  
+  const archiveBtn = document.getElementById('archive-fulfilled');
+  if (archiveBtn) {
+    archiveBtn.addEventListener('click', () => {
+      exportDataWithOptions('json', { statusFilter: 'fulfilled' });
+    });
+  }
+}
+
+function setupPerformanceManagement() {
+  console.log('🔧 Setting up performance management...');
+  
+  // Performance mode toggle
+  const perfModeCheckbox = document.getElementById('performance-mode');
+  if (perfModeCheckbox) {
+    perfModeCheckbox.addEventListener('change', function(e) {
+      if (window.EnhancedDataManager) {
+        EnhancedDataManager.updateSettings({
+          performanceMode: e.target.checked
+        });
+        console.log('Performance mode:', e.target.checked ? 'enabled' : 'disabled');
+      }
+    });
+    console.log('✅ Performance mode toggle added');
+  } else {
+    console.warn('Performance mode checkbox not found');
+  }
+  
+  // Auto-cleanup toggle
+  const autoCleanupCheckbox = document.getElementById('auto-cleanup');
+  if (autoCleanupCheckbox) {
+    autoCleanupCheckbox.addEventListener('change', function(e) {
+      if (window.EnhancedDataManager) {
+        EnhancedDataManager.updateSettings({
+          autoCleanup: e.target.checked
+        });
+        console.log('Auto cleanup:', e.target.checked ? 'enabled' : 'disabled');
+      }
+    });
+    console.log('✅ Auto cleanup toggle added');
+  } else {
+    console.warn('Auto cleanup checkbox not found');
+  }
+  
+  // Memory warnings toggle
+  const memoryWarningsCheckbox = document.getElementById('memory-warnings');
+  if (memoryWarningsCheckbox) {
+    memoryWarningsCheckbox.addEventListener('change', function(e) {
+      if (window.EnhancedDataManager) {
+        EnhancedDataManager.updateSettings({
+          memoryWarnings: e.target.checked
+        });
+        console.log('Memory warnings:', e.target.checked ? 'enabled' : 'disabled');
+      }
+    });
+    console.log('✅ Memory warnings toggle added');
+  } else {
+    console.warn('Memory warnings checkbox not found');
+  }
+  
+  // Manual cleanup button
+  const cleanupBtn = document.getElementById('cleanup-memory');
+  if (cleanupBtn) {
+    cleanupBtn.addEventListener('click', function() {
+      if (window.EnhancedDataManager) {
+        console.log('🧹 Manual memory cleanup triggered');
+        EnhancedDataManager.performMemoryCleanup();
+        setTimeout(updatePerformanceStats, 1000);
+        
+        // Show user feedback
+        const originalText = cleanupBtn.textContent;
+        cleanupBtn.textContent = 'Cleaning...';
+        cleanupBtn.disabled = true;
+        
+        setTimeout(() => {
+          cleanupBtn.textContent = originalText;
+          cleanupBtn.disabled = false;
+        }, 2000);
+      }
+    });
+    console.log('✅ Manual cleanup button added');
+  } else {
+    console.warn('Manual cleanup button not found');
+  }
+  
+  // Refresh stats button
+  const refreshBtn = document.getElementById('refresh-stats');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function() {
+      console.log('🔄 Manual stats refresh triggered');
+      updatePerformanceStats();
+      
+      // Show user feedback
+      const originalText = refreshBtn.textContent;
+      refreshBtn.textContent = 'Refreshing...';
+      refreshBtn.disabled = true;
+      
+      setTimeout(() => {
+        refreshBtn.textContent = originalText;
+        refreshBtn.disabled = false;
+      }, 1000);
+    });
+    console.log('✅ Refresh stats button added');
+  } else {
+    console.warn('Refresh stats button not found');
+  }
+  
+  // Clean old data button
+  const cleanupOldBtn = document.getElementById('cleanup-old-data');
+  if (cleanupOldBtn) {
+    cleanupOldBtn.addEventListener('click', function() {
+      if (confirm('This will remove old fulfilled requests (older than 6 months). Continue?')) {
+        if (window.EnhancedDataManager) {
+          console.log('🗑️ Cleaning old data...');
+          EnhancedDataManager.performStorageCleanup();
+          setTimeout(updatePerformanceStats, 1000);
+          
+          // Show success message
+          alert('Old data cleanup completed!');
+        }
+      }
+    });
+    console.log('✅ Cleanup old data button added');
+  } else {
+    console.warn('Cleanup old data button not found');
+  }
+  
+  // Clear all data button (dangerous action)
+  const clearAllBtn = document.getElementById('clear-all-data');
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', function() {
+      const warning = '⚠️ WARNING: This will delete ALL your data permanently!\n\n' +
+                     'This action cannot be undone. Make sure you have exported your data first.\n\n' +
+                     'Type "DELETE" to confirm:';
+      
+      if (confirm(warning)) {
+        const confirmation = prompt('Type "DELETE" to confirm data deletion:');
+        if (confirmation === 'DELETE') {
+          if (window.EnhancedDataManager) {
+            console.log('💥 Clearing all data...');
+            EnhancedDataManager.clearAllData();
+            setTimeout(() => {
+              alert('All data has been cleared. The page will reload.');
+              window.location.reload();
+            }, 1000);
+          }
+        } else {
+          alert('Data deletion cancelled.');
+        }
+      }
+    });
+    console.log('✅ Clear all data button added');
+  } else {
+    console.warn('Clear all data button not found');
+  }
+}
+
+// Progress tracking functions
+function showImportProgress(show) {
+  const progressContainer = document.getElementById('import-progress');
+  if (progressContainer) {
+    progressContainer.style.display = show ? 'block' : 'none';
+    if (show) {
+      updateImportProgress(0, 'Starting import...');
+    }
+  }
+}
+
+function updateImportProgress(percent, text) {
+  const progressBar = document.getElementById('import-progress-bar');
+  const progressText = document.getElementById('import-progress-text');
+  
+  if (progressBar) {
+    progressBar.style.width = Math.min(100, Math.max(0, percent)) + '%';
+  }
+  if (progressText) {
+    progressText.textContent = text || 'Processing...';
+  }
+}
+
+function showImportStatus(message, type) {
+  const statusElement = document.getElementById('import-status');
+  if (statusElement) {
+    statusElement.textContent = message;
+    statusElement.className = `import-status ${type}`;
+    statusElement.style.display = 'block';
+    
+    // Auto-hide success messages
+    if (type === 'success') {
+      setTimeout(() => {
+        statusElement.style.display = 'none';
+      }, 5000);
+    }
+  }
+  
+  // Also log to console
+  console.log(`Import ${type}:`, message);
+}
+
+async function processImportWithProgress(file) {
+  updateImportProgress(10, 'Reading file...');
+  
+  const fileContent = await readFileContent(file);
+  updateImportProgress(30, 'Parsing data...');
+  
+  let data;
+  try {
+    if (file.name.endsWith('.json')) {
+      data = JSON.parse(fileContent);
+      // Handle both array and object formats
+      if (data.requests && Array.isArray(data.requests)) {
+        data = data.requests;
+      } else if (!Array.isArray(data)) {
+        throw new Error('JSON file must contain an array of requests');
+      }
+    } else if (file.name.endsWith('.csv')) {
+      const parsed = Papa.parse(fileContent, { 
+        header: true, 
+        dynamicTyping: true,
+        skipEmptyLines: true 
+      });
+      data = parsed.data;
+      
+      if (parsed.errors && parsed.errors.length > 0) {
+        console.warn('CSV parsing warnings:', parsed.errors);
+      }
+    } else {
+      throw new Error('Unsupported file format. Please use JSON or CSV.');
+    }
+  } catch (parseError) {
+    throw new Error(`Failed to parse file: ${parseError.message}`);
+  }
+  
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error('No valid data found in file');
+  }
+  
+  updateImportProgress(50, 'Validating entries...');
+  
+  // Validate and clean data
+  const validData = data.filter(item => {
+    return item && (item.title || item.pmid || item.doi);
+  });
+  
+  if (validData.length === 0) {
+    throw new Error('No valid requests found in file');
+  }
+  
+  if (validData.length !== data.length) {
+    console.warn(`Filtered ${data.length - validData.length} invalid entries`);
+  }
+  
+  // Process in chunks for large imports
+  const chunkSize = 100;
+  const chunks = chunkArray(validData, chunkSize);
+  
+  let totalProcessed = 0;
+  
+  for (let i = 0; i < chunks.length; i++) {
+    const chunkProgress = 50 + (i / chunks.length) * 40;
+    updateImportProgress(
+      chunkProgress, 
+      `Processing chunk ${i + 1} of ${chunks.length}... (${totalProcessed}/${validData.length} items)`
+    );
+    
+    try {
+      if (window.EnhancedDataManager) {
+        await EnhancedDataManager.bulkAddRequests(chunks[i]);
+        totalProcessed += chunks[i].length;
+      } else {
+        throw new Error('EnhancedDataManager not available');
+      }
+    } catch (chunkError) {
+      console.error(`Failed to process chunk ${i + 1}:`, chunkError);
+      throw new Error(`Failed to import chunk ${i + 1}: ${chunkError.message}`);
+    }
+    
+    // Small delay to prevent UI blocking
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  
+  updateImportProgress(100, 'Import completed!');
+  showImportStatus(
+    `Successfully imported ${totalProcessed} requests${validData.length !== data.length ? ` (${data.length - validData.length} invalid entries skipped)` : ''}`, 
+    'success'
+  );
+}
+
+function readFileContent(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
+}
+
+function chunkArray(array, chunkSize) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+function exportDataWithOptions(format, options = {}) {
+  console.log('📤 Exporting data:', format, options);
+  
+  try {
+    // Try to use existing export functionality first
+    if (window.SilentStacks?.modules?.BulkOperations?.exportRequests) {
+      window.SilentStacks.modules.BulkOperations.exportRequests(format);
+      return;
+    }
+    
+    // Fallback to enhanced data manager export
+    if (window.EnhancedDataManager) {
+      const requests = EnhancedDataManager.getRequests();
+      let filteredRequests = requests;
+      
+      // Apply status filter
+      if (options.statusFilter && options.statusFilter !== 'all') {
+        filteredRequests = filteredRequests.filter(req => req.status === options.statusFilter);
+      }
+      
+      // Apply date filters
+      if (options.dateStart) {
+        const startDate = new Date(options.dateStart);
+        filteredRequests = filteredRequests.filter(req => {
+          const reqDate = new Date(req.createdAt || req.dateCreated || Date.now());
+          return reqDate >= startDate;
+        });
+      }
+      
+      if (options.dateEnd) {
+        const endDate = new Date(options.dateEnd);
+        filteredRequests = filteredRequests.filter(req => {
+          const reqDate = new Date(req.createdAt || req.dateCreated || Date.now());
+          return reqDate <= endDate;
+        });
+      }
+      
+      // Export filtered data
+      basicExport(filteredRequests, format);
+    } else {
+      throw new Error('No export functionality available');
+    }
+  } catch (error) {
+    console.error('Export failed:', error);
+    alert(`Export failed: ${error.message}`);
+  }
+}
+
+function basicExport(data, format) {
+  const timestamp = new Date().toISOString().split('T')[0];
+  const filename = `silentstacks-export-${timestamp}`;
+  
+  let content, mimeType, extension;
+  
+  switch (format) {
+    case 'json':
+      content = JSON.stringify(data, null, 2);
+      mimeType = 'application/json';
+      extension = 'json';
+      break;
+      
+    case 'csv':
+      if (data.length === 0) {
+        content = 'No data to export';
+      } else {
+        const headers = Object.keys(data[0]).join(',');
+        const rows = data.map(item => 
+          Object.values(item).map(val => 
+            typeof val === 'string' && val.includes(',') ? `"${val}"` : val
+          ).join(',')
+        );
+        content = [headers, ...rows].join('\n');
+      }
+      mimeType = 'text/csv';
+      extension = 'csv';
+      break;
+      
+    default:
+      throw new Error(`Unsupported export format: ${format}`);
+  }
+  
+  // Create and download file
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.${extension}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  URL.revokeObjectURL(url);
+  
+  console.log(`✅ Exported ${data.length} items as ${format}`);
+  alert(`Successfully exported ${data.length} items as ${format.toUpperCase()}`);
+}
+
+// Initialization function
+function initializePerformanceFeatures() {
+  console.log('🚀 Initializing performance features...');
+  
+  // Wait for enhanced data manager to be available
+  function waitForDataManager() {
+    if (window.EnhancedDataManager) {
+      console.log('✅ EnhancedDataManager found');
+      
+      // Initial stats update
+      updatePerformanceStats();
+      
+      // Set up periodic updates
+      setInterval(updatePerformanceStats, 30000);
+      
+      // Set up event listeners
+      setupEnhancedImportExport();
+      setupPerformanceManagement();
+      
+      console.log('✅ Performance features initialized');
+    } else {
+      console.log('⏳ Waiting for EnhancedDataManager...');
+      setTimeout(waitForDataManager, 500);
+    }
+  }
+  
+  waitForDataManager();
+}
+
+// Auto-initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializePerformanceFeatures);
+} else {
+  initializePerformanceFeatures();
+}
+
+// Manual initialization function for external calls
+function initPerformanceFeatures() {
+  initializePerformanceFeatures();
+}
+
+// Call initialization
+    console.log('🚀 Starting Performance Features...');
+initPerformanceFeatures();
+    
   </script>
 </head>
 <body>
@@ -601,7 +1218,7 @@
    <script src="assets/js/offline-manager.js"></script> 
     
   <!-- Load Modules in Dependency Order -->
-<script src="assets/js/modules/data-manager.js"></script>
+<!--<script src="assets/js/modules/data-manager.js"></script>-->
 <script src="assets/js/modules/theme-manager.js"></script>
 <script src="assets/js/modules/api-integration.js"></script>
 <script src="assets/js/modules/ui-controller.js"></script>
@@ -631,7 +1248,7 @@ waitForModules();
 <script src="assets/js/papaparse.min.js"></script>
 
 <!-- SilentStacks Modules (Load in dependency order) -->
-<script src="assets/js/data-manager.js"></script>
+<script src="assets/js/enhanced-data-manager.js"></script>
 <script src="assets/js/offline-manager.js"></script>
 <script src="assets/js/integrated-documentation.js"></script>
 
@@ -683,5 +1300,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // [Include all the JavaScript functions from the artifact here]
 </script>
+  
 </body>
 </html>
