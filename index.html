@@ -1357,6 +1357,13 @@ window.addEventListener('load', function() {
   if (window.EnhancedDataManager && window.SilentStacks && !window.SilentStacks.modules.DataManager) {
     console.log('🔧 Creating late DataManager bridge...');
     createDataManagerBridge();
+  initialize: () => {
+    console.log('✅ DataManager initialized (bridge)');
+    return Promise.resolve();
+  },
+  
+  _isEnhanced: true
+};
   }
 });
 </script>
