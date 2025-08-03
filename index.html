@@ -1251,7 +1251,95 @@ waitForModules();
 <script src="assets/js/enhanced-data-manager.js"></script>
 <script src="assets/js/offline-manager.js"></script>
 <script src="assets/js/integrated-documentation.js"></script>
+<script>
+  // Add this bridge code to your HTML after loading enhanced-data-manager.js
+// This connects EnhancedDataManager to your existing app structure
 
+(function() {
+  'use strict';
+  
+  // Wait for both EnhancedDataManager and SilentStacks to be available
+  function createDataManagerBridge() {
+    if (!window.EnhancedDataManager) {
+      console.log('⏳ Waiting for EnhancedDataManager...');
+      setTimeout(createDataManagerBridge, 100);
+      return;
+    }
+    
+    if (!window.SilentStacks) {
+      window.SilentStacks = { modules: {} };
+    }
+    
+    if (!window.SilentStacks.modules) {
+      window.SilentStacks.modules = {};
+    }
+    
+    // Create the bridge object that your existing app expects
+    window.SilentStacks.modules.DataManager = {
+      // Core data methods that existing modules expect
+      getSettings: () => window.EnhancedDataManager.getSettings(),
+      updateSettings: (settings) => window.EnhancedDataManager.updateSettings(settings),
+      
+      getRequests: () => window.EnhancedDataManager.getRequests(),
+      addRequest: (request) => window.EnhancedDataManager.addRequest(request),
+      updateRequest: (index, request) => window.EnhancedDataManager.updateRequest(index, request),
+      deleteRequest: (index) => window.EnhancedDataManager.deleteRequest(index),
+      deleteMultipleRequests: (indices) => window.EnhancedDataManager.deleteMultipleRequests(indices),
+      
+      getGlobalTags: () => window.EnhancedDataManager.getGlobalTags(),
+      setTagColor: (tag, color) => window.EnhancedDataManager.setTagColor(tag, color),
+      addTagsFromRequest: (tags) => window.EnhancedDataManager.addTagsFromRequest(tags),
+      
+      getStats: () => window.EnhancedDataManager.getStats(),
+      
+      // Legacy methods that might be expected
+      saveRequests: () => window.EnhancedDataManager.saveAll(),
+      loadRequests: () => console.log('Data already loaded by EnhancedDataManager'),
+      
+      // Enhanced methods (available but not required by legacy modules)
+      bulkAddRequests: (requests) => window.EnhancedDataManager.bulkAddRequests(requests),
+      validateRequest: (request) => window.EnhancedDataManager.validateRequest(request),
+      getPerformanceStats: () => window.EnhancedDataManager.getPerformanceStats(),
+      performMemoryCleanup: () => window.EnhancedDataManager.performMemoryCleanup(),
+      getStorageUsage: () => window.EnhancedDataManager.getStorageUsage(),
+      clearAllData: () => window.EnhancedDataManager.clearAllData(),
+      
+      // Compatibility flags
+      _isEnhanced: true,
+      _version: '1.2.0'
+    };
+    
+    console.log('🌉 DataManager bridge created successfully');
+    console.log('✅ SilentStacks.modules.DataManager is now available');
+    
+    // Dispatch event to let the app know DataManager is ready
+    const event = new CustomEvent('dataManagerReady', {
+      detail: { 
+        enhanced: true,
+        version: '1.2.0',
+        module: window.SilentStacks.modules.DataManager
+      }
+    });
+    document.dispatchEvent(event);
+  }
+  
+  // Start the bridge creation process
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createDataManagerBridge);
+  } else {
+    createDataManagerBridge();
+  }
+})();
+
+// Also create compatibility for direct EnhancedDataManager access
+window.addEventListener('load', function() {
+  // Ensure the bridge exists even if timing is different
+  if (window.EnhancedDataManager && window.SilentStacks && !window.SilentStacks.modules.DataManager) {
+    console.log('🔧 Creating late DataManager bridge...');
+    createDataManagerBridge();
+  }
+});
+</script>
 <!-- Main Application (Load last) -->
 <script src="assets/js/app.js"></script>
 
