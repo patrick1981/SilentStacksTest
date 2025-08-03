@@ -1,21 +1,24 @@
-// SilentStacks API Integration Module
-// Handles PubMed, CrossRef API calls with offline support and rate limiting
+// SilentStacks API Integration Module v1.4
+// Enhanced with MeSH Headings and Clinical Trials.gov Integration
+// Handles PubMed, CrossRef, and Clinical Trials API calls with offline support and rate limiting
 (() => {
   'use strict';
 
   // === Rate Limiting Configuration ===
   const RATE_LIMITS = {
     PUBMED: { requests: 3, perSeconds: 1 }, // NCBI recommends 3 requests per second
-    CROSSREF: { requests: 50, perSeconds: 1 } // CrossRef is more generous
+    CROSSREF: { requests: 50, perSeconds: 1 }, // CrossRef is more generous
+    CLINICALTRIALS: { requests: 10, perSeconds: 1 } // Conservative for ClinicalTrials.gov
   };
 
   // === Rate Limiting State ===
   const rateLimiters = {
     pubmed: { queue: [], lastRequest: 0, processing: false },
-    crossref: { queue: [], lastRequest: 0, processing: false }
+    crossref: { queue: [], lastRequest: 0, processing: false },
+    clinicaltrials: { queue: [], lastRequest: 0, processing: false }
   };
 
-  // === API Functions ===
+  // === Enhanced API Functions ===
   async function fetchPubMed(pmid) {
     console.log(`🔍 Fetching PubMed data for PMID: ${pmid}`);
     
@@ -100,10 +103,13 @@
         authors: (record.authors || []).map(author => author.name).join('; '),
         journal: record.fulljournalname || record.source || '',
         year: (record.pubdate || '').split(' ')[0] || '',
-        doi: ''
+        doi: '',
+        meshHeadings: [], // NEW: MeSH headings array
+        publicationType: '', // NEW: Publication type
+        clinicalTrials: [] // NEW: Associated clinical trials
       };
       
-      // Step 2: Get DOI from EFetch XML
+      // Step 2: Get enhanced metadata from EFetch XML (DOI, MeSH, Clinical Trials)
       const fetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmid}&retmode=xml${keyParam}`;
       
       try {
@@ -113,7 +119,7 @@
           const parser = new DOMParser();
           const doc = parser.parseFromString(xmlText, 'application/xml');
           
-          // Multiple strategies to find DOI
+          // Extract DOI (existing functionality)
           let doi = '';
           
           // Strategy 1: ArticleId with IdType="doi"
@@ -134,21 +140,72 @@
             }
           }
           
-          // Strategy 3: Look in ELocationID with EIdType="doi"
+          // Strategy 3: ELocationID with EIdType="doi"
           if (!doi) {
-            const elocationNode = doc.querySelector('ELocationID[EIdType="doi"]');
-            if (elocationNode) {
-              doi = elocationNode.textContent.trim();
+            const doiNode3 = doc.querySelector('ELocationID[EIdType="doi"]');
+            if (doiNode3) {
+              doi = doiNode3.textContent.trim();
             }
           }
           
-          meta.doi = doi;
+          if (doi) {
+            meta.doi = doi;
+            console.log('✅ DOI found:', doi);
+          }
+          
+          // NEW: Extract MeSH Headings
+          const meshHeadings = [];
+          const meshNodes = doc.querySelectorAll('MeshHeading DescriptorName');
+          meshNodes.forEach(node => {
+            const meshTerm = node.textContent.trim();
+            const majorTopic = node.getAttribute('MajorTopicYN') === 'Y';
+            if (meshTerm) {
+              meshHeadings.push({
+                term: meshTerm,
+                majorTopic: majorTopic
+              });
+            }
+          });
+          
+          meta.meshHeadings = meshHeadings;
+          console.log('🏷️ MeSH headings found:', meshHeadings.length);
+          
+          // NEW: Extract Publication Type
+          const pubTypeNodes = doc.querySelectorAll('PublicationType');
+          const pubTypes = Array.from(pubTypeNodes).map(node => node.textContent.trim());
+          meta.publicationType = pubTypes.join(', ');
+          console.log('📄 Publication type:', meta.publicationType);
+          
+          // NEW: Extract Clinical Trial Numbers (NCT numbers)
+          const clinicalTrialNumbers = extractClinicalTrialNumbers(xmlText);
+          
+          if (clinicalTrialNumbers.length > 0) {
+            console.log('🧪 Clinical trial numbers found:', clinicalTrialNumbers);
+            
+            // Fetch clinical trial details for each NCT number
+            const clinicalTrialPromises = clinicalTrialNumbers.map(nctNumber => 
+              fetchClinicalTrial(nctNumber).catch(error => {
+                console.warn(`Failed to fetch clinical trial ${nctNumber}:`, error);
+                return { nctNumber, error: error.message };
+              })
+            );
+            
+            const clinicalTrialResults = await Promise.all(clinicalTrialPromises);
+            meta.clinicalTrials = clinicalTrialResults.filter(result => !result.error);
+            
+            console.log('🧪 Clinical trial details fetched:', meta.clinicalTrials.length);
+          }
+          
+        } else {
+          console.warn(`EFetch failed: ${xmlResponse.status}, continuing without enhanced metadata`);
         }
+        
       } catch (xmlError) {
-        console.warn('Failed to fetch DOI from XML, continuing without:', xmlError);
+        console.warn('XML parsing error:', xmlError);
+        // Continue with basic metadata
       }
       
-      console.log('✅ PubMed metadata retrieved:', meta);
+      console.log('✅ Enhanced PubMed metadata retrieved:', meta);
       return meta;
       
     } catch (error) {
@@ -157,17 +214,204 @@
     }
   }
 
+  // NEW: Extract Clinical Trial Numbers from PubMed XML
+  function extractClinicalTrialNumbers(xmlText) {
+    const nctNumbers = new Set(); // Use Set to avoid duplicates
+    
+    // Strategy 1: Look for NCT numbers in DataBankList
+    const databankRegex = /<DataBankName>ClinicalTrials\.gov<\/DataBankName>[\s\S]*?<AccessionNumberList>([\s\S]*?)<\/AccessionNumberList>/gi;
+    let match;
+    
+    while ((match = databankRegex.exec(xmlText)) !== null) {
+      const accessionSection = match[1];
+      const nctRegex = /<AccessionNumber>(NCT\d+)<\/AccessionNumber>/gi;
+      let nctMatch;
+      
+      while ((nctMatch = nctRegex.exec(accessionSection)) !== null) {
+        nctNumbers.add(nctMatch[1]);
+      }
+    }
+    
+    // Strategy 2: General NCT pattern search in abstract and text
+    const generalNctRegex = /NCT\d{8}/gi;
+    let generalMatch;
+    
+    while ((generalMatch = generalNctRegex.exec(xmlText)) !== null) {
+      nctNumbers.add(generalMatch[0].toUpperCase());
+    }
+    
+    return Array.from(nctNumbers);
+  }
+
+  // NEW: Fetch Clinical Trial Details from ClinicalTrials.gov API
+  async function fetchClinicalTrial(nctNumber) {
+    console.log(`🧪 Fetching clinical trial data for: ${nctNumber}`);
+    
+    // Check if offline
+    if (window.offlineManager && !window.offlineManager.isOnline) {
+      return createClinicalTrialPlaceholder(nctNumber);
+    }
+    
+    return new Promise((resolve, reject) => {
+      rateLimiters.clinicaltrials.queue.push({
+        nctNumber,
+        resolve,
+        reject,
+        timestamp: Date.now()
+      });
+      
+      processClinicalTrialsQueue();
+    });
+  }
+
+  async function processClinicalTrialsQueue() {
+    if (rateLimiters.clinicaltrials.processing || rateLimiters.clinicaltrials.queue.length === 0) {
+      return;
+    }
+    
+    rateLimiters.clinicaltrials.processing = true;
+    
+    while (rateLimiters.clinicaltrials.queue.length > 0) {
+      const now = Date.now();
+      const timeSinceLastRequest = now - rateLimiters.clinicaltrials.lastRequest;
+      const minInterval = (RATE_LIMITS.CLINICALTRIALS.perSeconds * 1000) / RATE_LIMITS.CLINICALTRIALS.requests;
+      
+      if (timeSinceLastRequest < minInterval) {
+        await new Promise(resolve => setTimeout(resolve, minInterval - timeSinceLastRequest));
+      }
+      
+      const request = rateLimiters.clinicaltrials.queue.shift();
+      rateLimiters.clinicaltrials.lastRequest = Date.now();
+      
+      try {
+        const result = await executeClinicalTrialRequest(request.nctNumber);
+        request.resolve(result);
+      } catch (error) {
+        request.reject(error);
+      }
+    }
+    
+    rateLimiters.clinicaltrials.processing = false;
+  }
+
+  async function executeClinicalTrialRequest(nctNumber) {
+    try {
+      // Use ClinicalTrials.gov API v2
+      const url = `https://clinicaltrials.gov/api/v2/studies/${nctNumber}`;
+      console.log('📡 ClinicalTrials.gov URL:', url);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'SilentStacks/1.4.0 (https://github.com/silentlibrarian/silentstacks)'
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Clinical trial not found: ${nctNumber}`);
+        }
+        throw new Error(`ClinicalTrials.gov API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const study = data.protocolSection || data;
+      
+      // Extract relevant clinical trial information
+      const trialData = {
+        nctNumber: nctNumber,
+        briefTitle: study.identificationModule?.briefTitle || '',
+        officialTitle: study.identificationModule?.officialTitle || '',
+        phase: extractPhase(study),
+        status: study.statusModule?.overallStatus || '',
+        startDate: extractStartDate(study),
+        completionDate: extractCompletionDate(study),
+        conditions: extractConditions(study),
+        interventions: extractInterventions(study),
+        sponsors: extractSponsors(study),
+        studyType: study.designModule?.studyType || ''
+      };
+      
+      console.log('✅ Clinical trial data retrieved:', trialData);
+      return trialData;
+      
+    } catch (error) {
+      console.error('❌ Clinical trial fetch error:', error);
+      throw new Error(`Clinical trial lookup failed: ${error.message}`);
+    }
+  }
+
+  // Helper functions for clinical trial data extraction
+  function extractPhase(study) {
+    return study.designModule?.phases?.join(', ') || '';
+  }
+
+  function extractStartDate(study) {
+    const startDate = study.statusModule?.startDateStruct;
+    if (startDate) {
+      return startDate.date || '';
+    }
+    return '';
+  }
+
+  function extractCompletionDate(study) {
+    const completionDate = study.statusModule?.completionDateStruct;
+    if (completionDate) {
+      return completionDate.date || '';
+    }
+    return '';
+  }
+
+  function extractConditions(study) {
+    return study.conditionsModule?.conditions || [];
+  }
+
+  function extractInterventions(study) {
+    const interventions = study.armsInterventionsModule?.interventions || [];
+    return interventions.map(intervention => ({
+      type: intervention.type || '',
+      name: intervention.name || '',
+      description: intervention.description || ''
+    }));
+  }
+
+  function extractSponsors(study) {
+    const sponsorModule = study.sponsorCollaboratorsModule;
+    if (!sponsorModule) return [];
+    
+    const sponsors = [];
+    
+    if (sponsorModule.leadSponsor) {
+      sponsors.push({
+        type: 'Lead Sponsor',
+        name: sponsorModule.leadSponsor.name || '',
+        class: sponsorModule.leadSponsor.class || ''
+      });
+    }
+    
+    if (sponsorModule.collaborators) {
+      sponsorModule.collaborators.forEach(collab => {
+        sponsors.push({
+          type: 'Collaborator',
+          name: collab.name || '',
+          class: collab.class || ''
+        });
+      });
+    }
+    
+    return sponsors;
+  }
+
+  // Existing CrossRef function (unchanged)
   async function fetchCrossRef(doi) {
     console.log(`🔍 Fetching CrossRef data for DOI: ${doi}`);
     
-    // Check if offline and queue the request
     if (window.offlineManager && !window.offlineManager.isOnline) {
       window.offlineManager.queueApiCall('doi', doi, null);
       return createOfflinePlaceholder('doi', doi);
     }
     
     return new Promise((resolve, reject) => {
-      // Add to rate-limited queue
       rateLimiters.crossref.queue.push({
         doi,
         resolve,
@@ -211,8 +455,7 @@
 
   async function executeCrossRefRequest(doi) {
     try {
-      // Normalize DOI (remove URL prefixes)
-      const cleanDoi = doi.replace(/^(https?:\/\/)?(dx\.)?doi\.org\//, '').trim();
+      const cleanDoi = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//, '').trim();
       console.log('🔧 Cleaned DOI:', cleanDoi);
       
       const url = `https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`;
@@ -221,7 +464,7 @@
       const response = await fetch(url, {
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'SilentStacks/1.2.0 (https://github.com/silentlibrarian/silentstacks)'
+          'User-Agent': 'SilentStacks/1.4.0 (https://github.com/silentlibrarian/silentstacks)'
         }
       });
       
@@ -238,7 +481,7 @@
         throw new Error('No work data in CrossRef response');
       }
       
-      // Build metadata
+      // Build metadata (enhanced for consistency with PubMed format)
       const meta = {
         doi: cleanDoi,
         title: (work.title && work.title[0]) || '',
@@ -248,7 +491,10 @@
           .join('; '),
         journal: (work['container-title'] && work['container-title'][0]) || '',
         year: (work.published && work.published['date-parts'] && work.published['date-parts'][0] && work.published['date-parts'][0][0]) || '',
-        pmid: ''
+        pmid: '',
+        meshHeadings: [], // Empty for CrossRef data
+        publicationType: work.type || '',
+        clinicalTrials: [] // Empty for CrossRef data
       };
       
       console.log('✅ CrossRef metadata retrieved:', meta);
@@ -260,7 +506,7 @@
     }
   }
 
-  // === Offline Support ===
+  // Enhanced offline placeholder creation
   function createOfflinePlaceholder(type, identifier) {
     const placeholders = {
       pmid: {
@@ -269,7 +515,10 @@
         authors: 'Authors will be retrieved when online',
         journal: 'Journal information pending',
         year: 'Year pending',
-        doi: 'DOI pending'
+        doi: 'DOI pending',
+        meshHeadings: [],
+        publicationType: 'Publication type pending',
+        clinicalTrials: []
       },
       doi: {
         doi: identifier,
@@ -277,14 +526,33 @@
         authors: 'Authors will be retrieved when online',
         journal: 'Journal information pending',
         year: 'Year pending',
-        pmid: 'PMID pending'
+        pmid: 'PMID pending',
+        meshHeadings: [],
+        publicationType: 'Publication type pending',
+        clinicalTrials: []
       }
     };
     
     return placeholders[type] || {};
   }
 
-  // === Public API Functions ===
+  function createClinicalTrialPlaceholder(nctNumber) {
+    return {
+      nctNumber: nctNumber,
+      briefTitle: `[QUEUED] Clinical trial ${nctNumber} - Will lookup when online`,
+      officialTitle: 'Official title pending',
+      phase: 'Phase pending',
+      status: 'Status pending',
+      startDate: 'Start date pending',
+      completionDate: 'Completion date pending',
+      conditions: [],
+      interventions: [],
+      sponsors: [],
+      studyType: 'Study type pending'
+    };
+  }
+
+  // Enhanced public API functions
   async function lookupPMID() {
     const pmidInput = document.getElementById('pmid');
     if (!pmidInput) return;
@@ -305,18 +573,27 @@
     try {
       const pubmedData = await fetchPubMed(pmid);
       
-      // Populate form with PubMed data
+      // Populate form with enhanced PubMed data
       if (window.SilentStacks.modules.RequestManager?.populateForm) {
         window.SilentStacks.modules.RequestManager.populateForm(pubmedData);
       }
       
-      // Success message with DOI status
+      // Enhanced success message
+      let message = 'Metadata populated successfully';
       if (pubmedData.doi && !pubmedData.doi.includes('pending')) {
-        setStatus(`Metadata populated successfully. DOI found: ${pubmedData.doi}`, 'success');
-      } else if (pubmedData.title.includes('[QUEUED]')) {
+        message += `. DOI found: ${pubmedData.doi}`;
+      }
+      if (pubmedData.meshHeadings && pubmedData.meshHeadings.length > 0) {
+        message += `. MeSH terms: ${pubmedData.meshHeadings.length}`;
+      }
+      if (pubmedData.clinicalTrials && pubmedData.clinicalTrials.length > 0) {
+        message += `. Clinical trials: ${pubmedData.clinicalTrials.length}`;
+      }
+      
+      if (pubmedData.title.includes('[QUEUED]')) {
         setStatus('Request queued for when online. Placeholder data populated.', 'loading');
       } else {
-        setStatus('Metadata populated successfully. No DOI found for this article.', 'success');
+        setStatus(message, 'success');
       }
       
       // Auto-advance progress step if available
@@ -367,7 +644,7 @@
     }
   }
 
-  // === Utility Functions ===
+  // Utility Functions
   function setStatus(message, type = '') {
     if (window.SilentStacks.modules.UIController?.setStatus) {
       window.SilentStacks.modules.UIController.setStatus(message, type);
@@ -392,37 +669,41 @@
         pending: rateLimiters.crossref.queue.length,
         processing: rateLimiters.crossref.processing,
         lastRequest: rateLimiters.crossref.lastRequest
+      },
+      clinicaltrials: {
+        pending: rateLimiters.clinicaltrials.queue.length,
+        processing: rateLimiters.clinicaltrials.processing,
+        lastRequest: rateLimiters.clinicaltrials.lastRequest
       }
     };
   }
 
   function clearQueues() {
-    rateLimiters.pubmed.queue.forEach(req => {
-      req.reject(new Error('Queue cleared'));
-    });
-    rateLimiters.crossref.queue.forEach(req => {
-      req.reject(new Error('Queue cleared'));
+    // Clear all queues and reject pending requests
+    ['pubmed', 'crossref', 'clinicaltrials'].forEach(service => {
+      rateLimiters[service].queue.forEach(req => {
+        req.reject(new Error('Queue cleared'));
+      });
+      
+      rateLimiters[service].queue = [];
+      rateLimiters[service].processing = false;
     });
     
-    rateLimiters.pubmed.queue = [];
-    rateLimiters.crossref.queue = [];
-    rateLimiters.pubmed.processing = false;
-    rateLimiters.crossref.processing = false;
-    
-    console.log('🧹 API queues cleared');
+    console.log('🧹 All API queues cleared');
   }
 
-  // === Module Interface ===
+  // Module Interface
   const APIIntegration = {
     // Initialization
     initialize() {
-      console.log('🔧 Initializing APIIntegration...');
+      console.log('🔧 Initializing Enhanced APIIntegration v1.4...');
       
       // Make API functions globally available for offline manager
       window.fetchPubMed = fetchPubMed;
       window.fetchCrossRef = fetchCrossRef;
+      window.fetchClinicalTrial = fetchClinicalTrial;
       
-      console.log('✅ APIIntegration initialized');
+      console.log('✅ Enhanced APIIntegration v1.4 initialized with MeSH and Clinical Trials support');
     },
 
     // Public API functions
@@ -432,14 +713,21 @@
     // Direct API access
     fetchPubMed,
     fetchCrossRef,
+    fetchClinicalTrial,
     
-    // Utility functions
+    // Enhanced utility functions
     getQueueStatus,
     clearQueues,
     createOfflinePlaceholder,
+    createClinicalTrialPlaceholder,
+    extractClinicalTrialNumbers,
     
     // Constants
-    RATE_LIMITS
+    RATE_LIMITS,
+    
+    // Version info
+    version: '1.4.0',
+    features: ['PubMed', 'CrossRef', 'MeSH Headings', 'Clinical Trials', 'Offline Support', 'Rate Limiting']
   };
 
   // Register module
