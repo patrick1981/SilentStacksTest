@@ -18,36 +18,13 @@
 
   <!-- Service Worker Registration -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        // Use relative path for GitHub Pages compatibility
-        const swPath = '/service-worker.js';
-        
-        navigator.serviceWorker.register(swPath)
-          .then(registration => {
-            console.log('✅ Service Worker registered successfully:', registration.scope);
-            
-            // Handle updates
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              if (newWorker) {
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('🔄 New version available! Refresh to update.');
-                    // Optionally show update notification to user
-                  }
-                });
-              }
-            });
-          })
-          .catch(error => {
-            console.warn('⚠️ Service Worker registration failed:', error);
-            // App still works without SW
-          });
-      });
-    } else {
-      console.warn('⚠️ Service Workers not supported in this browser');
-    }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('Service Worker registered'))
+      .catch(err => console.error('Service Worker registration failed:', err));
+  });
+}
   </script>
   
   <!-- Font Loading Optimization -->
