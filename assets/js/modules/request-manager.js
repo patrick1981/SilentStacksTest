@@ -1,651 +1,734 @@
-// SilentStacks Request Manager Module - v1.2.1 FIXED VERSION
-// Enhanced with proper validation, memory management, and performance monitoring
-
+// SilentStacks Request Manager Module v1.4
+// Enhanced with MeSH Headings and Clinical Trials Support
 (() => {
   'use strict';
 
-  // === Enhanced Field Mapping ===
-  const FIELD_MAPPING = {
+  // Enhanced form field mappings for v1.4
+  const FORM_FIELDS = {
+    // Basic fields
     pmid: 'pmid',
-    doi: 'doi',
+    doi: 'doi', 
     title: 'title',
     authors: 'authors',
     journal: 'journal',
     year: 'year',
-    docline: 'docline',
-    'patron-email': 'patronEmail',
+    priority: 'priority',
     status: 'status',
-    tags: 'tags',
+    patronEmail: 'patron-email',
+    docline: 'docline',
     notes: 'notes',
-    priority: 'priority'
+    
+    // NEW v1.4 fields
+    publicationType: 'publication-type',
+    meshHeadings: 'mesh-headings',
+    clinicalTrials: 'clinical-trials'
   };
 
-  // === Enhanced Form Population ===
+  let isEditing = false;
+  let editingIndex = -1;
+  let currentMeshTerms = [];
+  let currentClinicalTrials = [];
+
+  // Enhanced form population with MeSH and Clinical Trials
   function populateForm(data) {
-    Object.entries(FIELD_MAPPING).forEach(([fieldId, dataKey]) => {
+    console.log('📝 Populating form with enhanced data:', data);
+    
+    // Populate basic fields
+    Object.entries(FORM_FIELDS).forEach(([dataKey, fieldId]) => {
+      if (dataKey === 'meshHeadings' || dataKey === 'clinicalTrials') return; // Handle separately
+      
       const element = document.getElementById(fieldId);
-      if (element && data.hasOwnProperty(dataKey)) {
-        let value = data[dataKey];
-        
-        // Handle arrays (like tags)
-        if (Array.isArray(value)) {
-          value = value.join(', ');
-        }
-        
-        element.value = value || '';
-        
-        // Trigger validation for the field
-        triggerFieldValidation(element);
+      if (element && data[dataKey] !== undefined) {
+        element.value = data[dataKey] || '';
       }
     });
     
-    console.log('✅ Form populated with data');
+    // Handle MeSH headings
+    if (data.meshHeadings && Array.isArray(data.meshHeadings)) {
+      currentMeshTerms = [...data.meshHeadings];
+      renderMeshTerms();
+      console.log('🏷️ Populated MeSH terms:', currentMeshTerms.length);
+    }
+    
+    // Handle clinical trials
+    if (data.clinicalTrials && Array.isArray(data.clinicalTrials)) {
+      currentClinicalTrials = [...data.clinicalTrials];
+      renderClinicalTrials();
+      console.log('🧪 Populated clinical trials:', currentClinicalTrials.length);
+    }
+    
+    // Update publication type display
+    if (data.publicationType) {
+      const pubTypeElement = document.getElementById('publication-type');
+      if (pubTypeElement) {
+        pubTypeElement.value = data.publicationType;
+      }
+    }
   }
 
-  function extractFormData() {
+  // NEW: Render MeSH terms in the UI
+  function renderMeshTerms() {
+    const meshList = document.getElementById('mesh-list');
+    if (!meshList) return;
+    
+    const majorOnlyFilter = document.getElementById('mesh-major-only');
+    const showMajorOnly = majorOnlyFilter && majorOnlyFilter.checked;
+    
+    meshList.innerHTML = '';
+    
+    if (currentMeshTerms.length === 0) {
+      meshList.innerHTML = '<div class="mesh-empty">No MeSH terms available</div>';
+      return;
+    }
+    
+    const filteredTerms = showMajorOnly 
+      ? currentMeshTerms.filter(term => term.majorTopic)
+      : currentMeshTerms;
+    
+    filteredTerms.forEach((meshTerm, index) => {
+      const termElement = document.createElement('span');
+      termElement.className = `mesh-term ${meshTerm.majorTopic ? 'major-topic' : ''}`;
+      termElement.innerHTML = `
+        ${meshTerm.term}
+        <span class="remove-mesh" data-index="${index}" title="Remove MeSH term">×</span>
+      `;
+      meshList.appendChild(termElement);
+    });
+    
+    // Add event listeners for remove buttons
+    meshList.querySelectorAll('.remove-mesh').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        removeMeshTerm(index);
+      });
+    });
+  }
+
+  // NEW: Add custom MeSH term
+  function addCustomMeshTerm(term) {
+    if (!term || term.trim() === '') return;
+    
+    const cleanTerm = term.trim();
+    
+    // Check if term already exists
+    const exists = currentMeshTerms.some(meshTerm => 
+      meshTerm.term.toLowerCase() === cleanTerm.toLowerCase()
+    );
+    
+    if (exists) {
+      setFormStatus('MeSH term already exists', 'warning');
+      return;
+    }
+    
+    // Add new custom term (marked as not major topic)
+    currentMeshTerms.push({
+      term: cleanTerm,
+      majorTopic: false,
+      custom: true
+    });
+    
+    renderMeshTerms();
+    setFormStatus(`Added MeSH term: ${cleanTerm}`, 'success');
+  }
+
+  // NEW: Remove MeSH term
+  function removeMeshTerm(index) {
+    if (index >= 0 && index < currentMeshTerms.length) {
+      const removedTerm = currentMeshTerms.splice(index, 1)[0];
+      renderMeshTerms();
+      setFormStatus(`Removed MeSH term: ${removedTerm.term}`, 'info');
+    }
+  }
+
+  // NEW: Clear all MeSH terms
+  function clearAllMeshTerms() {
+    currentMeshTerms = [];
+    renderMeshTerms();
+    setFormStatus('All MeSH terms cleared', 'info');
+  }
+
+  // NEW: Render clinical trials in the UI
+  function renderClinicalTrials() {
+    const trialsList = document.getElementById('clinical-trials-list');
+    if (!trialsList) return;
+    
+    trialsList.innerHTML = '';
+    
+    if (currentClinicalTrials.length === 0) {
+      trialsList.innerHTML = '<div class="clinical-trials-empty">No clinical trials associated</div>';
+      return;
+    }
+    
+    currentClinicalTrials.forEach((trial, index) => {
+      const trialCard = document.createElement('div');
+      trialCard.className = 'clinical-trial-card';
+      
+      // Handle both full trial data and placeholder data
+      const isPlaceholder = trial.briefTitle && trial.briefTitle.includes('[QUEUED]');
+      
+      trialCard.innerHTML = `
+        <button class="clinical-trial-remove" data-index="${index}" title="Remove clinical trial">×</button>
+        <div class="clinical-trial-header">
+          <div class="clinical-trial-nct">${trial.nctNumber || 'Unknown NCT'}</div>
+          ${trial.phase ? `<div class="clinical-trial-phase">${trial.phase}</div>` : ''}
+        </div>
+        <div class="clinical-trial-title">${trial.briefTitle || trial.officialTitle || 'Title not available'}</div>
+        <div class="clinical-trial-status">Status: ${trial.status || 'Unknown'}</div>
+        <div class="clinical-trial-details">
+          ${trial.studyType ? `Study Type: ${trial.studyType}<br>` : ''}
+          ${trial.startDate ? `Start Date: ${trial.startDate}<br>` : ''}
+          ${trial.completionDate ? `Completion Date: ${trial.completionDate}<br>` : ''}
+          ${trial.conditions && trial.conditions.length > 0 ? `Conditions: ${trial.conditions.join(', ')}<br>` : ''}
+          ${trial.sponsors && trial.sponsors.length > 0 ? `Sponsors: ${trial.sponsors.map(s => s.name).join(', ')}` : ''}
+        </div>
+        ${isPlaceholder ? '<div class="clinical-trial-placeholder">⏳ Details will load when online</div>' : ''}
+      `;
+      
+      trialsList.appendChild(trialCard);
+    });
+    
+    // Add event listeners for remove buttons
+    trialsList.querySelectorAll('.clinical-trial-remove').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        removeClinicalTrial(index);
+      });
+    });
+  }
+
+  // NEW: Add clinical trial by NCT number
+  async function addClinicalTrialByNCT(nctNumber) {
+    if (!nctNumber || !nctNumber.match(/^NCT\d{8}$/i)) {
+      setFormStatus('Invalid NCT number format. Use NCT followed by 8 digits.', 'error');
+      return;
+    }
+    
+    const cleanNCT = nctNumber.toUpperCase();
+    
+    // Check if trial already exists
+    const exists = currentClinicalTrials.some(trial => 
+      trial.nctNumber === cleanNCT
+    );
+    
+    if (exists) {
+      setFormStatus('Clinical trial already added', 'warning');
+      return;
+    }
+    
+    // Show loading status
+    setFormStatus(`Looking up clinical trial ${cleanNCT}...`, 'loading');
+    
+    try {
+      // Use the API integration module to fetch trial data
+      const trialData = await window.SilentStacks.modules.APIIntegration.fetchClinicalTrial(cleanNCT);
+      
+      currentClinicalTrials.push(trialData);
+      renderClinicalTrials();
+      
+      setFormStatus(`Added clinical trial: ${cleanNCT}`, 'success');
+      
+    } catch (error) {
+      console.error('Error adding clinical trial:', error);
+      setFormStatus(`Failed to add clinical trial: ${error.message}`, 'error');
+    }
+  }
+
+  // NEW: Remove clinical trial
+  function removeClinicalTrial(index) {
+    if (index >= 0 && index < currentClinicalTrials.length) {
+      const removedTrial = currentClinicalTrials.splice(index, 1)[0];
+      renderClinicalTrials();
+      setFormStatus(`Removed clinical trial: ${removedTrial.nctNumber}`, 'info');
+    }
+  }
+
+  // Enhanced form data collection
+  function collectFormData() {
     const formData = {};
     
-    Object.entries(FIELD_MAPPING).forEach(([fieldId, dataKey]) => {
+    // Collect basic form fields
+    Object.entries(FORM_FIELDS).forEach(([dataKey, fieldId]) => {
+      if (dataKey === 'meshHeadings' || dataKey === 'clinicalTrials') return; // Handle separately
+      
       const element = document.getElementById(fieldId);
       if (element) {
-        let value = element.value.trim();
-        
-        // Special handling for tags - convert comma-separated string to array
-        if (dataKey === 'tags') {
-          value = value ? value.split(',').map(t => t.trim()).filter(Boolean) : [];
-        }
-        
-        formData[dataKey] = value;
+        formData[dataKey] = element.value.trim();
       }
     });
     
+    // Add enhanced fields
+    formData.meshHeadings = [...currentMeshTerms];
+    formData.clinicalTrials = [...currentClinicalTrials];
+    
     // Add metadata
-    formData.createdAt = new Date().toISOString();
+    formData.createdAt = formData.createdAt || new Date().toISOString();
+    formData.updatedAt = new Date().toISOString();
+    formData.id = formData.id || generateRequestId();
+    
+    // Handle tags (if tags module is available)
+    const tagsContainer = document.querySelector('.selected-tags');
+    if (tagsContainer) {
+      const tagElements = tagsContainer.querySelectorAll('.tag-item');
+      formData.tags = Array.from(tagElements).map(tag => ({
+        text: tag.textContent.replace('×', '').trim(),
+        color: tag.dataset.color || 'blue'
+      }));
+    } else {
+      formData.tags = formData.tags || [];
+    }
     
     return formData;
   }
 
-  // === Enhanced Form Validation ===
-  function validateFormData(data) {
+  // Enhanced form validation
+  function validateForm() {
     const errors = [];
     
-    // At least one identifier or title is required
-    if (!data.title && !data.pmid && !data.doi) {
-      errors.push('Request must have at least a title, PMID, or DOI');
+    // Required field validation
+    const title = document.getElementById('title')?.value.trim();
+    if (!title) {
+      errors.push('Title is required');
     }
     
-    // Validate PMID format
-    if (data.pmid && !/^\d+$/.test(data.pmid)) {
-      errors.push('PMID must be numeric');
+    // Validate email if provided
+    const email = document.getElementById('patron-email')?.value.trim();
+    if (email && !isValidEmail(email)) {
+      errors.push('Invalid email address format');
     }
     
-    // Validate status
-    if (data.status && !['pending', 'in-progress', 'fulfilled', 'cancelled'].includes(data.status)) {
-      errors.push('Invalid status value');
+    // Validate year if provided
+    const year = document.getElementById('year')?.value.trim();
+    if (year && (!year.match(/^\d{4}$/) || parseInt(year) < 1900 || parseInt(year) > new Date().getFullYear() + 10)) {
+      errors.push('Year must be a valid 4-digit year');
     }
     
-    // Validate priority
-    if (data.priority && !['urgent', 'rush', 'normal'].includes(data.priority)) {
-      errors.push('Invalid priority value');
-    }
-    
-    // Validate email format if provided
-    if (data.patronEmail) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(data.patronEmail)) {
-        errors.push('Invalid email format');
+    // Validate NCT numbers in clinical trials
+    for (const trial of currentClinicalTrials) {
+      if (trial.nctNumber && !trial.nctNumber.match(/^NCT\d{8}$/)) {
+        errors.push(`Invalid clinical trial number: ${trial.nctNumber}`);
       }
-    }
-    
-    // Enhanced year validation - FIXED to prevent future dates
-    if (data.year) {
-      const yearNum = parseInt(data.year);
-      const currentYear = new Date().getFullYear();
-      if (isNaN(yearNum) || yearNum < 1800 || yearNum > currentYear + 1) {
-        errors.push(`Year must be between 1800 and ${currentYear + 1}`);
-      }
-    }
-    
-    // Validate title length
-    if (data.title && data.title.length > 500) {
-      errors.push('Title must be less than 500 characters');
-    }
-    
-    // Validate notes length
-    if (data.notes && data.notes.length > 2000) {
-      errors.push('Notes must be less than 2000 characters');
     }
     
     return errors;
   }
 
-  function triggerFieldValidation(element) {
-    if (!element) return;
+  // Enhanced form submission
+  function submitForm() {
+    console.log('📤 Submitting enhanced form...');
     
-    const fieldId = element.id;
-    const value = element.value.trim();
-    
-    // Clear previous validation state
-    element.classList.remove('valid', 'invalid');
-    
-    // Field-specific validation
-    switch (fieldId) {
-      case 'pmid':
-        if (value && !/^\d+$/.test(value)) {
-          element.setCustomValidity('PMID must be numeric');
-          element.classList.add('invalid');
-        } else {
-          element.setCustomValidity('');
-          if (value) element.classList.add('valid');
-        }
-        break;
-        
-      case 'patron-email':
-        if (value) {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(value)) {
-            element.setCustomValidity('Please enter a valid email address');
-            element.classList.add('invalid');
-          } else {
-            element.setCustomValidity('');
-            element.classList.add('valid');
-          }
-        } else {
-          element.setCustomValidity('');
-        }
-        break;
-        
-      case 'year':
-        if (value) {
-          const yearNum = parseInt(value);
-          const currentYear = new Date().getFullYear();
-          if (isNaN(yearNum) || yearNum < 1800 || yearNum > currentYear + 1) {
-            element.setCustomValidity(`Year must be between 1800 and ${currentYear + 1}`);
-            element.classList.add('invalid');
-          } else {
-            element.setCustomValidity('');
-            element.classList.add('valid');
-          }
-        } else {
-          element.setCustomValidity('');
-        }
-        break;
-        
-      case 'title':
-        if (value) {
-          if (value.length > 500) {
-            element.setCustomValidity('Title must be less than 500 characters');
-            element.classList.add('invalid');
-          } else {
-            element.setCustomValidity('');
-            element.classList.add('valid');
-          }
-        }
-        break;
-        
-      case 'notes':
-        if (value && value.length > 2000) {
-          element.setCustomValidity('Notes must be less than 2000 characters');
-          element.classList.add('invalid');
-        } else {
-          element.setCustomValidity('');
-          if (value) element.classList.add('valid');
-        }
-        break;
+    // Validate form
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setFormStatus(`Validation errors: ${validationErrors.join(', ')}`, 'error');
+      return false;
     }
-  }
-
-  // === Enhanced Form Handlers ===
-  function handleFormSubmit() {
+    
     try {
-      const formData = extractFormData();
+      const formData = collectFormData();
+      console.log('📋 Collected form data:', formData);
       
-      // Enhanced validation
-      const validationErrors = validateFormData(formData);
-      if (validationErrors.length > 0) {
-        const errorMessage = 'Validation errors:\n• ' + validationErrors.join('\n• ');
-        window.SilentStacks.modules.UIController.setStatus(errorMessage, 'error');
-        
-        // Focus first invalid field
-        const firstInvalidField = document.querySelector('.form-control.invalid');
-        if (firstInvalidField) {
-          firstInvalidField.focus();
-        }
-        return;
-      }
-      
-      // Check memory usage before large operations
-      checkMemoryBeforeOperation();
-      
-      // Handle edit vs new request
-      const currentEdit = window.SilentStacks.state.currentEdit;
-      
-      if (currentEdit !== null) {
-        // Update existing request
-        window.SilentStacks.modules.DataManager.updateRequest(currentEdit, formData);
-        window.SilentStacks.state.currentEdit = null;
-        window.SilentStacks.modules.UIController.setStatus('Request updated successfully!', 'success');
+      // Save or update request
+      if (isEditing) {
+        updateRequest(editingIndex, formData);
       } else {
-        // Add new request
-        window.SilentStacks.modules.DataManager.addRequest(formData);
-        window.SilentStacks.modules.UIController.setStatus('Request added successfully!', 'success');
+        addRequest(formData);
       }
       
-      // Update global tags if new ones were added
-      if (formData.tags && formData.tags.length > 0) {
-        window.SilentStacks.modules.DataManager.addTagsFromRequest(formData.tags);
+      // Reset form
+      resetForm();
+      
+      // Show success message
+      const message = isEditing ? 'Request updated successfully' : 'Request added successfully';
+      setFormStatus(message, 'success');
+      
+      // Auto-advance to next step if available
+      if (window.SilentStacks.modules.MedicalFeatures?.autoAdvanceStep) {
+        window.SilentStacks.modules.MedicalFeatures.autoAdvanceStep(3);
       }
       
-      // Clear form and refresh UI
-      clearForm();
-      refreshAllViews();
-      
-      // Auto-navigate to All Requests tab to show the new/updated request
-      setTimeout(() => {
-        const allRequestsTab = document.querySelector('[data-section="all-requests"]');
-        if (allRequestsTab) {
-          window.SilentStacks.modules.UIController.switchSection(allRequestsTab);
-        }
-      }, 1000);
+      return true;
       
     } catch (error) {
       console.error('Form submission error:', error);
-      window.SilentStacks.modules.UIController.setStatus(`Failed to save request: ${error.message}`, 'error');
-      
-      // Handle specific error types
-      if (error.message.includes('limit exceeded')) {
-        handleLimitExceededError(error);
-      } else if (error.message.includes('memory')) {
-        handleMemoryError(error);
-      }
+      setFormStatus(`Error saving request: ${error.message}`, 'error');
+      return false;
     }
   }
 
-  function clearForm() {
+  // Enhanced form reset
+  function resetForm() {
+    console.log('🔄 Resetting enhanced form...');
+    
+    // Reset basic form fields
     const form = document.getElementById('request-form');
     if (form) {
       form.reset();
-      
-      // Clear validation states
-      form.querySelectorAll('.form-control').forEach(field => {
-        field.classList.remove('valid', 'invalid');
-        field.setCustomValidity('');
+    }
+    
+    // Reset enhanced data
+    currentMeshTerms = [];
+    currentClinicalTrials = [];
+    
+    // Re-render enhanced components
+    renderMeshTerms();
+    renderClinicalTrials();
+    
+    // Reset editing state
+    isEditing = false;
+    editingIndex = -1;
+    
+    // Clear any status messages
+    setFormStatus('', '');
+    
+    // Reset form button text
+    const submitButton = document.getElementById('add-request');
+    if (submitButton) {
+      submitButton.textContent = 'Add Request';
+    }
+  }
+
+  // Initialize enhanced event listeners
+  function initializeEventListeners() {
+    console.log('🎯 Initializing enhanced event listeners...');
+    
+    // MeSH term input handler
+    const meshInput = document.getElementById('mesh-input');
+    if (meshInput) {
+      meshInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const term = meshInput.value.trim();
+          if (term) {
+            addCustomMeshTerm(term);
+            meshInput.value = '';
+          }
+        }
       });
     }
     
-    // Reset current edit state
-    window.SilentStacks.state.currentEdit = null;
-    
-    // Reset progress step if medical features are available
-    if (window.SilentStacks.modules.MedicalFeatures?.resetProgress) {
-      window.SilentStacks.modules.MedicalFeatures.resetProgress();
+    // MeSH filter handler
+    const meshMajorOnly = document.getElementById('mesh-major-only');
+    if (meshMajorOnly) {
+      meshMajorOnly.addEventListener('change', renderMeshTerms);
     }
     
-    window.SilentStacks.modules.UIController.setStatus('Form cleared', 'success');
-  }
-
-  function checkMemoryBeforeOperation() {
-    if (performance.memory) {
-      const memoryMB = performance.memory.usedJSHeapSize / 1024 / 1024;
-      
-      if (memoryMB > 300) {
-        console.log('🧹 High memory usage before operation, performing cleanup...');
-        
-        if (window.SilentStacks.modules.DataManager.performMemoryCleanup) {
-          window.SilentStacks.modules.DataManager.performMemoryCleanup();
+    // MeSH clear button
+    const meshClear = document.getElementById('mesh-clear');
+    if (meshClear) {
+      meshClear.addEventListener('click', clearAllMeshTerms);
+    }
+    
+    // Clinical trial NCT input handler
+    const nctInput = document.getElementById('nct-input');
+    const addNCTButton = document.getElementById('add-nct');
+    
+    if (nctInput && addNCTButton) {
+      const handleNCTAdd = () => {
+        const nctNumber = nctInput.value.trim();
+        if (nctNumber) {
+          addClinicalTrialByNCT(nctNumber);
+          nctInput.value = '';
         }
-      }
-    }
-  }
-
-  function handleLimitExceededError(error) {
-    const message = 'Request limit exceeded. Consider cleaning up old data or increasing limits.';
-    
-    if (confirm(`${message}\n\nWould you like to clean up old fulfilled requests?`)) {
-      // Trigger cleanup if available
-      if (window.SilentStacks.modules.DataManager.performStorageCleanup) {
-        window.SilentStacks.modules.DataManager.performStorageCleanup();
-      }
-    }
-  }
-
-  function handleMemoryError(error) {
-    const message = 'Memory limit reached. The page may need to be refreshed for optimal performance.';
-    
-    if (confirm(`${message}\n\nRefresh page now? (Your data is automatically saved)`)) {
-      window.location.reload();
-    }
-  }
-
-  // === Enhanced Request Management Functions ===
-  function editRequest(index) {
-    try {
-      const requests = window.SilentStacks.modules.DataManager.getRequests();
-      const request = requests[index];
-      
-      if (!request) {
-        throw new Error(`Request at index ${index} not found`);
-      }
-      
-      // Check if user has unsaved changes
-      if (isFormDirty() && !warnIfUnsavedChanges()) {
-        return;
-      }
-      
-      // Set edit mode
-      window.SilentStacks.state.currentEdit = index;
-      
-      // Populate form with request data
-      populateForm(request);
-      
-      // Switch to add request tab
-      const addTab = document.querySelector('[data-section="add-request"]');
-      if (addTab) {
-        window.SilentStacks.modules.UIController.switchSection(addTab);
-      }
-      
-      // Show edit mode indicator
-      window.SilentStacks.modules.UIController.setStatus('Editing request - make changes and click Save', 'info');
-      
-      // Focus first input with scroll to view
-      setTimeout(() => {
-        const firstInput = document.querySelector('#add-request input, #add-request select, #add-request textarea');
-        if (firstInput) {
-          firstInput.focus();
-          firstInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
-      
-    } catch (error) {
-      console.error('Edit request error:', error);
-      window.SilentStacks.modules.UIController.showNotification(`Failed to edit request: ${error.message}`, 'error');
-    }
-  }
-
-  function deleteRequest(index) {
-    try {
-      const requests = window.SilentStacks.modules.DataManager.getRequests();
-      const request = requests[index];
-      
-      if (!request) {
-        throw new Error(`Request at index ${index} not found`);
-      }
-      
-      const requestTitle = request.title || `Request ${index + 1}`;
-      
-      // Enhanced confirmation with request details
-      const confirmMessage = `Delete "${requestTitle}"?\n\n` +
-        `Authors: ${request.authors || 'Unknown'}\n` +
-        `Journal: ${request.journal || 'Unknown'}\n` +
-        `Status: ${request.status || 'pending'}\n\n` +
-        `This action cannot be undone.`;
-      
-      if (confirm(confirmMessage)) {
-        window.SilentStacks.modules.DataManager.deleteRequest(index);
-        refreshAllViews();
-        window.SilentStacks.modules.UIController.showNotification('Request deleted successfully', 'success');
-        
-        // Memory cleanup after deletions
-        setTimeout(() => {
-          if (window.SilentStacks.modules.DataManager.performMemoryCleanup) {
-            window.SilentStacks.modules.DataManager.performMemoryCleanup();
-          }
-        }, 500);
-      }
-      
-    } catch (error) {
-      console.error('Delete request error:', error);
-      window.SilentStacks.modules.UIController.showNotification(`Failed to delete request: ${error.message}`, 'error');
-    }
-  }
-
-  function duplicateRequest(index) {
-    try {
-      const requests = window.SilentStacks.modules.DataManager.getRequests();
-      const original = requests[index];
-      
-      if (!original) {
-        throw new Error(`Request at index ${index} not found`);
-      }
-      
-      // Create duplicate with modified title and reset status
-      const duplicate = {
-        ...original,
-        title: `${original.title} (Copy)`,
-        status: 'pending',
-        createdAt: new Date().toISOString()
       };
       
-      // Remove updatedAt if it exists
-      delete duplicate.updatedAt;
+      nctInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleNCTAdd();
+        }
+      });
       
-      window.SilentStacks.modules.DataManager.addRequest(duplicate);
-      refreshAllViews();
-      
-      window.SilentStacks.modules.UIController.showNotification('Request duplicated successfully', 'success');
-      
-    } catch (error) {
-      console.error('Duplicate request error:', error);
-      window.SilentStacks.modules.UIController.showNotification(`Failed to duplicate request: ${error.message}`, 'error');
+      addNCTButton.addEventListener('click', handleNCTAdd);
+    }
+    
+    // Enhanced form submission
+    const submitButton = document.getElementById('add-request');
+    if (submitButton) {
+      submitButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        submitForm();
+      });
+    }
+    
+    console.log('✅ Enhanced event listeners initialized');
+  }
+
+  // Utility functions
+  function setFormStatus(message, type = '') {
+    if (window.SilentStacks.modules.UIController?.setStatus) {
+      window.SilentStacks.modules.UIController.setStatus(message, type);
     }
   }
 
-  function deleteSelectedRequests() {
-    const selectedRequests = window.SilentStacks.state.selectedRequests;
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function generateRequestId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  }
+
+  function addRequest(data) {
+    if (window.SilentStacks.modules.DataManager?.addRequest) {
+      window.SilentStacks.modules.DataManager.addRequest(data);
+    }
+  }
+
+  function updateRequest(index, data) {
+    if (window.SilentStacks.modules.DataManager?.updateRequest) {
+      window.SilentStacks.modules.DataManager.updateRequest(index, data);
+    }
+  }
+
+  // Enhanced edit request function
+  function editRequest(index) {
+    console.log('✏️ Editing request with enhanced data:', index);
     
-    if (selectedRequests.size === 0) {
-      window.SilentStacks.modules.UIController.showNotification('No requests selected', 'warning');
+    const requests = window.SilentStacks.modules.DataManager?.getRequests() || [];
+    if (index < 0 || index >= requests.length) {
+      setFormStatus('Request not found', 'error');
       return;
     }
     
-    const confirmMessage = `Delete ${selectedRequests.size} selected request${selectedRequests.size > 1 ? 's' : ''}?\n\n` +
-      `This action cannot be undone.`;
+    const request = requests[index];
     
-    if (confirm(confirmMessage)) {
-      try {
-        const indices = Array.from(selectedRequests);
-        window.SilentStacks.modules.DataManager.deleteMultipleRequests(indices);
-        
-        selectedRequests.clear();
-        refreshAllViews();
-        
-        window.SilentStacks.modules.UIController.showNotification(
-          `Successfully deleted ${indices.length} request${indices.length > 1 ? 's' : ''}`, 
-          'success'
-        );
-        
-        // Memory cleanup after large deletions
-        if (indices.length > 10) {
-          setTimeout(() => {
-            if (window.SilentStacks.modules.DataManager.performMemoryCleanup) {
-              window.SilentStacks.modules.DataManager.performMemoryCleanup();
-            }
-          }, 1000);
-        }
-        
-      } catch (error) {
-        console.error('Bulk delete error:', error);
-        window.SilentStacks.modules.UIController.showNotification(`Failed to delete requests: ${error.message}`, 'error');
-      }
+    // Set editing state
+    isEditing = true;
+    editingIndex = index;
+    
+    // Populate form with request data
+    populateForm(request);
+    
+    // Update submit button text
+    const submitButton = document.getElementById('add-request');
+    if (submitButton) {
+      submitButton.textContent = 'Update Request';
     }
-  }
-
-  // === Enhanced Utility Functions ===
-  function refreshAllViews() {
-    try {
-      // Refresh all UI components
-      window.SilentStacks.modules.UIController.renderStats();
-      window.SilentStacks.modules.UIController.renderRequests();
-      window.SilentStacks.modules.UIController.renderRecentRequests();
-      
-      // Re-initialize search if needed
-      if (window.SilentStacks.modules.SearchFilter?.initFuse) {
-        window.SilentStacks.modules.SearchFilter.initFuse();
-      }
-    } catch (error) {
-      console.error('Failed to refresh views:', error);
-      window.SilentStacks.modules.UIController.showNotification('Failed to refresh display', 'error');
-    }
-  }
-
-  function getRequestSummary(request) {
-    const parts = [];
     
-    if (request.title) parts.push(request.title);
-    if (request.authors) parts.push(`by ${request.authors}`);
-    if (request.journal) parts.push(`in ${request.journal}`);
-    if (request.year) parts.push(`(${request.year})`);
-    if (request.pmid) parts.push(`PMID: ${request.pmid}`);
-    if (request.doi) parts.push(`DOI: ${request.doi}`);
-    
-    return parts.join(' ');
-  }
-
-  function formatRequestForDisplay(request) {
-    return {
-      ...request,
-      displayTitle: request.title || 'Untitled Request',
-      displayAuthors: request.authors || 'Unknown Authors',
-      displayJournal: request.journal || 'Unknown Journal',
-      displayYear: request.year || 'Unknown Year',
-      displayStatus: request.status ? request.status.replace('-', ' ').toUpperCase() : 'UNKNOWN',
-      displayPriority: request.priority ? request.priority.toUpperCase() : 'NORMAL',
-      displayTags: Array.isArray(request.tags) ? request.tags.join(', ') : '',
-      formattedDate: request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '',
-      formattedDateTime: request.createdAt ? new Date(request.createdAt).toLocaleString() : ''
-    };
-  }
-
-  // === Enhanced Form State Management ===
-  function isFormDirty() {
+    // Scroll to form
     const form = document.getElementById('request-form');
-    if (!form) return false;
+    if (form) {
+      form.scrollIntoView({ behavior: 'smooth' });
+    }
     
-    // Check if any field has been modified
-    const formElements = form.querySelectorAll('input, select, textarea');
-    for (const element of formElements) {
-      if (element.value && element.value.trim()) {
-        return true;
+    setFormStatus('Editing request - make changes and click Update Request', 'info');
+  }
+
+  // Enhanced duplicate request function
+  function duplicateRequest(index) {
+    console.log('📋 Duplicating request with enhanced data:', index);
+    
+    const requests = window.SilentStacks.modules.DataManager?.getRequests() || [];
+    if (index < 0 || index >= requests.length) {
+      setFormStatus('Request not found', 'error');
+      return;
+    }
+    
+    const original = requests[index];
+    
+    // Create duplicate with new ID and timestamp
+    const duplicate = {
+      ...original,
+      id: generateRequestId(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      title: `${original.title} (Copy)`,
+      status: 'pending' // Reset status for duplicate
+    };
+    
+    // Deep copy arrays to avoid reference issues
+    duplicate.meshHeadings = original.meshHeadings ? [...original.meshHeadings.map(term => ({...term}))] : [];
+    duplicate.clinicalTrials = original.clinicalTrials ? [...original.clinicalTrials.map(trial => ({...trial}))] : [];
+    duplicate.tags = original.tags ? [...original.tags.map(tag => ({...tag}))] : [];
+    
+    // Populate form with duplicate data
+    populateForm(duplicate);
+    
+    // Scroll to form
+    const form = document.getElementById('request-form');
+    if (form) {
+      form.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    setFormStatus('Request duplicated - review and submit', 'success');
+  }
+
+  // Enhanced export functions for CSV/JSON with new fields
+  function enhanceExportData(requests) {
+    return requests.map(request => ({
+      ...request,
+      // Flatten MeSH headings for export
+      meshHeadingsList: request.meshHeadings ? 
+        request.meshHeadings.map(term => `${term.term}${term.majorTopic ? ' (Major)' : ''}`).join('; ') : '',
+      meshHeadingsCount: request.meshHeadings ? request.meshHeadings.length : 0,
+      meshMajorTopics: request.meshHeadings ? 
+        request.meshHeadings.filter(term => term.majorTopic).map(term => term.term).join('; ') : '',
+      
+      // Flatten clinical trials for export
+      clinicalTrialsList: request.clinicalTrials ? 
+        request.clinicalTrials.map(trial => trial.nctNumber).join('; ') : '',
+      clinicalTrialsCount: request.clinicalTrials ? request.clinicalTrials.length : 0,
+      clinicalTrialsDetails: request.clinicalTrials ? 
+        request.clinicalTrials.map(trial => `${trial.nctNumber}: ${trial.briefTitle || 'No title'}`).join(' | ') : '',
+      
+      // Publication type
+      publicationType: request.publicationType || ''
+    }));
+  }
+
+  // Enhanced search functionality to include MeSH and clinical trial data
+  function enhanceSearchableContent(request) {
+    const searchableFields = [
+      request.title,
+      request.authors,
+      request.journal,
+      request.notes,
+      request.pmid,
+      request.doi,
+      request.publicationType
+    ];
+    
+    // Add MeSH terms to searchable content
+    if (request.meshHeadings) {
+      request.meshHeadings.forEach(term => {
+        searchableFields.push(term.term);
+      });
+    }
+    
+    // Add clinical trial data to searchable content
+    if (request.clinicalTrials) {
+      request.clinicalTrials.forEach(trial => {
+        searchableFields.push(trial.nctNumber);
+        searchableFields.push(trial.briefTitle);
+        searchableFields.push(trial.officialTitle);
+        if (trial.conditions) {
+          searchableFields.push(...trial.conditions);
+        }
+      });
+    }
+    
+    return searchableFields.filter(Boolean).join(' ').toLowerCase();
+  }
+
+  // Filter requests by MeSH terms
+  function filterByMeshTerms(requests, meshFilter) {
+    if (!meshFilter || meshFilter.trim() === '') return requests;
+    
+    const filterTerm = meshFilter.toLowerCase().trim();
+    
+    return requests.filter(request => {
+      if (!request.meshHeadings || request.meshHeadings.length === 0) return false;
+      
+      return request.meshHeadings.some(meshTerm => 
+        meshTerm.term.toLowerCase().includes(filterTerm)
+      );
+    });
+  }
+
+  // Filter requests by clinical trial status
+  function filterByClinicalTrials(requests, hasTrials = null) {
+    if (hasTrials === null) return requests;
+    
+    return requests.filter(request => {
+      const hasAssociatedTrials = request.clinicalTrials && request.clinicalTrials.length > 0;
+      return hasTrials ? hasAssociatedTrials : !hasAssociatedTrials;
+    });
+  }
+
+  // Enhanced statistics calculation
+  function calculateEnhancedStats(requests) {
+    const stats = {
+      total: requests.length,
+      withMeshTerms: 0,
+      withClinicalTrials: 0,
+      totalMeshTerms: 0,
+      totalClinicalTrials: 0,
+      majorTopicTerms: 0,
+      publicationTypes: {},
+      clinicalTrialPhases: {}
+    };
+    
+    requests.forEach(request => {
+      // MeSH statistics
+      if (request.meshHeadings && request.meshHeadings.length > 0) {
+        stats.withMeshTerms++;
+        stats.totalMeshTerms += request.meshHeadings.length;
+        stats.majorTopicTerms += request.meshHeadings.filter(term => term.majorTopic).length;
       }
-    }
-    return false;
-  }
-
-  function warnIfUnsavedChanges() {
-    if (isFormDirty()) {
-      return confirm('You have unsaved changes. Are you sure you want to leave this form?');
-    }
-    return true;
-  }
-
-  function setupFormValidation() {
-    // Enhanced real-time validation for key fields
-    const pmidInput = document.getElementById('pmid');
-    const emailInput = document.getElementById('patron-email');
-    const yearInput = document.getElementById('year');
-    const titleInput = document.getElementById('title');
-    const notesInput = document.getElementById('notes');
-    
-    // Set up event listeners for real-time validation
-    [pmidInput, emailInput, yearInput, titleInput, notesInput].forEach(input => {
-      if (input) {
-        input.addEventListener('input', (e) => triggerFieldValidation(e.target));
-        input.addEventListener('blur', (e) => triggerFieldValidation(e.target));
+      
+      // Clinical trial statistics
+      if (request.clinicalTrials && request.clinicalTrials.length > 0) {
+        stats.withClinicalTrials++;
+        stats.totalClinicalTrials += request.clinicalTrials.length;
+        
+        // Count phases
+        request.clinicalTrials.forEach(trial => {
+          if (trial.phase) {
+            stats.clinicalTrialPhases[trial.phase] = (stats.clinicalTrialPhases[trial.phase] || 0) + 1;
+          }
+        });
+      }
+      
+      // Publication type statistics
+      if (request.publicationType) {
+        stats.publicationTypes[request.publicationType] = (stats.publicationTypes[request.publicationType] || 0) + 1;
       }
     });
     
-    // Form-wide validation
-    const form = document.getElementById('request-form');
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        // Validate all fields before submission
-        const allFields = form.querySelectorAll('.form-control');
-        let hasErrors = false;
-        
-        allFields.forEach(field => {
-          triggerFieldValidation(field);
-          if (field.classList.contains('invalid')) {
-            hasErrors = true;
-          }
-        });
-        
-        if (hasErrors) {
-          e.preventDefault();
-          window.SilentStacks.modules.UIController.setStatus('Please fix validation errors before submitting', 'error');
-        }
-      });
-    }
+    return stats;
   }
 
-  // === Performance Monitoring ===
-  function monitorFormPerformance() {
-    // Monitor form submission time
-    const form = document.getElementById('request-form');
-    if (form) {
-      form.addEventListener('submit', () => {
-        const startTime = performance.now();
-        
-        setTimeout(() => {
-          const endTime = performance.now();
-          const submitTime = endTime - startTime;
-          
-          if (submitTime > 1000) {
-            console.warn('Slow form submission:', submitTime, 'ms');
-          }
-        }, 0);
-      });
-    }
-  }
-
-  // === Global Functions for Button Clicks ===
-  window.editRequest = editRequest;
-  window.deleteRequest = deleteRequest;
-  window.duplicateRequest = duplicateRequest;
-  window.deleteSelectedRequests = deleteSelectedRequests;
-
-  // === Enhanced Module Interface ===
+  // Module Interface
   const RequestManager = {
     // Initialization
     initialize() {
-      console.log('🔧 Initializing FIXED RequestManager v1.2.1...');
+      console.log('🔧 Initializing Enhanced RequestManager v1.4...');
       
-      // Set up enhanced form validation
-      setupFormValidation();
+      initializeEventListeners();
       
-      // Set up performance monitoring
-      monitorFormPerformance();
+      // Initialize enhanced UI components
+      renderMeshTerms();
+      renderClinicalTrials();
       
-      console.log('✅ FIXED RequestManager initialized');
+      console.log('✅ Enhanced RequestManager v1.4 initialized with MeSH and Clinical Trials support');
     },
 
-    // Form management
+    // Core functions
     populateForm,
-    extractFormData,
-    validateFormData,
-    handleFormSubmit,
-    clearForm,
-    triggerFieldValidation,
-
-    // Request management
+    collectFormData,
+    validateForm,
+    submitForm,
+    resetForm,
     editRequest,
-    deleteRequest,
     duplicateRequest,
-    deleteSelectedRequests,
 
-    // Enhanced utility functions
-    refreshAllViews,
-    getRequestSummary,
-    formatRequestForDisplay,
-    isFormDirty,
-    warnIfUnsavedChanges,
-    checkMemoryBeforeOperation,
+    // Enhanced data management
+    enhanceExportData,
+    enhanceSearchableContent,
+    filterByMeshTerms,
+    filterByClinicalTrials,
+    calculateEnhancedStats,
 
-    // Error handling
-    handleLimitExceededError,
-    handleMemoryError,
+    // MeSH term management
+    addCustomMeshTerm,
+    removeMeshTerm,
+    clearAllMeshTerms,
+    renderMeshTerms,
+    getCurrentMeshTerms: () => [...currentMeshTerms],
 
-    // Constants
-    FIELD_MAPPING
+    // Clinical trial management
+    addClinicalTrialByNCT,
+    removeClinicalTrial,
+    renderClinicalTrials,
+    getCurrentClinicalTrials: () => [...currentClinicalTrials],
+
+    // State management
+    isEditing: () => isEditing,
+    getEditingIndex: () => editingIndex,
+    
+    // Version info
+    version: '1.4.0',
+    features: ['Enhanced Form Management', 'MeSH Headings', 'Clinical Trials', 'Advanced Validation', 'Enhanced Export']
   };
 
   // Register module
@@ -656,6 +739,4 @@
     window.SilentStacks = window.SilentStacks || { modules: {} };
     window.SilentStacks.modules.RequestManager = RequestManager;
   }
-
-  console.log('✅ FIXED RequestManager registered successfully');
 })();
