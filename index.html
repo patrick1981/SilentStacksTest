@@ -15,6 +15,26 @@
   
   <!-- Main CSS (Modular Architecture) -->
   <link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+// Global documentation functions for onclick handlers
+window.closeDocumentation = function() {
+  const container = document.getElementById('documentation-container');
+  if (container) {
+    container.classList.add('hidden');
+    document.body.classList.remove('documentation-open');
+  }
+  console.log('📚 Documentation closed');
+};
+
+window.printDocumentation = function() {
+  alert('Print functionality - implementation in progress');
+};
+
+window.exportDocumentation = function() {
+  alert('Export functionality - implementation in progress');
+};
+</script>
   
   <!-- Service Worker Registration -->
   <script>
