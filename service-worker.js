@@ -30,7 +30,7 @@ const STATIC_CACHE_URLS = [
   '/assets/fonts/reddit-sans/RedditSans-Medium.woff2',
   '/assets/fonts/reddit-sans/RedditSans-SemiBold.woff2',
   '/assets/fonts/reddit-sans/RedditSans-Bold.woff2',
-  '/assets/js/silentstacks.js',
+  '/assets/js/app.js',
   '/assets/js/enhanced-data-manager.js',
   '/assets/js/offline-manager.js',
   '/assets/js/integrated-documentation.js',
