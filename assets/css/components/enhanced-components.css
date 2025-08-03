@@ -1,0 +1,603 @@
+/* SilentStacks Enhanced Components v1.4 - MeSH Headings & Clinical Trials */
+
+/* ===== ENHANCED FIELD SECTIONS ===== */
+.mesh-section,
+.clinical-trials-section {
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  background: var(--background-secondary, #f8f9fa);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mesh-section:hover,
+.clinical-trials-section:hover {
+  border-color: var(--color-primary, #007bff);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+/* ===== FIELD BADGES ===== */
+.field-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+}
+
+.field-badge.medical {
+  background: var(--color-medical, #4a90e2);
+  color: white;
+}
+
+.field-badge.clinical {
+  background: var(--color-clinical, #e74c3c);
+  color: white;
+}
+
+/* ===== MESH HEADINGS STYLES ===== */
+.mesh-container {
+  margin-top: 8px;
+}
+
+.mesh-list {
+  min-height: 60px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  background: var(--background-primary, #ffffff);
+  margin-bottom: 12px;
+  transition: border-color 0.3s ease;
+}
+
+.mesh-list:focus-within {
+  border-color: var(--color-primary, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+.mesh-empty {
+  color: var(--text-muted, #6c757d);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.mesh-term {
+  display: inline-block;
+  background: var(--color-medical, #4a90e2);
+  color: white;
+  padding: 6px 12px;
+  margin: 3px 4px 3px 0;
+  border-radius: 16px;
+  font-size: 0.85em;
+  position: relative;
+  cursor: default;
+  animation: fadeIn 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mesh-term:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.mesh-term.major-topic {
+  background: var(--color-clinical, #e74c3c);
+  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.mesh-term.custom {
+  background: var(--color-success, #28a745);
+  position: relative;
+}
+
+.mesh-term.custom::before {
+  content: "✏️";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 10px;
+  background: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-mesh {
+  margin-left: 8px;
+  cursor: pointer;
+  opacity: 0.8;
+  font-weight: bold;
+  font-size: 1.1em;
+  transition: opacity 0.2s ease;
+}
+
+.remove-mesh:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.mesh-input {
+  margin-top: 8px;
+  border-radius: 20px;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+.mesh-input:focus {
+  border-color: var(--color-medical, #4a90e2);
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  outline: none;
+}
+
+.mesh-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.mesh-controls .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: color 0.3s ease;
+}
+
+.mesh-controls .checkbox-label:hover {
+  color: var(--color-primary, #007bff);
+}
+
+/* ===== CLINICAL TRIALS STYLES ===== */
+.clinical-trials-container {
+  margin-top: 8px;
+}
+
+.clinical-trials-list {
+  min-height: 60px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.clinical-trials-empty {
+  color: var(--text-muted, #6c757d);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.clinical-trial-card {
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  background: var(--background-primary, #ffffff);
+  position: relative;
+  animation: slideIn 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+.clinical-trial-card:hover {
+  border-color: var(--color-clinical, #e74c3c);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.clinical-trial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.clinical-trial-nct {
+  font-weight: 700;
+  color: var(--color-clinical, #e74c3c);
+  font-size: 0.95em;
+  font-family: 'Courier New', monospace;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.clinical-trial-phase {
+  background: linear-gradient(135deg, var(--color-info, #17a2b8), #20c997);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.clinical-trial-title {
+  font-weight: 600;
+  margin: 8px 0;
+  color: var(--text-primary, #333);
+  line-height: 1.4;
+  font-size: 0.95em;
+}
+
+.clinical-trial-status {
+  font-size: 0.85em;
+  color: var(--text-secondary, #666);
+  margin: 6px 0;
+  font-weight: 500;
+}
+
+.clinical-trial-status::before {
+  content: "📊";
+  margin-right: 6px;
+}
+
+.clinical-trial-details {
+  font-size: 0.8em;
+  color: var(--text-secondary, #666);
+  margin-top: 12px;
+  line-height: 1.5;
+  padding: 8px;
+  background: var(--background-secondary, #f8f9fa);
+  border-radius: 4px;
+  border-left: 3px solid var(--color-clinical, #e74c3c);
+}
+
+.clinical-trial-details strong {
+  color: var(--text-primary, #333);
+}
+
+.clinical-trial-placeholder {
+  background: var(--color-warning, #ffc107);
+  color: var(--color-dark, #212529);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: 500;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.clinical-trial-remove {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--color-danger, #dc3545);
+  cursor: pointer;
+  font-size: 1.3em;
+  opacity: 0.6;
+  padding: 4px;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.clinical-trial-remove:hover {
+  opacity: 1;
+  background: rgba(220, 53, 69, 0.1);
+  transform: scale(1.1);
+}
+
+.clinical-trials-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.nct-input {
+  flex: 1;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-family: 'Courier New', monospace;
+  transition: all 0.3s ease;
+}
+
+.nct-input:focus {
+  border-color: var(--color-clinical, #e74c3c);
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+  outline: none;
+}
+
+.nct-input::placeholder {
+  font-family: inherit;
+  opacity: 0.7;
+}
+
+/* ===== ENHANCED ANIMATIONS ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Loading states */
+.mesh-term.loading,
+.clinical-trial-card.loading {
+  animation: pulse 1.5s infinite;
+  opacity: 0.7;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .mesh-section,
+  .clinical-trials-section {
+    padding: 12px;
+    margin: 12px 0;
+  }
+  
+  .mesh-controls,
+  .clinical-trials-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .clinical-trial-header {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  
+  .clinical-trial-phase {
+    align-self: flex-start;
+  }
+  
+  .mesh-term {
+    margin: 2px 2px 2px 0;
+    font-size: 0.8em;
+    padding: 4px 10px;
+  }
+  
+  .clinical-trial-remove {
+    position: static;
+    margin-top: 8px;
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .mesh-list,
+  .clinical-trials-list {
+    max-height: 150px;
+  }
+  
+  .clinical-trial-details {
+    font-size: 0.75em;
+    padding: 6px;
+  }
+  
+  .mesh-term {
+    font-size: 0.75em;
+    padding: 3px 8px;
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .mesh-section,
+  .clinical-trials-section {
+    border: 1px solid #000;
+    box-shadow: none;
+    background: white;
+    page-break-inside: avoid;
+  }
+  
+  .mesh-term {
+    background: #f0f0f0;
+    color: #000;
+    border: 1px solid #000;
+  }
+  
+  .clinical-trial-card {
+    border: 1px solid #000;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+  
+  .remove-mesh,
+  .clinical-trial-remove,
+  .mesh-controls,
+  .clinical-trials-controls {
+    display: none;
+  }
+  
+  .clinical-trial-phase {
+    background: #f0f0f0;
+    color: #000;
+    border: 1px solid #000;
+  }
+}
+
+/* ===== DARK THEME SUPPORT ===== */
+.theme-dark .mesh-section,
+.theme-dark .clinical-trials-section {
+  background: var(--background-secondary-dark, #2d3748);
+  border-color: var(--border-color-dark, #4a5568);
+}
+
+.theme-dark .mesh-list,
+.theme-dark .clinical-trial-card {
+  background: var(--background-primary-dark, #1a202c);
+  border-color: var(--border-color-dark, #4a5568);
+}
+
+.theme-dark .clinical-trial-title {
+  color: var(--text-primary-dark, #f7fafc);
+}
+
+.theme-dark .clinical-trial-status,
+.theme-dark .clinical-trial-details {
+  color: var(--text-secondary-dark, #a0aec0);
+}
+
+.theme-dark .clinical-trial-details {
+  background: var(--background-secondary-dark, #2d3748);
+}
+
+.theme-dark .mesh-empty,
+.theme-dark .clinical-trials-empty {
+  color: var(--text-muted-dark, #718096);
+}
+
+.theme-dark .clinical-trial-placeholder {
+  background: var(--color-warning-dark, #d69e2e);
+  color: var(--background-primary-dark, #1a202c);
+}
+
+/* ===== HIGH CONTRAST THEME SUPPORT ===== */
+.theme-high-contrast .mesh-term,
+.theme-high-contrast .field-badge,
+.theme-high-contrast .clinical-trial-phase {
+  border: 2px solid var(--border-contrast, #000);
+  font-weight: bold;
+}
+
+.theme-high-contrast .mesh-section,
+.theme-high-contrast .clinical-trials-section,
+.theme-high-contrast .mesh-list,
+.theme-high-contrast .clinical-trial-card {
+  border: 2px solid var(--border-contrast, #000);
+}
+
+.theme-high-contrast .clinical-trial-details {
+  border-left-width: 4px;
+}
+
+/* ===== ACCESSIBILITY ENHANCEMENTS ===== */
+.mesh-term:focus,
+.clinical-trial-card:focus {
+  outline: 2px solid var(--color-primary, #007bff);
+  outline-offset: 2px;
+}
+
+.remove-mesh:focus,
+.clinical-trial-remove:focus {
+  outline: 2px solid var(--color-danger, #dc3545);
+  outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Enhanced focus indicators for keyboard navigation */
+.mesh-input:focus,
+.nct-input:focus {
+  outline: 2px solid var(--color-primary, #007bff);
+  outline-offset: 2px;
+}
+
+/* Tooltips for enhanced UX */
+.mesh-term[title]:hover::after,
+.clinical-trial-phase[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--background-dark, #333);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 4px;
+}
+
+/* Enhanced error states */
+.mesh-input.error,
+.nct-input.error {
+  border-color: var(--color-danger, #dc3545);
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+.error-message {
+  color: var(--color-danger, #dc3545);
+  font-size: 0.8em;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.error-message::before {
+  content: "⚠️";
+}
+
+/* Success states */
+.mesh-input.success,
+.nct-input.success {
+  border-color: var(--color-success, #28a745);
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+.success-message {
+  color: var(--color-success, #28a745);
+  font-size: 0.8em;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.success-message::before {
+  content: "✅";
+}
