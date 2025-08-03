@@ -353,6 +353,10 @@
         
       } catch (error) {
         console.warn('Service Worker registration failed:', error);
+         console.log(e instanceof TypeError); // true
+  console.log(error.message); // "null has no properties"
+  console.log(error.name); // "TypeError"
+  console.log(error.stack); // Stack of the error
       }
     }
   }
