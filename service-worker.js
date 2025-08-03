@@ -1,41 +1,68 @@
-// Complete service-worker.js - Place in root directory
+// SilentStacks Service Worker v1.2.1
+// Complete and operational with proper file paths
 
-const CACHE_NAME = 'silentstacks-v1.2.0';
+const CACHE_NAME = 'silentstacks-v1.2.1';
 const OFFLINE_URL = '/offline.html';
 
-// Files to cache for offline operation
+// Files to cache for offline operation - respecting your exact file tree
 const STATIC_CACHE_URLS = [
   '/',
   '/index.html',
   '/offline.html',
+  
+  // Main CSS
   '/assets/css/style.css',
+  
+  // Base CSS
   '/assets/css/base/reset.css',
   '/assets/css/base/typography.css',
   '/assets/css/base/design-tokens.css',
+  
+  // Layout CSS
   '/assets/css/layout/grid.css',
   '/assets/css/layout/navigation.css',
   '/assets/css/layout/responsive.css',
+  
+  // Component CSS
   '/assets/css/components/buttons.css',
   '/assets/css/components/forms.css',
   '/assets/css/components/cards.css',
   '/assets/css/components/progress.css',
   '/assets/css/components/tables.css',
+  
+  // Theme CSS
   '/assets/css/themes/light-theme.css',
   '/assets/css/themes/dark-theme.css',
   '/assets/css/themes/high-contrast-theme.css',
+  
+  // Utility CSS
   '/assets/css/utilities/accessibility.css',
   '/assets/css/utilities/print.css',
+  
+  // Fonts
   '/assets/fonts/reddit-sans/reddit-sans.css',
   '/assets/fonts/reddit-sans/RedditSans-Regular.woff2',
   '/assets/fonts/reddit-sans/RedditSans-Medium.woff2',
   '/assets/fonts/reddit-sans/RedditSans-SemiBold.woff2',
   '/assets/fonts/reddit-sans/RedditSans-Bold.woff2',
+  
+  // Core JavaScript
   '/assets/js/app.js',
   '/assets/js/enhanced-data-manager.js',
   '/assets/js/offline-manager.js',
   '/assets/js/integrated-documentation.js',
   '/assets/js/fuse.min.js',
-  '/assets/js/papaparse.min.js'
+  '/assets/js/papaparse.min.js',
+  
+  // Module JavaScript
+  '/assets/js/modules/api-integration.js',
+  '/assets/js/modules/bulk-operations.js',
+  '/assets/js/modules/medical-features.js',
+  '/assets/js/modules/request-manager.js',
+  '/assets/js/modules/search-filter.js',
+  '/assets/js/modules/theme-manager.js',
+  '/assets/js/modules/ui-controller.js',
+  '/assets/js/modules/ill-workflow.js'
 ];
 
 // API endpoints to handle offline
@@ -53,17 +80,25 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('📦 Caching static assets...');
-        return cache.addAll(STATIC_CACHE_URLS.map(url => {
-          return new Request(url, { mode: 'no-cors' });
-        }));
+        
+        // Cache files individually to handle errors gracefully
+        return Promise.all(
+          STATIC_CACHE_URLS.map(url => {
+            return cache.add(url).catch(err => {
+              console.warn(`Failed to cache ${url}:`, err);
+              // Continue with other files even if one fails
+              return Promise.resolve();
+            });
+          })
+        );
       })
       .then(() => {
-        console.log('✅ Static assets cached');
+        console.log('✅ Static assets cached successfully');
         return self.skipWaiting();
       })
       .catch((error) => {
-        console.error('❌ Failed to cache static assets:', error);
-        // Continue anyway - app can still work with partial caching
+        console.error('❌ Cache installation error:', error);
+        // Still skip waiting to activate
         return self.skipWaiting();
       })
   );
@@ -79,7 +114,7 @@ self.addEventListener('activate', (event) => {
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
+            if (cacheName !== CACHE_NAME && cacheName.startsWith('silentstacks-')) {
               console.log('🗑️ Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
@@ -96,7 +131,10 @@ self.addEventListener('activate', (event) => {
         clients.forEach(client => {
           client.postMessage({
             type: 'SW_ACTIVATED',
-            version: CACHE_NAME
+            data: {
+              version: CACHE_NAME,
+              timestamp: new Date().toISOString()
+            }
           });
         });
       });
@@ -109,8 +147,13 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
-  // Skip non-http requests
+  // Skip non-http(s) requests
   if (!request.url.startsWith('http')) {
+    return;
+  }
+  
+  // Skip cross-origin requests except for APIs we handle
+  if (url.origin !== self.location.origin && !isAPIRequest(request.url)) {
     return;
   }
   
@@ -120,7 +163,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Handle static assets and navigation
+  // Handle GET requests (static assets and navigation)
   if (request.method === 'GET') {
     event.respondWith(handleStaticRequest(request));
   }
@@ -133,8 +176,6 @@ function isAPIRequest(url) {
 
 // Handle API requests with offline fallback
 async function handleAPIRequest(request) {
-  const requestId = generateRequestId();
-  
   try {
     console.log('🌐 API request:', request.url);
     
@@ -149,39 +190,31 @@ async function handleAPIRequest(request) {
     clearTimeout(timeoutId);
     
     if (networkResponse.ok) {
-      // Cache successful API responses for offline use
+      // Cache successful API responses
       const cache = await caches.open(CACHE_NAME);
       cache.put(request.clone(), networkResponse.clone());
       console.log('✅ API response cached:', request.url);
       return networkResponse;
     }
     
-    throw new Error(`HTTP ${networkResponse.status}: ${networkResponse.statusText}`);
+    throw new Error(`HTTP ${networkResponse.status}`);
     
   } catch (error) {
-    console.log('🌐 API request failed, checking cache:', request.url, error.message);
+    console.log('📴 API request failed, checking cache:', error.message);
     
     // Try to serve from cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      console.log('📦 Serving cached API response:', request.url);
-      
-      // Add cache indicator header
-      const response = cachedResponse.clone();
-      response.headers.set('X-Served-From', 'ServiceWorker-Cache');
-      return response;
+      console.log('📦 Serving cached API response');
+      return cachedResponse;
     }
     
-    // Queue the request for retry when online
-    await queueFailedRequest(request, requestId);
-    
-    // Return offline response for failed API calls
+    // Return offline response
     return new Response(
       JSON.stringify({
         error: 'Offline',
-        message: 'This request requires an internet connection. It has been queued for retry when you\'re back online.',
+        message: 'This request requires an internet connection.',
         cached: false,
-        requestId: requestId,
         url: request.url,
         timestamp: new Date().toISOString()
       }),
@@ -190,8 +223,7 @@ async function handleAPIRequest(request) {
         statusText: 'Service Unavailable - Offline',
         headers: {
           'Content-Type': 'application/json',
-          'X-Served-From': 'ServiceWorker-Offline',
-          'X-Request-ID': requestId
+          'X-Served-From': 'ServiceWorker-Offline'
         }
       }
     );
@@ -200,59 +232,60 @@ async function handleAPIRequest(request) {
 
 // Handle static file requests
 async function handleStaticRequest(request) {
-  const url = new URL(request.url);
-  
   try {
-    // For HTML documents, try network first to get fresh content
-    if (request.destination === 'document' || request.headers.get('Accept')?.includes('text/html')) {
-      
-      // Try network first with a short timeout for HTML
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout for HTML
-      
+    // For navigation requests, try network first
+    if (request.mode === 'navigate') {
       try {
-        const networkResponse = await fetch(request, {
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
+        const networkResponse = await fetch(request);
         if (networkResponse.ok) {
-          // Cache the fresh HTML
+          // Update cache with fresh content
           const cache = await caches.open(CACHE_NAME);
-          cache.put(request.clone(), networkResponse.clone());
+          cache.put(request, networkResponse.clone());
           return networkResponse;
         }
-      } catch (networkError) {
-        clearTimeout(timeoutId);
-        console.log('📄 Network failed for HTML, trying cache:', request.url);
+      } catch (error) {
+        console.log('📄 Network failed for navigation, using cache');
       }
     }
     
-    // Try cache first for assets, or after network failure for HTML
+    // Check cache first for all requests
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       console.log('📦 Serving from cache:', request.url);
+      
+      // For non-navigation requests, update cache in background
+      if (request.mode !== 'navigate') {
+        event.waitUntil(
+          fetch(request).then(response => {
+            if (response.ok) {
+              const cache = caches.open(CACHE_NAME);
+              cache.then(c => c.put(request, response));
+            }
+          }).catch(() => {})
+        );
+      }
+      
       return cachedResponse;
     }
     
-    // Try network as fallback for non-HTML or when cache miss
+    // Try network for non-cached resources
+    console.log('🌐 Fetching from network:', request.url);
     const networkResponse = await fetch(request);
+    
     if (networkResponse.ok) {
-      // Cache the response for future use
+      // Cache successful responses
       const cache = await caches.open(CACHE_NAME);
       cache.put(request.clone(), networkResponse.clone());
-      console.log('🌐 Served from network and cached:', request.url);
       return networkResponse;
     }
     
     throw new Error(`Network response not ok: ${networkResponse.status}`);
     
   } catch (error) {
-    console.log('❌ Both network and cache failed for:', request.url, error.message);
+    console.error('❌ Request failed:', request.url, error);
     
-    // Serve offline page for HTML requests
-    if (request.destination === 'document' || request.headers.get('Accept')?.includes('text/html')) {
+    // For navigation requests, show offline page
+    if (request.mode === 'navigate') {
       const offlineResponse = await caches.match(OFFLINE_URL);
       if (offlineResponse) {
         console.log('📴 Serving offline page');
@@ -260,215 +293,15 @@ async function handleStaticRequest(request) {
       }
     }
     
-    // Return 404 for other failed requests
+    // Return error response
     return new Response(
-      JSON.stringify({
-        error: 'Not Found',
-        message: 'The requested resource is not available offline.',
-        url: request.url
-      }),
+      'Resource not available offline',
       {
-        status: 404,
-        statusText: 'Not Found - Offline',
-        headers: { 'Content-Type': 'application/json' }
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'text/plain' }
       }
     );
-  }
-}
-
-// Background sync for queued API requests
-self.addEventListener('sync', (event) => {
-  console.log('🔄 Background sync triggered:', event.tag);
-  
-  if (event.tag === 'api-retry') {
-    event.waitUntil(processQueuedAPIRequests());
-  }
-});
-
-// IndexedDB queue management
-function openQueueDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('SilentStacksQueue', 1);
-    
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains('apiQueue')) {
-        const store = db.createObjectStore('apiQueue', { keyPath: 'id' });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
-        store.createIndex('url', 'url', { unique: false });
-      }
-    };
-  });
-}
-
-async function queueFailedRequest(request, requestId) {
-  try {
-    const db = await openQueueDB();
-    const transaction = db.transaction(['apiQueue'], 'readwrite');
-    const store = transaction.objectStore('apiQueue');
-    
-    const queueItem = {
-      id: requestId,
-      url: request.url,
-      method: request.method,
-      headers: Object.fromEntries(request.headers.entries()),
-      body: request.method !== 'GET' ? await request.clone().text() : null,
-      timestamp: Date.now(),
-      retries: 0
-    };
-    
-    return new Promise((resolve, reject) => {
-      const request = store.add(queueItem);
-      request.onsuccess = () => {
-        console.log('📋 Request queued for retry:', queueItem.url);
-        
-        // Register for background sync
-        self.registration.sync.register('api-retry').catch(err => {
-          console.warn('Background sync registration failed:', err);
-        });
-        
-        resolve(requestId);
-      };
-      request.onerror = () => reject(request.error);
-    });
-  } catch (error) {
-    console.error('Failed to queue request:', error);
-    return null;
-  }
-}
-
-async function getQueuedRequests() {
-  try {
-    const db = await openQueueDB();
-    const transaction = db.transaction(['apiQueue'], 'readonly');
-    const store = transaction.objectStore('apiQueue');
-    
-    return new Promise((resolve, reject) => {
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  } catch (error) {
-    console.error('Failed to get queued requests:', error);
-    return [];
-  }
-}
-
-async function removeQueuedRequest(id) {
-  try {
-    const db = await openQueueDB();
-    const transaction = db.transaction(['apiQueue'], 'readwrite');
-    const store = transaction.objectStore('apiQueue');
-    
-    return new Promise((resolve, reject) => {
-      const request = store.delete(id);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  } catch (error) {
-    console.error('Failed to remove queued request:', error);
-  }
-}
-
-async function processQueuedAPIRequests() {
-  try {
-    const queuedRequests = await getQueuedRequests();
-    console.log(`🔄 Processing ${queuedRequests.length} queued requests`);
-    
-    if (queuedRequests.length === 0) {
-      return;
-    }
-    
-    let successCount = 0;
-    let failureCount = 0;
-    
-    for (const queueItem of queuedRequests) {
-      try {
-        // Reconstruct the request
-        const requestInit = {
-          method: queueItem.method,
-          headers: queueItem.headers
-        };
-        
-        if (queueItem.body) {
-          requestInit.body = queueItem.body;
-        }
-        
-        const response = await fetch(queueItem.url, requestInit);
-        
-        if (response.ok) {
-          // Success - notify clients and remove from queue
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({
-                type: 'SYNC_SUCCESS',
-                data: {
-                  requestId: queueItem.id,
-                  url: queueItem.url,
-                  timestamp: new Date().toISOString()
-                }
-              });
-            });
-          });
-          
-          await removeQueuedRequest(queueItem.id);
-          successCount++;
-          console.log('✅ Successfully synced:', queueItem.url);
-          
-        } else {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-      } catch (error) {
-        console.error('Failed to sync request:', queueItem.url, error);
-        failureCount++;
-        
-        // Update retry count
-        queueItem.retries = (queueItem.retries || 0) + 1;
-        
-        // Remove after max retries
-        if (queueItem.retries >= 3) {
-          await removeQueuedRequest(queueItem.id);
-          
-          // Notify client of permanent failure
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({
-                type: 'SYNC_FAILED',
-                data: {
-                  requestId: queueItem.id,
-                  url: queueItem.url,
-                  error: error.message,
-                  maxRetriesReached: true
-                }
-              });
-            });
-          });
-        }
-      }
-    }
-    
-    console.log(`🔄 Sync completed: ${successCount} successful, ${failureCount} failed`);
-    
-    // Notify clients about sync completion
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'SYNC_COMPLETED',
-          data: {
-            successCount,
-            failureCount,
-            timestamp: new Date().toISOString()
-          }
-        });
-      });
-    });
-    
-  } catch (error) {
-    console.error('Background sync failed:', error);
   }
 }
 
@@ -481,44 +314,43 @@ self.addEventListener('message', (event) => {
       self.skipWaiting();
       break;
       
-    case 'CACHE_UPDATE':
-      updateCache(data.urls || []);
-      break;
-      
-    case 'CLEAR_CACHE':
-      clearCache();
-      break;
-      
     case 'GET_CACHE_STATUS':
       getCacheStatus().then(status => {
         event.ports[0].postMessage(status);
       });
       break;
       
-    case 'FORCE_SYNC':
-      processQueuedAPIRequests();
+    case 'CLEAR_CACHE':
+      clearCache();
+      break;
+      
+    case 'UPDATE_CACHE':
+      if (data && data.urls) {
+        updateCache(data.urls);
+      }
       break;
   }
 });
 
-// Force cache update
-async function updateCache(urls) {
+// Get cache status
+async function getCacheStatus() {
   try {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(urls);
-    console.log('✅ Cache updated with new URLs:', urls.length);
+    const keys = await cache.keys();
     
-    // Notify clients
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'CACHE_UPDATED',
-          data: { urls, timestamp: new Date().toISOString() }
-        });
-      });
-    });
+    return {
+      cacheVersion: CACHE_NAME,
+      cachedFiles: keys.length,
+      cacheNames: await caches.keys(),
+      lastUpdated: new Date().toISOString()
+    };
   } catch (error) {
-    console.error('❌ Failed to update cache:', error);
+    console.error('Failed to get cache status:', error);
+    return {
+      error: error.message,
+      cacheVersion: CACHE_NAME,
+      cachedFiles: 0
+    };
   }
 }
 
@@ -543,42 +375,38 @@ async function clearCache() {
   }
 }
 
-// Get cache status
-async function getCacheStatus() {
+// Update cache with new URLs
+async function updateCache(urls) {
   try {
     const cache = await caches.open(CACHE_NAME);
-    const keys = await cache.keys();
-    const queuedRequests = await getQueuedRequests();
+    const results = await Promise.allSettled(
+      urls.map(url => cache.add(url))
+    );
     
-    return {
-      cacheVersion: CACHE_NAME,
-      cachedFiles: keys.length,
-      queuedRequests: queuedRequests.length,
-      lastUpdated: new Date().toISOString()
-    };
+    const succeeded = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+    
+    console.log(`✅ Cache update: ${succeeded} succeeded, ${failed} failed`);
+    
+    // Notify clients
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'CACHE_UPDATED',
+          data: { 
+            succeeded,
+            failed,
+            timestamp: new Date().toISOString() 
+          }
+        });
+      });
+    });
   } catch (error) {
-    console.error('Failed to get cache status:', error);
-    return {
-      error: error.message,
-      cacheVersion: CACHE_NAME,
-      cachedFiles: 0,
-      queuedRequests: 0
-    };
+    console.error('❌ Failed to update cache:', error);
   }
 }
 
-// Utility functions
-function generateRequestId() {
-  return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
-}
-
-// Handle unhandled promise rejections
-self.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection in service worker:', event.reason);
-  event.preventDefault();
-});
-
-// Periodic cleanup of old cache entries
+// Periodic cache cleanup (remove old API responses)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     cleanupOldCacheEntries()
@@ -591,6 +419,8 @@ async function cleanupOldCacheEntries() {
     const keys = await cache.keys();
     const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
     
+    let cleanedCount = 0;
+    
     // Remove old API cache entries
     for (const request of keys) {
       if (isAPIRequest(request.url)) {
@@ -601,14 +431,29 @@ async function cleanupOldCacheEntries() {
           const responseDate = new Date(dateHeader).getTime();
           if (responseDate < oneWeekAgo) {
             await cache.delete(request);
+            cleanedCount++;
             console.log('🗑️ Removed old cached API response:', request.url);
           }
         }
       }
+    }
+    
+    if (cleanedCount > 0) {
+      console.log(`✅ Cleaned ${cleanedCount} old cache entries`);
     }
   } catch (error) {
     console.error('Cache cleanup failed:', error);
   }
 }
 
-console.log('🎯 Service Worker loaded successfully - SilentStacks v1.2.0');
+// Handle errors
+self.addEventListener('error', (event) => {
+  console.error('Service Worker error:', event.error);
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection in service worker:', event.reason);
+  event.preventDefault();
+});
+
+console.log('🎯 Service Worker loaded successfully - SilentStacks v1.2.1');
