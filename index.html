@@ -21,7 +21,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Use relative path for GitHub Pages compatibility
-        const swPath = './service-worker.js';
+        const swPath = '/service-worker.js';
         
         navigator.serviceWorker.register(swPath)
           .then(registration => {
