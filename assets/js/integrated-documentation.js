@@ -1589,4 +1589,160 @@ function getGuideData(guideKey) {
   
   return DOCUMENTATION[guideKey];
 }
+// Global documentation functions for HTML onclick handlers
+window.closeDocumentation = function() {
+  const container = document.getElementById('documentation-container');
+  if (container) {
+    container.classList.add('hidden');
+    document.body.classList.remove('documentation-open');
+    
+    // Focus management - return focus to previously focused element
+    if (window.lastFocusedElement) {
+      window.lastFocusedElement.focus();
+    }
+  }
+  console.log('📚 Documentation closed');
+};
+
+window.printDocumentation = function() {
+  console.log('🖨️ Printing documentation...');
+  
+  // Create print-friendly version
+  const container = document.getElementById('documentation-container');
+  if (!container) {
+    alert('Documentation not available for printing');
+    return;
+  }
+  
+  // Get the content area
+  const content = container.querySelector('.documentation-content');
+  if (!content) {
+    alert('Documentation content not found');
+    return;
+  }
+  
+  // Create a new window for printing
+  const printWindow = window.open('', '_blank', 'width=800,height=600');
+  const printContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>SilentStacks Documentation</title>
+        <style>
+            body {
+                font-family: 'Reddit Sans', Arial, sans-serif;
+                line-height: 1.6;
+                color: #000;
+                background: #fff;
+                margin: 20px;
+                font-size: 12pt;
+            }
+            h1, h2, h3 { color: #0066cc; margin-top: 24pt; }
+            h1 { font-size: 18pt; border-bottom: 2pt solid #0066cc; }
+            h2 { font-size: 16pt; }
+            h3 { font-size: 14pt; }
+            .section { margin-bottom: 20pt; page-break-inside: avoid; }
+            .code-block { 
+                background: #f5f5f5; 
+                border: 1pt solid #ddd; 
+                padding: 8pt; 
+                font-family: monospace;
+                font-size: 10pt;
+            }
+            @page { margin: 1in; }
+            .no-print { display: none; }
+        </style>
+    </head>
+    <body>
+        <h1>SilentStacks Documentation</h1>
+        <p><strong>Printed:</strong> ${new Date().toLocaleString()}</p>
+        ${content.innerHTML}
+    </body>
+    </html>
+  `;
+  
+  printWindow.document.write(printContent);
+  printWindow.document.close();
+  
+  // Wait for content to load, then print
+  printWindow.onload = function() {
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+};
+
+window.exportDocumentation = function() {
+  console.log('📄 Exporting documentation...');
+  
+  try {
+    const container = document.getElementById('documentation-container');
+    if (!container) {
+      alert('Documentation not available for export');
+      return;
+    }
+    
+    const content = container.querySelector('.documentation-content');
+    if (!content) {
+      alert('Documentation content not found');
+      return;
+    }
+    
+    // Create markdown version of the documentation
+    const sections = content.querySelectorAll('.doc-section');
+    let markdownContent = '# SilentStacks Documentation\n\n';
+    markdownContent += `**Generated:** ${new Date().toLocaleString()}\n\n`;
+    markdownContent += '---\n\n';
+    
+    sections.forEach(section => {
+      const title = section.querySelector('h2, h3')?.textContent;
+      const text = section.textContent;
+      
+      if (title) {
+        markdownContent += `## ${title}\n\n`;
+      }
+      
+      // Clean up the text content
+      const cleanText = text
+        .replace(/\s+/g, ' ')
+        .replace(/^\s*/, '')
+        .replace(/\s*$/, '')
+        .replace(title || '', '');
+      
+      if (cleanText.trim()) {
+        markdownContent += `${cleanText.trim()}\n\n`;
+      }
+    });
+    
+    // Create and download the file
+    const blob = new Blob([markdownContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `silentstacks-documentation-${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    URL.revokeObjectURL(url);
+    
+    console.log('✅ Documentation exported successfully');
+    
+    // Show success message
+    const originalText = 'Export Documentation';
+    const exportBtn = document.querySelector('[onclick="exportDocumentation()"]');
+    if (exportBtn) {
+      exportBtn.textContent = 'Exported!';
+      setTimeout(() => {
+        exportBtn.textContent = originalText;
+      }, 2000);
+    }
+    
+  } catch (error) {
+    console.error('Export failed:', error);
+    alert(`Export failed: ${error.message}`);
+  }
+};
 })();
