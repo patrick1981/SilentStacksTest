@@ -1306,5 +1306,287 @@ async function lookupPMID(pmid) {
 
   // Export for global access
   window.DocumentationSystem = DocumentationSystem;
+// Missing Documentation Functions - Add to your integrated-documentation.js or in script tags
 
+// Make functions globally available
+window.closeDocumentation = function() {
+  const container = document.getElementById('documentation-container');
+  if (!container) return;
+  
+  container.classList.add('hidden');
+  document.body.classList.remove('documentation-open');
+  
+  // Return focus to help button
+  const helpButton = document.querySelector('.help-tab');
+  if (helpButton) helpButton.focus();
+  
+  console.log('📚 Documentation closed');
+};
+
+window.printDocumentation = function() {
+  const currentGuide = getCurrentGuide();
+  const guide = getGuideData(currentGuide);
+  
+  if (!guide) {
+    alert('No guide data available to print');
+    return;
+  }
+  
+  // Create printable version
+  const printContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${guide.title} - SilentStacks Documentation</title>
+      <style>
+        body { 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+          line-height: 1.6; 
+          margin: 40px; 
+          color: #333;
+        }
+        h1 { 
+          color: #0066cc; 
+          border-bottom: 2px solid #0066cc; 
+          padding-bottom: 10px; 
+          font-size: 28px;
+        }
+        h2 { 
+          color: #333; 
+          margin-top: 30px; 
+          font-size: 20px;
+          page-break-after: avoid;
+        }
+        h3 { 
+          color: #666; 
+          margin-top: 25px;
+          font-size: 16px;
+        }
+        h4 { 
+          color: #333; 
+          margin-top: 20px; 
+          font-size: 14px;
+        }
+        .help-tip, .help-warning, .help-emergency { 
+          padding: 15px; 
+          margin: 15px 0; 
+          border-radius: 6px; 
+          page-break-inside: avoid;
+        }
+        .help-tip { 
+          background: #e8f4fd; 
+          border-left: 4px solid #0066cc; 
+        }
+        .help-warning { 
+          background: #fff3cd; 
+          border-left: 4px solid #ffc107; 
+        }
+        .help-emergency { 
+          background: #f8d7da; 
+          border-left: 4px solid #dc3545; 
+        }
+        pre { 
+          background: #f8f9fa; 
+          padding: 15px; 
+          border-radius: 6px; 
+          overflow-x: auto; 
+          font-size: 12px;
+          page-break-inside: avoid;
+        }
+        code { 
+          background: #f8f9fa; 
+          padding: 2px 6px; 
+          border-radius: 3px; 
+          font-size: 12px;
+        }
+        table { 
+          border-collapse: collapse; 
+          width: 100%; 
+          margin: 15px 0; 
+        }
+        th, td { 
+          border: 1px solid #ddd; 
+          padding: 8px; 
+          text-align: left; 
+        }
+        th { 
+          background: #f8f9fa; 
+          font-weight: 600;
+        }
+        ol, ul { 
+          padding-left: 20px; 
+        }
+        li {
+          margin-bottom: 5px;
+        }
+        .status-examples span { 
+          padding: 4px 8px; 
+          border-radius: 12px; 
+          font-size: 11px; 
+          margin-right: 10px; 
+          display: inline-block; 
+          margin-bottom: 5px;
+          border: 1px solid #ccc;
+        }
+        @page { 
+          margin: 1in; 
+          @bottom-right {
+            content: "Page " counter(page);
+          }
+        }
+        @media print { 
+          body { margin: 0; }
+          h1, h2, h3 { page-break-after: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>${guide.icon} ${guide.title}</h1>
+      <p><strong>SilentStacks Documentation v1.2.1</strong> • Generated: ${new Date().toLocaleDateString()}</p>
+      
+      ${guide.sections.map(section => `
+        <h2>${section.title}</h2>
+        <div>${section.content}</div>
+      `).join('')}
+      
+      <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+        SilentStacks v1.2.1 - Document Request Management System<br>
+        Generated: ${new Date().toLocaleString()}
+      </footer>
+    </body>
+    </html>
+  `;
+  
+  // Open print window
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(printContent);
+  printWindow.document.close();
+  printWindow.focus();
+  
+  // Small delay then print
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+  
+  console.log('🖨️ Documentation sent to printer');
+};
+
+window.exportDocumentation = function() {
+  const currentGuide = getCurrentGuide();
+  const guide = getGuideData(currentGuide);
+  
+  if (!guide) {
+    alert('No guide data available to export');
+    return;
+  }
+  
+  // Create markdown version for export
+  let markdown = `# ${guide.icon} ${guide.title}\n\n`;
+  markdown += `**SilentStacks Documentation v1.2.1** • Generated: ${new Date().toLocaleDateString()}\n\n`;
+  
+  guide.sections.forEach(section => {
+    markdown += `## ${section.title}\n\n`;
+    
+    // Convert HTML to markdown (basic conversion)
+    let content = section.content
+      .replace(/<h3>(.*?)<\/h3>/g, '### $1\n')
+      .replace(/<h4>(.*?)<\/h4>/g, '#### $1\n')
+      .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+      .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+      .replace(/<code>(.*?)<\/code>/g, '`$1`')
+      .replace(/<pre>(.*?)<\/pre>/gs, '```\n$1\n```\n')
+      .replace(/<li>(.*?)<\/li>/g, '- $1\n')
+      .replace(/<ol[^>]*>|<\/ol>/g, '')
+      .replace(/<ul[^>]*>|<\/ul>/g, '')
+      .replace(/<[^>]+>/g, ''); // Remove remaining HTML tags
+    
+    markdown += content + '\n\n';
+  });
+  
+  // Create and download file
+  const blob = new Blob([markdown], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `silentstacks-${currentGuide}-${new Date().toISOString().split('T')[0]}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  URL.revokeObjectURL(url);
+  
+  console.log('💾 Documentation exported successfully');
+  alert('Documentation exported successfully!');
+};
+
+// Helper functions to get current guide data
+function getCurrentGuide() {
+  // Try to find active guide button
+  const activeBtn = document.querySelector('.doc-nav-btn.active');
+  if (activeBtn) {
+    return activeBtn.dataset.guide;
+  }
+  return 'user_manual'; // default
+}
+
+function getGuideData(guideKey) {
+  // This should match the DOCUMENTATION object from integrated-documentation.js
+  const DOCUMENTATION = {
+    user_manual: {
+      title: "User's Manual",
+      icon: "👤",
+      sections: [
+        {
+          title: "Getting Started",
+          content: `
+            <h3>Welcome to SilentStacks v1.2.1!</h3>
+            <p>SilentStacks is your comprehensive document request management system with critical performance enhancements.</p>
+            
+            <h4>First Steps:</h4>
+            <ol>
+              <li><strong>Add Your First Request:</strong> Click the "Add Request" tab</li>
+              <li><strong>Use Auto-Lookup:</strong> Enter PMID or DOI for automatic metadata</li>
+              <li><strong>Organize with Tags:</strong> Add colored tags for categorization</li>
+              <li><strong>Track Progress:</strong> Update status as you work</li>
+            </ol>
+            
+            <div class="help-tip">
+              <strong>💡 Pro Tip:</strong> Use bulk entry for multiple requests. Performance mode automatically activates for large imports.
+            </div>
+          `
+        }
+        // Add more sections as needed
+      ]
+    },
+    developer_guide: {
+      title: "Developer's Guide", 
+      icon: "👩‍💻",
+      sections: [
+        {
+          title: "Architecture Overview",
+          content: `
+            <h3>SilentStacks v1.2.1 Architecture</h3>
+            <p>Enhanced with critical performance fixes and memory management.</p>
+          `
+        }
+      ]
+    },
+    upkeep_guide: {
+      title: "Upkeep Guide",
+      icon: "🔧", 
+      sections: [
+        {
+          title: "Performance Monitoring",
+          content: `
+            <h3>Critical Performance Management</h3>
+            <p>v1.2.1 includes essential performance safeguards for large datasets.</p>
+          `
+        }
+      ]
+    }
+  };
+  
+  return DOCUMENTATION[guideKey];
+}
 })();
