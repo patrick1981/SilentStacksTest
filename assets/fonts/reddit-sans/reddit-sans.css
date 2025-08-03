@@ -1,0 +1,66 @@
+/* Reddit Sans Font Self-Hosted Setup */
+
+/* Create this structure in your project:
+   assets/fonts/reddit-sans/
+   ├── RedditSans-Regular.woff2
+   ├── RedditSans-Medium.woff2
+   ├── RedditSans-SemiBold.woff2
+   ├── RedditSans-Bold.woff2
+   └── reddit-sans.css (this file)
+*/
+
+/* Regular Weight */
+@font-face {
+  font-family: 'Reddit Sans';
+  src: url('./RedditSans-Regular.woff2') format('woff2'),
+       url('./RedditSans-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Medium Weight */
+@font-face {
+  font-family: 'Reddit Sans';
+  src: url('./RedditSans-Medium.woff2') format('woff2'),
+       url('./RedditSans-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* SemiBold Weight */
+@font-face {
+  font-family: 'Reddit Sans';
+  src: url('./RedditSans-SemiBold.woff2') format('woff2'),
+       url('./RedditSans-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Bold Weight */
+@font-face {
+  font-family: 'Reddit Sans';
+  src: url('./RedditSans-Bold.woff2') format('woff2'),
+       url('./RedditSans-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Font Loading Optimization */
+.font-loading {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.font-loaded {
+  font-family: 'Reddit Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+/* Preload Critical Fonts - Add to HTML <head> */
+/*
+<link rel="preload" href="assets/fonts/reddit-sans/RedditSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/reddit-sans/RedditSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/reddit-sans/RedditSans-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+*/
