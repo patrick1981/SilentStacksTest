@@ -20,11 +20,40 @@
   <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(reg => console.log('Service Worker registered'))
-      .catch(err => console.error('Service Worker registration failed:', err));
+    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+      .then(reg => {
+        console.log('SW registered:', reg);
+
+        if (reg.installing) {
+          trackState(reg.installing);
+        } else if (reg.waiting) {
+          trackState(reg.waiting);
+        } else if (reg.active) {
+          trackState(reg.active);
+        }
+
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          trackState(newSW);
+          newSW.addEventListener('statechange', () => {
+            trackState(newSW);
+          });
+        });
+
+        function trackState(worker) {
+          if (!worker) return;
+          console.log('SW state:', worker.state);
+          worker.addEventListener('statechange', () => {
+            console.log('SW state changed to:', worker.state);
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Service Worker registration failed (outer):', err);
+      });
   });
 }
+
   </script>
   
   <!-- Font Loading Optimization -->
