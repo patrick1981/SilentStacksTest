@@ -192,7 +192,7 @@
               <li><strong>enhanced-data-manager.js:</strong> Data storage, validation, performance</li>
               <li><strong>offline-manager.js:</strong> Offline detection, request queuing</li>
               <li><strong>integrated-documentation.js:</strong> This help system</li>
-              <li><strong>silentstacks.js:</strong> Main application logic</li>
+              <li><strong>app.js:</strong> Main application logic</li>
             </ul>
             
             <h4>Key Design Patterns:</h4>
