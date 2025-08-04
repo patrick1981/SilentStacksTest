@@ -77,73 +77,71 @@
       console.log('📚 Documentation closed');
     };
 
+    
     window.printDocumentation = function() {
       console.log('🖨️ Printing documentation...');
-      
-      // Create print-friendly version
+
       const container = document.getElementById('documentation-container');
       if (!container) {
         alert('Documentation not available for printing');
         return;
       }
-      
-      // Get the content area
       const content = container.querySelector('.documentation-content');
       if (!content) {
         alert('Documentation content not found');
         return;
       }
-      
-      // Create a new window for printing
+
+      // Build the full HTML document in a template literal
+      const printContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SilentStacks Documentation</title>
+  <style>
+    body {
+      font-family: 'Reddit Sans', Arial, sans-serif;
+      line-height: 1.6;
+      color: #000;
+      background: #fff;
+      margin: 20px;
+      font-size: 12pt;
+    }
+    h1, h2, h3 { color: #0066cc; margin-top: 24pt; }
+    h1 { font-size: 18pt; border-bottom: 2pt solid #0066cc; }
+    h2 { font-size: 16pt; }
+    h3 { font-size: 14pt; }
+    .section { margin-bottom: 20pt; page-break-inside: avoid; }
+    .code-block {
+      background: #f5f5f5;
+      border: 1pt solid #ddd;
+      padding: 8pt;
+      font-family: monospace;
+      font-size: 10pt;
+    }
+    @page { margin: 1in; }
+    .no-print { display: none; }
+  </style>
+</head>
+<body>
+  <h1>SilentStacks Documentation</h1>
+  <p><strong>Printed:</strong> ${new Date().toLocaleString()}</p>
+  ${content.innerHTML}
+</body>
+</html>`;
+
       const printWindow = window.open('', '_blank', 'width=800,height=600');
-      const printContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>SilentStacks Documentation</title>
-            <style>
-                body {
-                    font-family: 'Reddit Sans', Arial, sans-serif;
-                    line-height: 1.6;
-                    color: #000;
-                    background: #fff;
-                    margin: 20px;
-                    font-size: 12pt;
-                }
-                h1, h2, h3 { color: #0066cc; margin-top: 24pt; }
-                h1 { font-size: 18pt; border-bottom: 2pt solid #0066cc; }
-                h2 { font-size: 16pt; }
-                h3 { font-size: 14pt; }
-                .section { margin-bottom: 20pt; page-break-inside: avoid; }
-                .code-block { 
-                    background: #f5f5f5; 
-                    border: 1pt solid #ddd; 
-                    padding: 8pt; 
-                    font-family: monospace;
-                    font-size: 10pt;
-                }
-                @page { margin: 1in; }
-                .no-print { display: none; }
-            </style>
-        </head>
-        <body>
-            <h1>SilentStacks Documentation</h1>
-            <p><strong>Printed:</strong> ${new Date().toLocaleString()}</p>
-            ${content.innerHTML}
-        </body>
-        </html>
-      `;
-      
       printWindow.document.write(printContent);
       printWindow.document.close();
-      
-      // Wait for content to load, then print
-      printWindow.onload = function() {
+
+      printWindow.onload = () => {
         setTimeout(() => {
           printWindow.print();
           printWindow.close();
         }, 250);
       };
+    };
+
     };
 
     window.exportDocumentation = function() {
