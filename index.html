@@ -1475,7 +1475,7 @@
     <script src="assets/js/papaparse.min.js"></script>
 
     <!-- SilentStacks Enhanced Modules -->
-    <script src="assets/js/enhanced-data-manager.js"></script>
+    
     <script src="assets/js/integrated-documentation.js"></script>
 
     <!-- DataManager Bridge -->
@@ -1485,9 +1485,11 @@
             'use strict';
             
             // Wait for both EnhancedDataManager and SilentStacks to be available
+<script src="assets/js/enhanced-data-manager.js"></script>
             function createDataManagerBridge() {
                 if (!window.EnhancedDataManager) {
                     console.log('⏳ Waiting for EnhancedDataManager...');
+<script src="assets/js/enhanced-data-manager.js"></script>
                     setTimeout(createDataManagerBridge, 100);
                     return;
                 }
@@ -1557,8 +1559,10 @@
             
             // Start the bridge creation process
             if (document.readyState === 'loading') {
+<script src="assets/js/enhanced-data-manager.js"></script>
                 document.addEventListener('DOMContentLoaded', createDataManagerBridge);
             } else {
+<script src="assets/js/enhanced-data-manager.js"></script>
                 createDataManagerBridge();
             }
         })();
@@ -1567,6 +1571,7 @@
         window.addEventListener('load', function() {
             if (window.EnhancedDataManager && window.SilentStacks && !window.SilentStacks.modules.DataManager) {
                 console.log('🔧 Creating late DataManager bridge...');
+<script src="assets/js/enhanced-data-manager.js"></script>
                 createDataManagerBridge();
             }
         });
