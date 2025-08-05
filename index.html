@@ -883,5 +883,35 @@ window.toggleMeshFilter = function(meshTerm) {
 
 console.log('🧬 Global functions initialized');
 </script>
+    <script>
+// Debug tab functionality
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 DEBUG: Checking tab setup...');
+    
+    const tabs = document.querySelectorAll('.nav-tab');
+    console.log('Found tabs:', tabs.length);
+    
+    // Check if modules loaded
+    console.log('SilentStacks object:', window.SilentStacks);
+    console.log('UIController available?', window.SilentStacks?.modules?.UIController);
+    
+    // Add TEMPORARY direct click handlers
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            console.log('🔵 Tab clicked:', this.dataset.section);
+            
+            // Basic tab switching
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            document.querySelectorAll('.section').forEach(s => {
+                s.classList.toggle('active', s.id === this.dataset.section);
+            });
+        });
+    });
+    
+    console.log('✅ Debug handlers attached');
+});
+</script>
 </body>
 </html>
