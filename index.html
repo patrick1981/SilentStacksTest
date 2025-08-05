@@ -145,6 +145,55 @@
             border: 1px solid rgba(220, 53, 69, 0.3);
         }
     </style>
+    script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      // Use relative path for GitHub Pages compatibility
+      const swPath = '/SilentStacksTest/service-worker.js'; // Note: properly closed quote
+      
+      navigator.serviceWorker.register(swPath)
+        .then(registration => {
+          console.log('✅ Service Worker registered successfully:', registration.scope);
+          
+          // Handle updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('🔄 New version available! Refresh to update.');
+                  // Optionally show update notification to user
+                  const notification = document.createElement('div');
+                  notification.className = 'update-notification';
+                  notification.textContent = 'New version available! Refresh to update.';
+                  notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #2196F3;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    z-index: 9999;
+                  `;
+                  document.body.appendChild(notification);
+                  setTimeout(() => notification.remove(), 5000);
+                }
+              });
+            }
+          });
+        })
+        .catch(error => {
+          console.warn('⚠️ Service Worker registration failed:', error);
+          // App still works without SW
+        });
+    });
+  } else {
+    console.warn('⚠️ Service Workers not supported in this browser');
+  }
+</script>
+    
 </head>
 <body>
 <div class="container">
@@ -682,9 +731,6 @@
     </main>
 </div>
 
-<!-- Local Dependencies for Offline Support -->
-<script src="assets/js/fuse.min.js"></script>
-<script src="assets/js/papaparse.min.js"></script>
 
 <!-- Modular JavaScript Architecture - Using your exact structure -->
   <script src="assets/js/offline-manager.js" defer></script>
@@ -723,35 +769,31 @@
     console.log('✅ DataManager is now available:', !!window.SilentStacks.modules.DataManager);
 </script>-->
 
-<!-- Module JavaScript -->
+<!-- Third-party Libraries (load first) -->
+<script src="assets/js/fuse.min.js" defer></script>
+<script src="assets/js/papaparse.min.js" defer></script>
+
 <!-- Offline & Data Management -->
+<script src="assets/js/offline-manager.js" defer></script>
+<script src="assets/js/enhanced-data-manager.js" defer></script>
+<script src="assets/js/integrated-documentation.js" defer></script>
 
+<!-- API Integrations -->
+<script src="assets/js/modules/api-integration.js" defer></script>
 
-  <!-- API Integrations -->
- <!-- Third-party Libraries -->
-  <script src="assets/js/fuse.min.js" defer></script>
-  <script src="assets/js/papaparse.min.js" defer></script>
+<!-- Feature Modules -->
+<script src="assets/js/modules/ill-workflow.js" defer></script>
+<script src="assets/js/modules/bulk-operations.js" defer></script>
+<script src="assets/js/modules/medical-features.js" defer></script>
+<script src="assets/js/modules/request-manager.js" defer></script>
+<script src="assets/js/modules/search-filter.js" defer></script>
+<script src="assets/js/modules/theme-manager.js" defer></script>
 
-  <!-- API Integrations -->
-  <script src="assets/js/modules/api-integration.js" defer></script>
+<!-- UI Controller (binds tab & navigation behaviors) -->
+<script src="assets/js/modules/ui-controller.js" defer></script>
 
-  <!-- Feature Modules -->
-  <script src="assets/js/modules/ill-workflow.js" defer></script>
-  <script src="assets/js/modules/bulk-operations.js" defer></script>
-  <script src="assets/js/modules/medical-features.js" defer></script>
-  <script src="assets/js/modules/request-manager.js" defer></script>
-  <script src="assets/js/modules/search-filter.js" defer></script>
-  <script src="assets/js/modules/theme-manager.js" defer></script>
-
-  <!-- UI Controller (binds tab & navigation behaviors) -->
-  <script src="assets/js/modules/ui-controller.js" defer></script>
-
-  <!-- Core Application Script -->
-  <script src="assets/js/app.js" defer></script>
-
-  <!-- Register Service Worker -->
-  <script src="service-worker.js" defer></script>
-
+<!-- Core Application Script (loads last) -->
+<script src="assets/js/app.js" defer></script>
 
 <!-- Enhanced Features Compatibility Layer -->
 <script>
