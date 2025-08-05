@@ -732,18 +732,18 @@
   }
 
   // === Enhanced Module Interface ===
-  const EnhancedDataManager = {
+  const DataManager = {
     initialize() {
-      console.log('🔧 Initializing Enhanced DataManager...');
+      console.log('🔧 Initializing Enhanced Manager...');
       try {
         loadSettings();
         loadRequests();
         loadGlobalTags();
         loadMetrics();
         initializeMemoryMonitoring();
-        console.log('✅ Enhanced DataManager initialized successfully');
+        console.log('✅ Enhanced Manager initialized successfully');
       } catch (error) {
-        console.error('❌ Enhanced DataManager initialization failed:', error);
+        console.error('❌ Enhanced Data Manager initialization failed:', error);
         throw error;
       }
     },
@@ -796,13 +796,13 @@
   // Auto-initialize
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      EnhancedDataManager.initialize();
+      DataManager.initialize();
     });
   } else {
-    EnhancedDataManager.initialize();
+    DataManager.initialize();
   }
 
   // Export for global access
-  window.EnhancedDataManager = EnhancedDataManager;
+  window.DataManager = DataManager;
 
 })();
