@@ -913,5 +913,68 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Debug handlers attached');
 });
 </script>
+    <script>
+// Connect API lookup buttons
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Connecting API lookup buttons...');
+    
+    // PMID lookup button
+    const pmidBtn = document.getElementById('lookup-pmid');
+    if (pmidBtn) {
+        pmidBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🔍 PMID lookup clicked');
+            
+            if (window.SilentStacks?.modules?.APIIntegration?.lookupPMID) {
+                window.SilentStacks.modules.APIIntegration.lookupPMID();
+            } else {
+                console.error('APIIntegration module not available');
+            }
+        });
+    }
+    
+    // DOI lookup button
+    const doiBtn = document.getElementById('lookup-doi');
+    if (doiBtn) {
+        doiBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🔍 DOI lookup clicked');
+            
+            if (window.SilentStacks?.modules?.APIIntegration?.lookupDOI) {
+                window.SilentStacks.modules.APIIntegration.lookupDOI();
+            } else {
+                console.error('APIIntegration module not available');
+            }
+        });
+    }
+    
+    // Also check for MedicalFeatures buttons
+    const clinicalBtn = document.getElementById('lookup-clinical-trials');
+    if (clinicalBtn) {
+        clinicalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🔍 Clinical trials lookup clicked');
+            
+            if (window.SilentStacks?.modules?.MedicalFeatures?.lookupClinicalTrials) {
+                window.SilentStacks.modules.MedicalFeatures.lookupClinicalTrials();
+            } else {
+                console.error('MedicalFeatures module not available');
+            }
+        });
+    }
+    
+    console.log('✅ API buttons connected');
+});
+</script>
+    <script>
+// Debug API integration
+setTimeout(() => {
+    console.log('🔍 API Integration Check:');
+    console.log('APIIntegration module:', window.SilentStacks?.modules?.APIIntegration);
+    console.log('lookupPMID function:', window.SilentStacks?.modules?.APIIntegration?.lookupPMID);
+    console.log('RequestManager module:', window.SilentStacks?.modules?.RequestManager);
+    console.log('populateForm function:', window.SilentStacks?.modules?.RequestManager?.populateForm);
+}, 2000);
+</script>
 </body>
 </html>
