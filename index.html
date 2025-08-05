@@ -687,8 +687,9 @@
 <script src="assets/js/papaparse.min.js"></script>
 
 <!-- Modular JavaScript Architecture - Using your exact structure -->
-<script src="assets/js/offline-manager.js"></script>
-<script src="assets/js/data-manager.js"></script>
+  <script src="assets/js/offline-manager.js" defer></script>
+  <script src="assets/js/enhanced-data-manager.js" defer></script>
+  <script src="assets/js/integrated-documentation.js" defer></script>
 
 <!-- IMMEDIATE DataManager Compatibility Fix -->
 <!--<script>
@@ -723,17 +724,26 @@
 </script>-->
 
 <!-- Module JavaScript -->
-<script src="assets/js/modules/api-integration.js"></script>
-<script src="assets/js/modules/medical-features.js"></script>
-<script src="assets/js/modules/request-manager.js"></script>
-<script src="assets/js/modules/search-filter.js"></script>
-<script src="assets/js/modules/ui-controller.js"></script>
-<script src="assets/js/modules/theme-manager.js"></script>
-<script src="assets/js/modules/bulk-operations.js"></script>
-<script src="assets/js/modules/ill-workflow.js"></script>
+<!-- Offline & Data Management -->
 
-<!-- Main Application -->
-<script src="assets/js/app.js"></script>
+
+  <!-- API Integrations -->
+  <script src="assets/js/modules/api-integration.js" defer></script>
+
+  <!-- Feature Modules -->
+  <script src="assets/js/modules/ill-workflow.js" defer></script>
+  <script src="assets/js/modules/bulk-operations.js" defer></script>
+  <script src="assets/js/modules/medical-features.js" defer></script>
+  <script src="assets/js/modules/request-manager.js" defer></script>
+  <script src="assets/js/modules/search-filter.js" defer></script>
+  <script src="assets/js/modules/theme-manager.js" defer></script>
+  <script src="assets/js/modules/ui-controller.js" defer></script>
+
+  <!-- Core Application Script -->
+  <script src="assets/js/app.js" defer></script>
+
+  <!-- Register Service Worker -->
+  <script src="service-worker.js" defer></script>
 
 
 <!-- Enhanced Features Compatibility Layer -->
