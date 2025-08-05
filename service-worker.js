@@ -1,7 +1,7 @@
 // SilentStacks Service Worker v1.2.1
 // Complete and operational with proper file paths
 
-const CACHE_NAME = 'silentstacks-v1.2.1';
+const CACHE_NAME = 'silentstacks-v1.2.2';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache for offline operation - respecting your exact file tree
