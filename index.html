@@ -730,12 +730,6 @@ if ('serviceWorker' in navigator) {
         </section>
     </main>
 </div>
-<script src="assets/js/app.js" defer></script>
-
-<!-- Modular JavaScript Architecture - Using your exact structure -->
-  <script src="assets/js/offline-manager.js" defer></script>
-  <script src="assets/js/enhanced-data-manager.js" defer></script>
-  <script src="assets/js/integrated-documentation.js" defer></script>
 
 <!-- IMMEDIATE DataManager Compatibility Fix -->
 <!--<script>
@@ -774,97 +768,120 @@ if ('serviceWorker' in navigator) {
 <script src="assets/js/papaparse.min.js" defer></script>
 
 <!-- Offline & Data Management -->
-<script src="assets/js/offline-manager.js" defer></script>
 <script src="assets/js/enhanced-data-manager.js" defer></script>
+<script src="assets/js/offline-manager.js" defer></script>
 <script src="assets/js/integrated-documentation.js" defer></script>
+
+<!--Theme Management-->
+<script src="assets/js/modules/theme-manager.js" defer></script>
 
 <!-- API Integrations -->
 <script src="assets/js/modules/api-integration.js" defer></script>
-
-<!-- Feature Modules -->
-<script src="assets/js/modules/ill-workflow.js" defer></script>
-<script src="assets/js/modules/bulk-operations.js" defer></script>
-<script src="assets/js/modules/medical-features.js" defer></script>
-<script src="assets/js/modules/request-manager.js" defer></script>
+<!-- 7. Search Filter (depends on Fuse.js and data manager) -->
 <script src="assets/js/modules/search-filter.js" defer></script>
-<script src="assets/js/modules/theme-manager.js" defer></script>
-
-<!-- UI Controller (binds tab & navigation behaviors) -->
+<!-- 8. Request Manager (depends on data manager and API integration) -->
+<script src="assets/js/modules/request-manager.js" defer></script>
+<!-- 9. Medical Features (depends on API integration) -->
+<script src="assets/js/modules/medical-features.js" defer></script>
+<!-- 10. Bulk Operations (depends on data manager and papaparse) -->
+<script src="assets/js/modules/bulk-operations.js" defer></script>
+<!-- 11. UI Controller (depends on data manager and other modules) -->
 <script src="assets/js/modules/ui-controller.js" defer></script>
-
-<!-- Core Application Script (loads last) -->
-<!--<script src="assets/js/app.js" defer></script>-->
-
+<!-- 12. ILL Workflow (when fixed - depends on data manager) -->
+<!-- <script src="assets/js/modules/ill-workflow.js" defer></script> -->
+<!-- 13. Main Application (depends on ALL modules) -->
+<script src="assets/js/app.js" defer></script>
 <!-- Enhanced Features Compatibility Layer -->
+<!-- 14. Compatibility layers and global functions (after all modules) -->
 <script>
-    // Compatibility layer to ensure enhanced-data-manager registers as DataManager
-    (function() {
-        'use strict';
-
-        // Wait for enhanced-data-manager to load and register it as DataManager if needed
-        function ensureDataManagerCompatibility() {
-            if (window.SilentStacks?.modules?.EnhancedDataManager && !window.SilentStacks.modules.DataManager) {
-                console.log('🔧 Registering EnhancedDataManager as DataManager for compatibility');
-                window.SilentStacks.modules.DataManager = window.SilentStacks.modules.EnhancedDataManager;
-            }
+// DataManager compatibility layer
+(function() {
+    'use strict';
+    
+    function ensureDataManagerCompatibility() {
+        window.SilentStacks = window.SilentStacks || { modules: {} };
+        
+        if (window.SilentStacks.modules.EnhancedDataManager && !window.SilentStacks.modules.DataManager) {
+            console.log('🔧 Registering EnhancedDataManager as DataManager');
+            window.SilentStacks.modules.DataManager = window.SilentStacks.modules.EnhancedDataManager;
         }
-
-        // Try immediately
+    }
+    
+    // Try multiple times to ensure compatibility
+    ensureDataManagerCompatibility();
+    document.addEventListener('DOMContentLoaded', ensureDataManagerCompatibility);
+    
+    let attempts = 0;
+    const checkInterval = setInterval(() => {
+        attempts++;
         ensureDataManagerCompatibility();
-
-        // Also try after DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', ensureDataManagerCompatibility);
+        if (window.SilentStacks?.modules?.DataManager || attempts > 10) {
+            clearInterval(checkInterval);
         }
+    }, 100);
+})();
 
-        // Fallback - check periodically for a short time
-        let attempts = 0;
-        const checkInterval = setInterval(() => {
-            attempts++;
-            ensureDataManagerCompatibility();
-
-            if (window.SilentStacks?.modules?.DataManager || attempts > 10) {
-                clearInterval(checkInterval);
-                if (window.SilentStacks?.modules?.DataManager) {
-                    console.log('✅ DataManager compatibility ensured');
-                }
-            }
-        }, 100);
-    })();
-</script>
-
-<!-- Enhanced Features will be handled by your existing modules -->
-<script>
-    // Minimal enhanced features integration - just the essential global functions
-    // Let your existing modular architecture handle the heavy lifting
-
-    // Global functions for UI interaction (referenced in HTML onclick attributes)
-    window.addMeshToTags = function(meshTerm) {
-        const tagsInput = document.getElementById('tags');
-        if (!tagsInput) return;
-
-        const currentTags = tagsInput.value.trim();
-        const tagsArray = currentTags ? currentTags.split(',').map(t => t.trim()) : [];
-
-        if (!tagsArray.includes(meshTerm)) {
-            tagsArray.push(meshTerm);
-            tagsInput.value = tagsArray.join(', ');
-
-            // Visual feedback
-            const meshButton = document.querySelector(`[onclick*="${meshTerm.replace(/'/g, '&apos;')}"]`);
-            if (meshButton) {
-                meshButton.style.transform = 'scale(1.1)';
-                setTimeout(() => meshButton.style.transform = '', 200);
-            }
+// Global functions referenced in HTML
+window.toggleSelectAll = function(checked) {
+    const checkboxes = document.querySelectorAll('.request-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checked;
+        if (checked) {
+            window.SilentStacks?.state?.selectedRequests.add(cb.dataset.requestId);
+        } else {
+            window.SilentStacks?.state?.selectedRequests.clear();
         }
-    };
+    });
+    
+    // Update delete button visibility
+    const deleteBtn = document.getElementById('delete-selected-btn');
+    if (deleteBtn) {
+        deleteBtn.style.display = checked ? 'inline-block' : 'none';
+    }
+};
 
-    window.toggleMeshFilter = function(meshTerm) {
-        // This will be handled by your existing modules when implemented
-        console.log('MeSH filter toggle:', meshTerm);
-    };
+window.deleteSelectedRequests = function() {
+    const selectedRequests = window.SilentStacks?.state?.selectedRequests;
+    if (!selectedRequests || selectedRequests.size === 0) {
+        alert('No requests selected');
+        return;
+    }
+    
+    if (confirm(`Delete ${selectedRequests.size} selected request(s)?`)) {
+        if (window.SilentStacks?.modules?.RequestManager?.deleteMultipleRequests) {
+            window.SilentStacks.modules.RequestManager.deleteMultipleRequests(Array.from(selectedRequests));
+        } else {
+            console.error('RequestManager not available');
+        }
+    }
+};
 
-    console.log('🧬 Enhanced UI hooks ready - modules will handle functionality');
+window.addMeshToTags = function(meshTerm) {
+    const tagsInput = document.getElementById('tags');
+    if (!tagsInput) return;
+    
+    const currentTags = tagsInput.value.trim();
+    const tagsArray = currentTags ? currentTags.split(',').map(t => t.trim()) : [];
+    
+    if (!tagsArray.includes(meshTerm)) {
+        tagsArray.push(meshTerm);
+        tagsInput.value = tagsArray.join(', ');
+        
+        // Visual feedback
+        const meshButton = event.target;
+        if (meshButton) {
+            meshButton.style.transform = 'scale(1.1)';
+            setTimeout(() => meshButton.style.transform = '', 200);
+        }
+    }
+};
+
+window.toggleMeshFilter = function(meshTerm) {
+    console.log('MeSH filter toggle:', meshTerm);
+    // This will be handled by your modules
+};
+
+console.log('🧬 Global functions initialized');
 </script>
 </body>
 </html>
