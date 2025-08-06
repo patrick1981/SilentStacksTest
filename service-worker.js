@@ -1,68 +1,61 @@
-// SilentStacks Service Worker v1.2.1
-// Complete and operational with proper file paths
+// SilentStacks Service Worker v1.2.5
+// Complete and operational with proper error handling
 
-const CACHE_NAME = 'silentstacks-v1.2.2';
-const OFFLINE_URL = '/offline.html';
+const CACHE_NAME = 'silentstacks-v1.2.5';
+const OFFLINE_URL = '/SilentStacksTest/offline.html';
 
-// Files to cache for offline operation - respecting your exact file tree
+// Files to cache for offline operation
 const STATIC_CACHE_URLS = [
-  '/',
-  '/index.html',
-  '/offline.html',
+  '/SilentStacksTest/',
+  '/SilentStacksTest/index.html',
+  '/SilentStacksTest/offline.html',
   
   // Main CSS
-  '/assets/css/style.css',
+  '/SilentStacksTest/assets/css/style.css',
   
   // Base CSS
-  '/assets/css/base/reset.css',
-  '/assets/css/base/typography.css',
-  '/assets/css/base/design-tokens.css',
+  '/SilentStacksTest/assets/css/base/reset.css',
+  '/SilentStacksTest/assets/css/base/typography.css',
+  '/SilentStacksTest/assets/css/base/design-tokens.css',
   
   // Layout CSS
-  '/assets/css/layout/grid.css',
-  '/assets/css/layout/navigation.css',
-  '/assets/css/layout/responsive.css',
+  '/SilentStacksTest/assets/css/layout/grid.css',
+  '/SilentStacksTest/assets/css/layout/navigation.css',
+  '/SilentStacksTest/assets/css/layout/responsive.css',
   
   // Component CSS
-  '/assets/css/components/buttons.css',
-  '/assets/css/components/forms.css',
-  '/assets/css/components/cards.css',
-  '/assets/css/components/progress.css',
-  '/assets/css/components/tables.css',
+  '/SilentStacksTest/assets/css/components/buttons.css',
+  '/SilentStacksTest/assets/css/components/forms.css',
+  '/SilentStacksTest/assets/css/components/cards.css',
+  '/SilentStacksTest/assets/css/components/progress.css',
+  '/SilentStacksTest/assets/css/components/tables.css',
+  '/SilentStacksTest/assets/css/components/enhanced-components.css',
   
   // Theme CSS
-  '/assets/css/themes/light-theme.css',
-  '/assets/css/themes/dark-theme.css',
-  '/assets/css/themes/high-contrast-theme.css',
+  '/SilentStacksTest/assets/css/themes/light-theme.css',
+  '/SilentStacksTest/assets/css/themes/dark-theme.css',
+  '/SilentStacksTest/assets/css/themes/high-contrast-theme.css',
   
   // Utility CSS
-  '/assets/css/utilities/accessibility.css',
-  '/assets/css/utilities/print.css',
-  
-  // Fonts
-  '/assets/fonts/reddit-sans/reddit-sans.css',
-  '/assets/fonts/reddit-sans/RedditSans-Regular.woff2',
-  '/assets/fonts/reddit-sans/RedditSans-Medium.woff2',
-  '/assets/fonts/reddit-sans/RedditSans-SemiBold.woff2',
-  '/assets/fonts/reddit-sans/RedditSans-Bold.woff2',
+  '/SilentStacksTest/assets/css/utilities/accessibility.css',
+  '/SilentStacksTest/assets/css/utilities/print.css',
   
   // Core JavaScript
-  '/assets/js/app.js',
-  '/assets/js/enhanced-data-manager.js',
-  '/assets/js/offline-manager.js',
-  '/assets/js/integrated-documentation.js',
-  '/assets/js/fuse.min.js',
-  '/assets/js/papaparse.min.js',
+  '/SilentStacksTest/assets/js/app.js',
+  '/SilentStacksTest/assets/js/enhanced-data-manager.js',
+  '/SilentStacksTest/assets/js/offline-manager.js',
+  '/SilentStacksTest/assets/js/integrated-documentation.js',
+  '/SilentStacksTest/assets/js/fuse.min.js',
+  '/SilentStacksTest/assets/js/papaparse.min.js',
   
   // Module JavaScript
-  '/assets/js/modules/api-integration.js',
-  '/assets/js/modules/bulk-operations.js',
-  '/assets/js/modules/medical-features.js',
-  '/assets/js/modules/request-manager.js',
-  '/assets/js/modules/search-filter.js',
-  '/assets/js/modules/theme-manager.js',
-  '/assets/js/modules/ui-controller.js',
-  '/assets/js/modules/ill-workflow.js'
+  '/SilentStacksTest/assets/js/modules/api-integration.js',
+  '/SilentStacksTest/assets/js/modules/bulk-operations.js',
+  '/SilentStacksTest/assets/js/modules/medical-features.js',
+  '/SilentStacksTest/assets/js/modules/request-manager.js',
+  '/SilentStacksTest/assets/js/modules/search-filter.js',
+  '/SilentStacksTest/assets/js/modules/theme-manager.js',
+  '/SilentStacksTest/assets/js/modules/ui-controller.js'
 ];
 
 // API endpoints to handle offline
@@ -73,22 +66,41 @@ const API_CACHE_PATTERNS = [
 ];
 
 // Install event - cache static assets
-// Cache files individually to handle errors gracefully
-return Promise.all(
-  STATIC_CACHE_URLS.map(async url => {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        await cache.put(url, response);
-        console.log('✅ Cached:', url);
-      } else {
-        console.warn(`⚠️ Skipping cache for ${url} - status: ${response.status}`);
-      }
-    } catch (err) {
-      console.warn(`Failed to fetch ${url}:`, err);
-    }
-  })
-);
+self.addEventListener('install', (event) => {
+  console.log('🔧 Service Worker installing...');
+  
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(async (cache) => {
+        console.log('📦 Caching static assets...');
+        
+        // Cache files individually and only cache successful responses
+        const cachePromises = STATIC_CACHE_URLS.map(async (url) => {
+          try {
+            const response = await fetch(url);
+            if (response.ok) {
+              await cache.put(url, response);
+              console.log('✅ Cached:', url);
+            } else {
+              console.warn(`⚠️ Skipping cache for ${url} - status: ${response.status}`);
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch ${url}:`, err);
+          }
+        });
+        
+        return Promise.all(cachePromises);
+      })
+      .then(() => {
+        console.log('✅ Static assets cached successfully');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('❌ Cache installation error:', error);
+        return self.skipWaiting();
+      })
+  );
+});
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
@@ -112,18 +124,6 @@ self.addEventListener('activate', (event) => {
     ])
     .then(() => {
       console.log('✅ Service Worker activated');
-      // Notify clients about activation
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'SW_ACTIVATED',
-            data: {
-              version: CACHE_NAME,
-              timestamp: new Date().toISOString()
-            }
-          });
-        });
-      });
     })
   );
 });
@@ -165,28 +165,21 @@ async function handleAPIRequest(request) {
   try {
     console.log('🌐 API request:', request.url);
     
-    // Try network first with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
-    const networkResponse = await fetch(request, {
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
+    // Try network first
+    const networkResponse = await fetch(request);
     
     if (networkResponse.ok) {
       // Cache successful API responses
       const cache = await caches.open(CACHE_NAME);
       cache.put(request.clone(), networkResponse.clone());
-      console.log('✅ API response cached:', request.url);
+      console.log('✅ API response cached');
       return networkResponse;
     }
     
     throw new Error(`HTTP ${networkResponse.status}`);
     
   } catch (error) {
-    console.log('📴 API request failed, checking cache:', error.message);
+    console.log('📴 API request failed, checking cache');
     
     // Try to serve from cache
     const cachedResponse = await caches.match(request);
@@ -219,42 +212,30 @@ async function handleAPIRequest(request) {
 // Handle static file requests
 async function handleStaticRequest(request) {
   try {
-    // For navigation requests, try network first
-    if (request.mode === 'navigate') {
-      try {
-        const networkResponse = await fetch(request);
-        if (networkResponse.ok) {
-          // Update cache with fresh content
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(request, networkResponse.clone());
-          return networkResponse;
-        }
-      } catch (error) {
-        console.log('📄 Network failed for navigation, using cache');
-      }
-    }
-    
-    // Check cache first for all requests
+    // Check cache first
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       console.log('📦 Serving from cache:', request.url);
       
-      // For non-navigation requests, update cache in background
+      // Update cache in background for non-navigation requests
       if (request.mode !== 'navigate') {
         event.waitUntil(
-          fetch(request).then(response => {
-            if (response.ok) {
-              const cache = caches.open(CACHE_NAME);
-              cache.then(c => c.put(request, response));
-            }
-          }).catch(() => {})
+          fetch(request)
+            .then(response => {
+              if (response.ok) {
+                return caches.open(CACHE_NAME).then(cache => {
+                  cache.put(request, response);
+                });
+              }
+            })
+            .catch(() => {})
         );
       }
       
       return cachedResponse;
     }
     
-    // Try network for non-cached resources
+    // Try network
     console.log('🌐 Fetching from network:', request.url);
     const networkResponse = await fetch(request);
     
@@ -265,7 +246,9 @@ async function handleStaticRequest(request) {
       return networkResponse;
     }
     
-    throw new Error(`Network response not ok: ${networkResponse.status}`);
+    // Don't cache error responses
+    console.warn(`❌ Not caching error response (${networkResponse.status}) for:`, request.url);
+    return networkResponse;
     
   } catch (error) {
     console.error('❌ Request failed:', request.url, error);
@@ -346,16 +329,6 @@ async function clearCache() {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map(name => caches.delete(name)));
     console.log('🗑️ All caches cleared');
-    
-    // Notify clients
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'CACHE_CLEARED',
-          data: { timestamp: new Date().toISOString() }
-        });
-      });
-    });
   } catch (error) {
     console.error('❌ Failed to clear cache:', error);
   }
@@ -366,80 +339,22 @@ async function updateCache(urls) {
   try {
     const cache = await caches.open(CACHE_NAME);
     const results = await Promise.allSettled(
-      urls.map(url => cache.add(url))
+      urls.map(async url => {
+        const response = await fetch(url);
+        if (response.ok) {
+          return cache.put(url, response);
+        }
+        throw new Error(`Failed to fetch ${url}`);
+      })
     );
     
     const succeeded = results.filter(r => r.status === 'fulfilled').length;
     const failed = results.filter(r => r.status === 'rejected').length;
     
     console.log(`✅ Cache update: ${succeeded} succeeded, ${failed} failed`);
-    
-    // Notify clients
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'CACHE_UPDATED',
-          data: { 
-            succeeded,
-            failed,
-            timestamp: new Date().toISOString() 
-          }
-        });
-      });
-    });
   } catch (error) {
     console.error('❌ Failed to update cache:', error);
   }
 }
 
-// Periodic cache cleanup (remove old API responses)
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    cleanupOldCacheEntries()
-  );
-});
-
-async function cleanupOldCacheEntries() {
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    const keys = await cache.keys();
-    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-    
-    let cleanedCount = 0;
-    
-    // Remove old API cache entries
-    for (const request of keys) {
-      if (isAPIRequest(request.url)) {
-        const response = await cache.match(request);
-        const dateHeader = response?.headers.get('date');
-        
-        if (dateHeader) {
-          const responseDate = new Date(dateHeader).getTime();
-          if (responseDate < oneWeekAgo) {
-            await cache.delete(request);
-            cleanedCount++;
-            console.log('🗑️ Removed old cached API response:', request.url);
-          }
-        }
-      }
-    }
-    
-    if (cleanedCount > 0) {
-      console.log(`✅ Cleaned ${cleanedCount} old cache entries`);
-    }
-  } catch (error) {
-    console.error('Cache cleanup failed:', error);
-  }
-}
-
-// Handle errors
-self.addEventListener('error', (event) => {
-  console.error('Service Worker error:', event.error);
-});
-
-self.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection in service worker:', event.reason);
-  event.preventDefault();
-});
-
-console.log('🎯 Service Worker loaded successfully - SilentStacks v1.2.1');
+console.log('🎯 Service Worker loaded successfully - SilentStacks v1.2.5');
