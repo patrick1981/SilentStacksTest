@@ -804,7 +804,8 @@
 
   // Export for global access
   window.DataManager = DataManager;
-  window.SilentStacks = window.SilentStacks || { modules: {} };
+ window.SilentStacks = window.SilentStacks || { modules: {} };
 window.SilentStacks.modules.DataManager = DataManager;
+console.log('✅ DataManager registered with SilentStacks modules');
 
 })();
