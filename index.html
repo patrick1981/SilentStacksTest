@@ -791,6 +791,20 @@ if ('serviceWorker' in navigator) {
 <!-- <script src="assets/js/modules/ill-workflow.js" defer></script> -->
 <!-- 13. Main Application (depends on ALL modules) -->
 <script src="assets/js/app.js" defer></script>
+    <script>
+// IMMEDIATE DataManager fix - run before other scripts initialize
+(function() {
+    window.SilentStacks = window.SilentStacks || { modules: {} };
+    
+    // Create immediate EnhancedDataManager alias
+    Object.defineProperty(window.SilentStacks.modules, 'DataManager', {
+        get: function() {
+            return window.SilentStacks.modules.EnhancedDataManager || null;
+        },
+        configurable: true
+    });
+})();
+</script>
 <!-- Enhanced Features Compatibility Layer -->
 <!-- 14. Compatibility layers and global functions (after all modules) -->
 <script>
@@ -884,6 +898,87 @@ window.toggleMeshFilter = function(meshTerm) {
 console.log('🧬 Global functions initialized');
 </script>
     <script>
+// Connect API lookup buttons with better error handling
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Setting up API integration...');
+    
+    // Wait a bit for modules to load
+    setTimeout(() => {
+        const api = window.SilentStacks?.modules?.APIIntegration;
+        const medical = window.SilentStacks?.modules?.MedicalFeatures;
+        
+        console.log('API module status:', api ? 'Available' : 'Not found');
+        console.log('Medical module status:', medical ? 'Available' : 'Not found');
+        
+        // PMID lookup
+        const pmidBtn = document.getElementById('lookup-pmid');
+        if (pmidBtn && api) {
+            pmidBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🔍 PMID lookup triggered');
+                api.lookupPMID();
+            });
+            console.log('✅ PMID button connected');
+        }
+        
+        // DOI lookup
+        const doiBtn = document.getElementById('lookup-doi');
+        if (doiBtn && api) {
+            doiBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🔍 DOI lookup triggered');
+                api.lookupDOI();
+            });
+            console.log('✅ DOI button connected');
+        }
+        
+        // Clinical Trials lookup (Medical Features)
+        const clinicalBtn = document.getElementById('lookup-clinical-trials');
+        if (clinicalBtn && medical) {
+            clinicalBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('🔍 Clinical trials lookup triggered');
+                medical.lookupClinicalTrials();
+            });
+            console.log('✅ Clinical trials button connected');
+        }
+        
+        // Initialize modules if they have initialize methods
+        if (api?.initialize && !api.initialized) {
+            api.initialize();
+        }
+        if (medical?.initialize && !medical.initialized) {
+            medical.initialize();
+        }
+        
+        // Also ensure status indicators exist
+        const statusElements = ['pmid-status', 'doi-status', 'clinical-trials-status'];
+        statusElements.forEach(id => {
+            if (!document.getElementById(id)) {
+                console.warn(`⚠️ Missing status element: ${id}`);
+            }
+        });
+        
+    }, 1500); // Give modules time to load
+});
+</script>
+<!-- ADD FIX #3 HERE -->
+<script>
+// Prevent SearchFilter from crashing during cleanup
+setTimeout(() => {
+    if (window.SilentStacks?.modules?.SearchFilter) {
+        const originalInitFuse = window.SilentStacks.modules.SearchFilter.initFuse;
+        window.SilentStacks.modules.SearchFilter.initFuse = function() {
+            if (!window.SilentStacks?.modules?.DataManager) {
+                console.warn('DataManager not available for SearchFilter');
+                return;
+            }
+            return originalInitFuse.call(this);
+        };
+    }
+}, 1000); // Wait for SearchFilter to load
+</script>
+    <script>
 // Debug tab functionality
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔍 DEBUG: Checking tab setup...');
@@ -911,59 +1006,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     console.log('✅ Debug handlers attached');
-});
-</script>
-    <script>
-// Connect API lookup buttons
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 Connecting API lookup buttons...');
-    
-    // PMID lookup button
-    const pmidBtn = document.getElementById('lookup-pmid');
-    if (pmidBtn) {
-        pmidBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('🔍 PMID lookup clicked');
-            
-            if (window.SilentStacks?.modules?.APIIntegration?.lookupPMID) {
-                window.SilentStacks.modules.APIIntegration.lookupPMID();
-            } else {
-                console.error('APIIntegration module not available');
-            }
-        });
-    }
-    
-    // DOI lookup button
-    const doiBtn = document.getElementById('lookup-doi');
-    if (doiBtn) {
-        doiBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('🔍 DOI lookup clicked');
-            
-            if (window.SilentStacks?.modules?.APIIntegration?.lookupDOI) {
-                window.SilentStacks.modules.APIIntegration.lookupDOI();
-            } else {
-                console.error('APIIntegration module not available');
-            }
-        });
-    }
-    
-    // Also check for MedicalFeatures buttons
-    const clinicalBtn = document.getElementById('lookup-clinical-trials');
-    if (clinicalBtn) {
-        clinicalBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('🔍 Clinical trials lookup clicked');
-            
-            if (window.SilentStacks?.modules?.MedicalFeatures?.lookupClinicalTrials) {
-                window.SilentStacks.modules.MedicalFeatures.lookupClinicalTrials();
-            } else {
-                console.error('MedicalFeatures module not available');
-            }
-        });
-    }
-    
-    console.log('✅ API buttons connected');
 });
 </script>
     <script>
