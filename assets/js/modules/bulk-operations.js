@@ -1,305 +1,599 @@
-// Enhanced Bulk Operations Module for SilentStacks v1.3.0
-// Addresses: PMID bulk fetch, bulk updates, CSV fixes, DOCLINE support
+// Fixed Bulk Operations Module for SilentStacks v1.4
+// Addresses: Non-working paste/upload functions, PMID auto-fetch, DOCLINE support
 
 (function() {
   'use strict';
 
-  console.log('🚀 Loading Enhanced Bulk Operations v1.3.0...');
+  console.log('🚀 Loading FIXED Bulk Operations v1.4...');
 
   // Safety limits
   const SAFETY_LIMITS = {
     MAX_IMPORT_SIZE: 1000,
     MAX_MEMORY_USAGE: 200, // MB
-    MAX_BATCH_SIZE: 50,
-    API_DELAY: 1000 // ms between API calls
+    MAX_BATCH_SIZE: 25, // Reduced for stability
+    API_DELAY: 1200, // Slightly longer delay
+    MAX_CONCURRENT_API_CALLS: 5
   };
 
-  // === Enhanced CSV Import with PMID Auto-Population ===
+  // === FIXED: File Import Handler ===
   async function handleImport(event) {
+    console.log('📁 File import triggered');
+    
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
 
-    console.log(`📂 Processing import file: ${file.name}`);
+    console.log(`Processing file: ${file.name}, size: ${file.size} bytes`);
+    
+    // Clear any previous status
+    showImportStatus('📖 Reading file...', 'loading');
     
     try {
-      showImportStatus('📥 Reading file...', 'loading');
-      
-      const data = await readFile(file);
-      let importedData = [];
-      
-      if (file.name.endsWith('.json')) {
-        const parsed = JSON.parse(data);
-        importedData = Array.isArray(parsed) ? parsed : (parsed.requests || []);
-      } else if (file.name.endsWith('.csv')) {
-        if (!window.Papa) {
-          throw new Error('CSV parsing library not available');
-        }
-        
-        const results = Papa.parse(data, {
-          header: true,
-          skipEmptyLines: true,
-          dynamicTyping: false, // Keep as strings for better processing
-          delimitersToGuess: [',', '\t', '|', ';']
-        });
-        
-        if (results.errors.length > 0) {
-          console.warn('CSV parsing warnings:', results.errors);
-        }
-        
-        importedData = results.data.map(row => mapCSVRowToRequest(row));
-      } else {
-        throw new Error('Unsupported file format. Please use CSV or JSON files.');
+      // Validate file size (50MB limit)
+      const maxSize = 50 * 1024 * 1024;
+      if (file.size > maxSize) {
+        throw new Error(`File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum: 50MB`);
       }
+
+      // Read file content
+      const data = await readFileContent(file);
+      console.log(`File content length: ${data.length} characters`);
       
-      // Process import with API lookups
-      await processImportWithAPILookup(importedData, file.name);
+      // Process the file data
+      await processFileData(data, file.name);
       
     } catch (error) {
-      console.error('Import error:', error);
+      console.error('File import error:', error);
       showImportStatus(`❌ Import failed: ${error.message}`, 'error');
     }
   }
 
-  // === New: Process Import with Automatic API Lookups ===
-  async function processImportWithAPILookup(importedData, filename) {
-    // Filter and validate data
-    const validRequests = importedData.filter(req => 
-      req && (req.title || req.pmid || req.doi || req.docline)
-    );
-    
-    if (validRequests.length === 0) {
-      throw new Error('No valid requests found. Ensure you have Title, PMID, DOI, or DOCLINE columns.');
-    }
-
-    // Check size limits
-    if (validRequests.length > SAFETY_LIMITS.MAX_IMPORT_SIZE) {
-      const proceed = confirm(
-        `⚠️ Large import detected (${validRequests.length} items).\n\n` +
-        `This will include automatic PMID lookups and may take time.\n\n` +
-        `Continue with bulk API processing?`
-      );
+  // === FIXED: File Reading with Better Error Handling ===
+  function readFileContent(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
       
-      if (!proceed) {
-        showImportStatus('❌ Import cancelled', 'error');
-        return;
-      }
-    }
-
-    showImportStatus(`🔄 Processing ${validRequests.length} requests with API lookups...`, 'loading');
-    
-    // Process with chunked API lookups
-    let processedCount = 0;
-    let enrichedCount = 0;
-    const chunkSize = 10; // Small chunks for API calls
-    
-    for (let i = 0; i < validRequests.length; i += chunkSize) {
-      const chunk = validRequests.slice(i, i + chunkSize);
+      reader.onload = function(e) {
+        console.log('✅ File read successfully');
+        resolve(e.target.result);
+      };
       
-      // Process each request in chunk with API enrichment
-      for (const request of chunk) {
-        try {
-          const enrichedRequest = await enrichRequestWithAPI(request);
-          
-          // Add to data store
-          window.SilentStacks.modules.DataManager.addRequest(enrichedRequest);
-          processedCount++;
-          
-          if (enrichedRequest._wasEnriched) {
-            enrichedCount++;
-          }
-          
-          // Update progress
-          const progress = Math.round((processedCount / validRequests.length) * 100);
-          showImportStatus(
-            `🔄 Processing ${processedCount}/${validRequests.length} (${enrichedCount} enriched via API)...`, 
-            'loading'
-          );
-          
-          // Rate limiting between API calls
-          await new Promise(resolve => setTimeout(resolve, SAFETY_LIMITS.API_DELAY));
-          
-        } catch (error) {
-          console.warn(`Failed to process request:`, error);
-          // Still add the request even if API failed
-          window.SilentStacks.modules.DataManager.addRequest(request);
-          processedCount++;
-        }
-      }
+      reader.onerror = function(e) {
+        console.error('File reading failed:', e);
+        reject(new Error('Failed to read file'));
+      };
       
-      // Memory cleanup between chunks
-      await checkMemoryBetweenChunks();
-    }
-
-    // Update UI
-    window.SilentStacks.modules.RequestManager.refreshAllViews();
-    
-    // Clear file input
-    const importFile = document.getElementById('import-file');
-    if (importFile) {
-      importFile.value = '';
-    }
-    
-    showImportStatus(
-      `✅ Successfully imported ${processedCount} requests (${enrichedCount} auto-populated via PubMed API)`, 
-      'success'
-    );
+      reader.onabort = function() {
+        console.error('File reading aborted');
+        reject(new Error('File reading was aborted'));
+      };
+      
+      // Start reading
+      reader.readAsText(file);
+    });
   }
 
-  // === New: Enrich Request with API Data ===
-  async function enrichRequestWithAPI(request) {
-    let enriched = { ...request };
-    let wasEnriched = false;
-
-    // Skip if already has complete metadata
-    const hasCompleteMetadata = enriched.title && enriched.authors && enriched.journal && enriched.year;
+  // === FIXED: Process File Data ===
+  async function processFileData(data, filename) {
+    let parsedData = [];
     
-    if (hasCompleteMetadata && !enriched.pmid && !enriched.doi) {
-      return enriched;
-    }
-
     try {
-      // Try PMID lookup first if available
-      if (enriched.pmid && (!enriched.title || !enriched.authors)) {
-        console.log(`🔍 Fetching PubMed data for PMID: ${enriched.pmid}`);
+      showImportStatus('📊 Parsing data...', 'loading');
+      
+      if (filename.endsWith('.json')) {
+        console.log('Processing JSON file');
+        const jsonData = JSON.parse(data);
+        parsedData = Array.isArray(jsonData) ? jsonData : (jsonData.requests || []);
         
-        if (window.SilentStacks?.modules?.APIIntegration?.fetchPubMed) {
-          const pubmedData = await window.SilentStacks.modules.APIIntegration.fetchPubMed(enriched.pmid);
-          
-          if (pubmedData && pubmedData.title) {
-            // Merge API data with existing data (existing takes precedence)
-            enriched = {
-              ...pubmedData,
-              ...Object.fromEntries(Object.entries(enriched).filter(([_, v]) => v && v !== ''))
-            };
-            wasEnriched = true;
-            console.log(`✅ Enriched request with PubMed data for PMID: ${enriched.pmid}`);
+      } else if (filename.endsWith('.csv')) {
+        console.log('Processing CSV file');
+        
+        if (!window.Papa) {
+          throw new Error('CSV parsing library (PapaCSV) not available. Please check if papaparse.min.js is loaded.');
+        }
+        
+        const parseResults = Papa.parse(data, {
+          header: true,
+          skipEmptyLines: true,
+          dynamicTyping: false, // Keep as strings for better control
+          delimitersToGuess: [',', '\t', '|', ';'],
+          transformHeader: function(header) {
+            return header.trim(); // Clean headers
+          }
+        });
+        
+        console.log('CSV parse results:', parseResults);
+        
+        if (parseResults.errors && parseResults.errors.length > 0) {
+          console.warn('CSV parsing warnings:', parseResults.errors);
+          // Show warnings but continue if we have data
+          if (!parseResults.data || parseResults.data.length === 0) {
+            throw new Error(`CSV parsing failed: ${parseResults.errors[0].message}`);
           }
         }
+        
+        parsedData = parseResults.data
+          .map(row => mapCSVRowToRequest(row))
+          .filter(req => req && (req.title || req.pmid || req.doi || req.docline));
+        
+      } else {
+        throw new Error('Unsupported file format. Please use .csv or .json files only.');
       }
       
-      // Try DOI lookup if still missing data
-      if (!wasEnriched && enriched.doi && (!enriched.title || !enriched.authors)) {
-        console.log(`🔍 Fetching CrossRef data for DOI: ${enriched.doi}`);
-        
-        if (window.SilentStacks?.modules?.APIIntegration?.fetchCrossRef) {
-          const crossrefData = await window.SilentStacks.modules.APIIntegration.fetchCrossRef(enriched.doi);
-          
-          if (crossrefData && crossrefData.title) {
-            enriched = {
-              ...crossrefData,
-              ...Object.fromEntries(Object.entries(enriched).filter(([_, v]) => v && v !== ''))
-            };
-            wasEnriched = true;
-            console.log(`✅ Enriched request with CrossRef data for DOI: ${enriched.doi}`);
-          }
-        }
+      console.log(`Parsed ${parsedData.length} records from ${filename}`);
+      
+      if (parsedData.length === 0) {
+        throw new Error('No valid records found. Check your file format and required fields (Title, PMID, DOI, or DOCLINE).');
       }
+      
+      // Process with API enrichment
+      await processWithAPIEnrichment(parsedData, filename);
+      
     } catch (error) {
-      console.warn(`API enrichment failed for request:`, error);
-      // Continue with original data
+      console.error('Data processing error:', error);
+      throw error;
     }
-
-    enriched._wasEnriched = wasEnriched;
-    return enriched;
   }
 
-  // === Enhanced Bulk Paste with PMID Support ===
+  // === FIXED: Bulk Paste Handler ===
   async function handleBulkPasteWithLookup() {
+    console.log('📋 Bulk paste triggered');
+    
     const textarea = document.getElementById('bulk-paste-data');
     if (!textarea) {
-      console.error('Bulk paste textarea not found');
+      console.error('❌ Bulk paste textarea not found');
+      showNotification('Bulk paste area not found', 'error');
       return;
     }
     
     const data = textarea.value.trim();
-    
     if (!data) {
-      window.SilentStacks.modules.UIController.showNotification('Please paste some data first', 'warning');
+      showNotification('Please paste some data first', 'warning');
       return;
     }
 
+    console.log(`Processing pasted data: ${data.length} characters`);
+    
     try {
-      // Check if it's just a list of PMIDs/DOIs
+      showImportStatus('📊 Processing pasted data...', 'loading');
+      
+      // Detect if it's a simple list vs CSV data
       const lines = data.split('\n').map(line => line.trim()).filter(Boolean);
-      let parsedData;
+      let parsedData = [];
 
-      // Simple PMID/DOI list detection
-      if (lines.length > 0 && lines.every(line => /^(\d+|10\.\d+\/.+)$/.test(line))) {
-        console.log('🔍 Detected simple PMID/DOI list');
+      // Simple PMID/DOI list detection (numbers or DOI format)
+      const isSimpleList = lines.every(line => 
+        /^\d+$/.test(line) || /^10\.\d+\/.+/.test(line)
+      );
+
+      if (isSimpleList) {
+        console.log('Detected simple PMID/DOI list');
         
-        // Convert to CSV format for processing
-        const csvData = 'PMID,DOI\n' + lines.map(line => {
+        // Convert to structured data
+        parsedData = lines.map(line => {
           if (/^\d+$/.test(line)) {
-            return `${line},`;
-          } else {
-            return `,${line}`;
+            return { pmid: line.trim() };
+          } else if (/^10\.\d+\/.+/.test(line)) {
+            return { doi: line.trim() };
           }
-        }).join('\n');
+          return null;
+        }).filter(Boolean);
         
-        parsedData = Papa.parse(csvData, {
-          header: true,
-          skipEmptyLines: true,
-          dynamicTyping: false
-        });
       } else {
-        // Regular CSV parsing
-        parsedData = Papa.parse(data, {
+        console.log('Processing as CSV data');
+        
+        if (!window.Papa) {
+          throw new Error('CSV parsing library not available');
+        }
+        
+        const parseResults = Papa.parse(data, {
           header: true,
           skipEmptyLines: true,
           dynamicTyping: false,
-          delimitersToGuess: [',', '\t', '|', ';']
+          delimitersToGuess: [',', '\t', '|', ';'],
+          transformHeader: function(header) {
+            return header.trim();
+          }
         });
+        
+        if (parseResults.errors && parseResults.errors.length > 0) {
+          console.warn('CSV paste warnings:', parseResults.errors);
+        }
+        
+        if (!parseResults.data || parseResults.data.length === 0) {
+          throw new Error('No valid CSV data found. Check your format and headers.');
+        }
+        
+        parsedData = parseResults.data
+          .map(row => mapCSVRowToRequest(row))
+          .filter(req => req && (req.title || req.pmid || req.doi || req.docline));
       }
       
-      if (!parsedData.data || parsedData.data.length === 0) {
-        throw new Error('No valid data found. Check your format.');
+      console.log(`Parsed ${parsedData.length} records from paste`);
+      
+      if (parsedData.length === 0) {
+        throw new Error('No valid records found in pasted data.');
       }
       
-      const importedData = parsedData.data.map(row => mapCSVRowToRequest(row));
-      await processImportWithAPILookup(importedData, 'pasted-data');
+      // Process with API enrichment
+      await processWithAPIEnrichment(parsedData, 'pasted-data');
       
       // Clear textarea on success
       textarea.value = '';
       
     } catch (error) {
       console.error('Bulk paste error:', error);
-      window.SilentStacks.modules.UIController.showNotification(
-        `Bulk paste failed: ${error.message}`,
-        'error'
-      );
+      showImportStatus(`❌ Paste failed: ${error.message}`, 'error');
     }
   }
 
-  // === New: Bulk Update Functions ===
-  async function bulkUpdateStatus(requestIds, newStatus) {
-    if (!requestIds || requestIds.length === 0) {
-      throw new Error('No requests selected for update');
+  // === NEW: Unified Processing with API Enrichment ===
+  async function processWithAPIEnrichment(data, source) {
+    console.log(`🔄 Processing ${data.length} records from ${source}`);
+    
+    // Check size limits
+    if (data.length > SAFETY_LIMITS.MAX_IMPORT_SIZE) {
+      const proceed = confirm(
+        `⚠️ Large dataset detected (${data.length} items).\n\n` +
+        `This includes automatic PMID/DOI lookups which may take time.\n\n` +
+        `Continue?`
+      );
+      
+      if (!proceed) {
+        showImportStatus('❌ Processing cancelled', 'error');
+        return;
+      }
     }
 
-    let updated = 0;
-    const total = requestIds.length;
+    // Separate records that need API lookups vs those that don't
+    const recordsNeedingAPI = data.filter(req => 
+      (req.pmid || req.doi) && (!req.title || !req.authors)
+    );
+    
+    const recordsReadyToImport = data.filter(req => 
+      (!req.pmid && !req.doi) || (req.title && req.authors)
+    );
+
+    console.log(`Records needing API: ${recordsNeedingAPI.length}, Ready to import: ${recordsReadyToImport.length}`);
+
+    // Import ready records immediately
+    let totalImported = 0;
+    if (recordsReadyToImport.length > 0) {
+      console.log('Importing records without API lookups...');
+      showImportStatus(`📥 Importing ${recordsReadyToImport.length} records...`, 'loading');
+      
+      try {
+        const importedCount = await safeAddRequests(recordsReadyToImport);
+        totalImported += importedCount;
+        console.log(`✅ Imported ${importedCount} records without API`);
+      } catch (error) {
+        console.error('Error importing ready records:', error);
+      }
+    }
+
+    // Process API-dependent records with enrichment
+    if (recordsNeedingAPI.length > 0) {
+      console.log('Processing records with API lookups...');
+      showImportStatus(`🔍 Processing ${recordsNeedingAPI.length} records with API lookups...`, 'loading');
+      
+      let enrichedCount = 0;
+      for (let i = 0; i < recordsNeedingAPI.length; i++) {
+        const record = recordsNeedingAPI[i];
+        
+        try {
+          const enrichedRecord = await enrichWithAPI(record);
+          await safeAddRequests([enrichedRecord]);
+          
+          if (enrichedRecord._wasEnriched) {
+            enrichedCount++;
+          }
+          totalImported++;
+          
+          // Progress update
+          const progress = Math.round(((i + 1) / recordsNeedingAPI.length) * 100);
+          showImportStatus(
+            `🔍 API processing: ${i + 1}/${recordsNeedingAPI.length} (${enrichedCount} enriched)`, 
+            'loading'
+          );
+          
+          // Rate limiting
+          await new Promise(resolve => setTimeout(resolve, SAFETY_LIMITS.API_DELAY));
+          
+        } catch (error) {
+          console.warn(`Failed to process record ${i + 1}:`, error);
+          // Add without enrichment
+          try {
+            await safeAddRequests([record]);
+            totalImported++;
+          } catch (addError) {
+            console.error(`Failed to add record ${i + 1}:`, addError);
+          }
+        }
+      }
+      
+      console.log(`✅ API processing complete. ${enrichedCount} records enriched.`);
+    }
+
+    // Final UI updates
+    if (totalImported > 0) {
+      // Refresh UI
+      if (window.SilentStacks.modules.RequestManager?.refreshAllViews) {
+        window.SilentStacks.modules.RequestManager.refreshAllViews();
+      }
+      
+      showImportStatus(
+        `✅ Successfully processed ${totalImported} records${recordsNeedingAPI.length > 0 ? ' with API enrichment' : ''}`, 
+        'success'
+      );
+      
+      showNotification(
+        `Import complete! Added ${totalImported} requests.`, 
+        'success'
+      );
+      
+    } else {
+      throw new Error('No records could be imported');
+    }
+  }
+
+  // === FIXED: API Enrichment ===
+  async function enrichWithAPI(record) {
+    let enriched = { ...record };
+    let wasEnriched = false;
+
+    // Skip if already complete
+    if (enriched.title && enriched.authors && enriched.journal) {
+      return { ...enriched, _wasEnriched: false };
+    }
 
     try {
-      // Process in batches to avoid performance issues
-      for (let i = 0; i < requestIds.length; i += SAFETY_LIMITS.MAX_BATCH_SIZE) {
-        const batch = requestIds.slice(i, i + SAFETY_LIMITS.MAX_BATCH_SIZE);
+      // Try PMID lookup first
+      if (enriched.pmid && isValidPMID(enriched.pmid)) {
+        console.log(`🔍 Looking up PMID: ${enriched.pmid}`);
         
-        batch.forEach(id => {
-          const success = window.SilentStacks.modules.DataManager.updateRequest(id, { status: newStatus });
-          if (success) updated++;
-        });
+        const api = window.SilentStacks?.modules?.APIIntegration;
+        if (api && api.fetchPubMed) {
+          const pubmedData = await api.fetchPubMed(enriched.pmid);
+          
+          if (pubmedData && pubmedData.title) {
+            // Merge API data, preserving existing values
+            enriched = mergeAPIData(enriched, pubmedData);
+            wasEnriched = true;
+            console.log(`✅ Enriched PMID ${enriched.pmid}`);
+          }
+        } else {
+          console.warn('APIIntegration module not available for PMID lookup');
+        }
+      }
+      
+      // Try DOI lookup if still missing data
+      if (!wasEnriched && enriched.doi && isValidDOI(enriched.doi)) {
+        console.log(`🔍 Looking up DOI: ${enriched.doi}`);
         
-        // Memory cleanup between batches
-        if (batch.length === SAFETY_LIMITS.MAX_BATCH_SIZE) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+        const api = window.SilentStacks?.modules?.APIIntegration;
+        if (api && api.fetchCrossRef) {
+          const crossrefData = await api.fetchCrossRef(enriched.doi);
+          
+          if (crossrefData && crossrefData.title) {
+            enriched = mergeAPIData(enriched, crossrefData);
+            wasEnriched = true;
+            console.log(`✅ Enriched DOI ${enriched.doi}`);
+          }
+        } else {
+          console.warn('APIIntegration module not available for DOI lookup');
+        }
+      }
+      
+    } catch (error) {
+      console.warn(`API enrichment failed for record:`, error);
+    }
+
+    return { ...enriched, _wasEnriched: wasEnriched };
+  }
+
+  // === Helper Functions ===
+  function isValidPMID(pmid) {
+    return pmid && /^\d+$/.test(pmid.toString().trim());
+  }
+
+  function isValidDOI(doi) {
+    return doi && /^10\.\d+\/.+/.test(doi.toString().trim());
+  }
+
+  function mergeAPIData(existing, apiData) {
+    const merged = { ...apiData };
+    
+    // Preserve existing non-empty values
+    Object.keys(existing).forEach(key => {
+      if (existing[key] && existing[key] !== '' && key !== '_wasEnriched') {
+        merged[key] = existing[key];
+      }
+    });
+    
+    return merged;
+  }
+
+  // === FIXED: Safe Add Requests ===
+  async function safeAddRequests(requests) {
+    if (!requests || requests.length === 0) {
+      return 0;
+    }
+
+    let added = 0;
+    
+    try {
+      // Check if DataManager is available
+      const dataManager = window.SilentStacks?.modules?.DataManager;
+      if (!dataManager) {
+        throw new Error('DataManager module not available');
+      }
+
+      // Add requests individually for better error handling
+      for (const request of requests) {
+        try {
+          if (dataManager.addRequest) {
+            dataManager.addRequest(request);
+            added++;
+          } else if (dataManager.bulkAddRequests) {
+            const result = dataManager.bulkAddRequests([request]);
+            added += result;
+          } else {
+            console.error('No add method available in DataManager');
+            break;
+          }
+        } catch (error) {
+          console.warn('Failed to add individual request:', error);
+        }
+      }
+      
+      console.log(`✅ Successfully added ${added}/${requests.length} requests`);
+      return added;
+      
+    } catch (error) {
+      console.error('Safe add requests failed:', error);
+      throw error;
+    }
+  }
+
+  // === FIXED: CSV Row Mapping with Enhanced DOCLINE Support ===
+  function mapCSVRowToRequest(row) {
+    if (!row || typeof row !== 'object') {
+      return null;
+    }
+
+    // Helper to get value from multiple possible header variations
+    const getValue = (possibleKeys) => {
+      for (const key of possibleKeys) {
+        const value = row[key];
+        if (value !== undefined && value !== null && value !== '') {
+          return String(value).trim();
+        }
+      }
+      return '';
+    };
+
+    const mapped = {
+      pmid: getValue(['pmid', 'PMID', 'Pmid', 'PmId', 'pubmed_id', 'PubMed ID']),
+      doi: getValue(['doi', 'DOI', 'Doi', 'DoI', 'digital_object_identifier']),
+      title: getValue(['title', 'Title', 'TITLE', 'publication_title', 'Publication Title', 'article_title']),
+      authors: getValue(['authors', 'Authors', 'AUTHORS', 'author', 'Author', 'author_list']),
+      journal: getValue(['journal', 'Journal', 'JOURNAL', 'source', 'Source', 'publication_source']),
+      year: getValue(['year', 'Year', 'YEAR', 'publication_year', 'Publication Year', 'pub_year']),
+      priority: validatePriority(getValue(['priority', 'Priority', 'PRIORITY']).toLowerCase()),
+      status: validateStatus(getValue(['status', 'Status', 'STATUS']).toLowerCase()),
+      patronEmail: getValue(['patronEmail', 'PatronEmail', 'patron_email', 'Patron Email', 'patron-email', 'email', 'Email', 'user_email']),
+      docline: getValue(['docline', 'Docline', 'DOCLINE', 'docline_number', 'DOCLINE_NUMBER', 'request_number', 'Request Number', 'ill_number']),
+      notes: getValue(['notes', 'Notes', 'NOTES', 'note', 'Note', 'comments', 'Comments', 'description']),
+      tags: parseTagsFromString(getValue(['tags', 'Tags', 'TAGS', 'keywords', 'Keywords', 'subjects'])),
+      createdAt: getValue(['createdAt', 'Created', 'created', 'date_created', 'Date Created']) || new Date().toISOString()
+    };
+
+    // Validate that we have at least one useful field
+    if (!mapped.title && !mapped.pmid && !mapped.doi && !mapped.docline) {
+      return null;
+    }
+
+    return mapped;
+  }
+
+  // === Utility Functions ===
+  function validatePriority(priority) {
+    const valid = ['urgent', 'rush', 'normal', 'low'];
+    return valid.includes(priority) ? priority : 'normal';
+  }
+
+  function validateStatus(status) {
+    const valid = ['pending', 'in-progress', 'fulfilled', 'cancelled', 'on-hold'];
+    return valid.includes(status) ? status : 'pending';
+  }
+
+  function parseTagsFromString(tagString) {
+    if (!tagString) return [];
+    return tagString.split(/[,;|]/).map(t => t.trim()).filter(Boolean);
+  }
+
+  function showImportStatus(message, type) {
+    const importStatus = document.getElementById('import-status');
+    if (importStatus) {
+      importStatus.textContent = message;
+      importStatus.className = `import-status ${type}`;
+      importStatus.style.display = 'block';
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          importStatus.style.display = 'none';
+        }, 10000);
+      }
+    }
+    console.log(`Import Status: ${message} (${type})`);
+  }
+
+  function showNotification(message, type) {
+    if (window.SilentStacks?.modules?.UIController?.showNotification) {
+      window.SilentStacks.modules.UIController.showNotification(message, type);
+    } else {
+      console.log(`Notification: ${message} (${type})`);
+      // Fallback to alert for critical errors
+      if (type === 'error') {
+        alert(message);
+      }
+    }
+  }
+
+  async function checkMemoryBetweenChunks() {
+    if (performance.memory) {
+      const memoryMB = performance.memory.usedJSHeapSize / 1024 / 1024;
+      if (memoryMB > SAFETY_LIMITS.MAX_MEMORY_USAGE) {
+        console.log('🧹 High memory usage, performing cleanup...');
+        
+        if (window.SilentStacks.modules.DataManager.performMemoryCleanup) {
+          window.SilentStacks.modules.DataManager.performMemoryCleanup();
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+  }
+
+  // === FIXED: Bulk Update Functions ===
+  async function bulkUpdateStatus(requestIds, newStatus) {
+    if (!requestIds || requestIds.length === 0) {
+      throw new Error('No requests selected');
+    }
+
+    console.log(`Updating ${requestIds.length} requests to status: ${newStatus}`);
+    
+    let updated = 0;
+    const dataManager = window.SilentStacks?.modules?.DataManager;
+    
+    if (!dataManager) {
+      throw new Error('DataManager not available');
+    }
+
+    try {
+      for (const id of requestIds) {
+        try {
+          if (dataManager.updateRequest) {
+            const success = dataManager.updateRequest(id, { 
+              status: newStatus,
+              updatedAt: new Date().toISOString()
+            });
+            if (success) updated++;
+          }
+        } catch (error) {
+          console.warn(`Failed to update request ${id}:`, error);
         }
       }
       
       // Refresh UI
-      window.SilentStacks.modules.RequestManager.refreshAllViews();
+      if (window.SilentStacks.modules.RequestManager?.refreshAllViews) {
+        window.SilentStacks.modules.RequestManager.refreshAllViews();
+      }
       
-      window.SilentStacks.modules.UIController.showNotification(
-        `✅ Updated ${updated}/${total} request${updated !== 1 ? 's' : ''} to ${newStatus}`,
+      showNotification(
+        `✅ Updated ${updated}/${requestIds.length} request(s) to ${newStatus}`,
         'success'
       );
       
@@ -312,33 +606,40 @@
 
   async function bulkUpdatePriority(requestIds, newPriority) {
     if (!requestIds || requestIds.length === 0) {
-      throw new Error('No requests selected for update');
+      throw new Error('No requests selected');
     }
 
+    console.log(`Updating ${requestIds.length} requests to priority: ${newPriority}`);
+    
     let updated = 0;
-    const total = requestIds.length;
+    const dataManager = window.SilentStacks?.modules?.DataManager;
+    
+    if (!dataManager) {
+      throw new Error('DataManager not available');
+    }
 
     try {
-      // Process in batches
-      for (let i = 0; i < requestIds.length; i += SAFETY_LIMITS.MAX_BATCH_SIZE) {
-        const batch = requestIds.slice(i, i + SAFETY_LIMITS.MAX_BATCH_SIZE);
-        
-        batch.forEach(id => {
-          const success = window.SilentStacks.modules.DataManager.updateRequest(id, { priority: newPriority });
-          if (success) updated++;
-        });
-        
-        // Memory cleanup between batches
-        if (batch.length === SAFETY_LIMITS.MAX_BATCH_SIZE) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+      for (const id of requestIds) {
+        try {
+          if (dataManager.updateRequest) {
+            const success = dataManager.updateRequest(id, { 
+              priority: newPriority,
+              updatedAt: new Date().toISOString()
+            });
+            if (success) updated++;
+          }
+        } catch (error) {
+          console.warn(`Failed to update request ${id}:`, error);
         }
       }
       
       // Refresh UI
-      window.SilentStacks.modules.RequestManager.refreshAllViews();
+      if (window.SilentStacks.modules.RequestManager?.refreshAllViews) {
+        window.SilentStacks.modules.RequestManager.refreshAllViews();
+      }
       
-      window.SilentStacks.modules.UIController.showNotification(
-        `✅ Updated ${updated}/${total} request${updated !== 1 ? 's' : ''} to ${newPriority} priority`,
+      showNotification(
+        `✅ Updated ${updated}/${requestIds.length} request(s) to ${newPriority} priority`,
         'success'
       );
       
@@ -349,23 +650,25 @@
     }
   }
 
-  // === Enhanced CSV Export with DOCLINE ===
+  // === FIXED: CSV Export with DOCLINE ===
   async function exportCSV() {
-    const requests = window.SilentStacks.modules.DataManager.getRequests();
+    console.log('📤 Starting CSV export...');
     
-    if (requests.length === 0) {
-      window.SilentStacks.modules.UIController.showNotification('No requests to export', 'warning');
+    const dataManager = window.SilentStacks?.modules?.DataManager;
+    if (!dataManager || !dataManager.getRequests) {
+      showNotification('DataManager not available for export', 'error');
+      return;
+    }
+    
+    const requests = dataManager.getRequests();
+    
+    if (!requests || requests.length === 0) {
+      showNotification('No requests to export', 'warning');
       return;
     }
     
     try {
-      if (requests.length > 5000) {
-        if (!confirm(`Large export detected (${requests.length} requests).\n\nContinue?`)) {
-          return;
-        }
-      }
-
-      // Enhanced headers including DOCLINE
+      // Headers for CSV export (including DOCLINE)
       const headers = [
         'PMID', 'DOI', 'Title', 'Authors', 'Journal', 'Year', 
         'Status', 'Priority', 'Tags', 'Notes', 'Patron Email', 
@@ -374,215 +677,168 @@
       
       let csvContent = headers.join(',') + '\n';
       
-      // Process in chunks for large exports
-      const chunkSize = 1000;
-      for (let i = 0; i < requests.length; i += chunkSize) {
-        const chunk = requests.slice(i, i + chunkSize);
-        
-        const chunkRows = chunk.map(r => [
-          r.pmid || '',
-          r.doi || '',
-          r.title || '',
-          r.authors || '',
-          r.journal || '',
-          r.year || '',
-          r.status || 'pending',
-          r.priority || 'normal',
-          (r.tags || []).join('; '),
-          r.notes || '',
-          r.patronEmail || '',
-          r.docline || '', // DOCLINE support
-          r.createdAt || '',
-          r.updatedAt || r.createdAt || ''
-        ]);
-        
-        csvContent += chunkRows
-          .map(row => row.map(cell => `"${(cell + '').replace(/"/g, '""')}"`).join(','))
-          .join('\n') + '\n';
-        
-        // Memory check for large exports
-        if (performance.memory && performance.memory.usedJSHeapSize / 1024 / 1024 > SAFETY_LIMITS.MAX_MEMORY_USAGE) {
-          console.warn('⚠️ High memory usage during export, taking break...');
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
+      // Convert requests to CSV rows
+      const csvRows = requests.map(r => [
+        r.pmid || '',
+        r.doi || '',
+        r.title || '',
+        r.authors || '',
+        r.journal || '',
+        r.year || '',
+        r.status || 'pending',
+        r.priority || 'normal',
+        (r.tags || []).join('; '),
+        r.notes || '',
+        r.patronEmail || '',
+        r.docline || '', // DOCLINE field
+        r.createdAt || '',
+        r.updatedAt || r.createdAt || ''
+      ]);
       
+      // Escape CSV values properly
+      csvContent += csvRows
+        .map(row => row.map(cell => `"${(cell + '').replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+      
+      // Create and download file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const filename = `silentstacks-requests-${new Date().toISOString().split('T')[0]}.csv`;
+      const filename = `silentstacks-export-${new Date().toISOString().split('T')[0]}.csv`;
       
       downloadFile(blob, filename);
       
-      window.SilentStacks.modules.UIController.showNotification(
-        `✅ Exported ${requests.length} requests to ${filename}`, 
-        'success'
-      );
+      showNotification(`✅ Exported ${requests.length} requests to ${filename}`, 'success');
       
     } catch (error) {
       console.error('CSV export error:', error);
-      window.SilentStacks.modules.UIController.showNotification(
-        `Failed to export CSV: ${error.message}`, 
-        'error'
-      );
-    }
-  }
-
-  // === Enhanced CSV Row Mapping with DOCLINE ===
-  function mapCSVRowToRequest(row) {
-    // Handle different case variations for all fields
-    const getValue = (keys) => {
-      for (const key of keys) {
-        if (row[key] !== undefined && row[key] !== null) {
-          return String(row[key]).trim();
-        }
-      }
-      return '';
-    };
-
-    return {
-      pmid: getValue(['pmid', 'PMID', 'Pmid', 'PmId']),
-      doi: getValue(['doi', 'DOI', 'Doi', 'DoI']),
-      title: getValue(['title', 'Title', 'TITLE', 'publication_title', 'Publication Title']),
-      authors: getValue(['authors', 'Authors', 'AUTHORS', 'author', 'Author']),
-      journal: getValue(['journal', 'Journal', 'JOURNAL', 'source', 'Source']),
-      year: getValue(['year', 'Year', 'YEAR', 'publication_year', 'Publication Year']),
-      priority: validatePriority(getValue(['priority', 'Priority', 'PRIORITY']).toLowerCase() || 'normal'),
-      status: validateStatus(getValue(['status', 'Status', 'STATUS']).toLowerCase() || 'pending'),
-      patronEmail: getValue(['patronEmail', 'PatronEmail', 'patron_email', 'Patron Email', 'patron-email', 'email', 'Email']),
-      docline: getValue(['docline', 'Docline', 'DOCLINE', 'docline_number', 'DOCLINE_NUMBER', 'request_number', 'Request Number']),
-      notes: getValue(['notes', 'Notes', 'NOTES', 'note', 'Note', 'comments', 'Comments']),
-      tags: parseTagsFromString(getValue(['tags', 'Tags', 'TAGS', 'keywords', 'Keywords'])),
-      createdAt: getValue(['createdAt', 'Created', 'created', 'date_created', 'Date Created']) || new Date().toISOString()
-    };
-  }
-
-  // === Utility Functions ===
-  function readFile(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
-      reader.onerror = e => reject(e);
-      reader.readAsText(file);
-    });
-  }
-
-  function validatePriority(priority) {
-    const validPriorities = ['urgent', 'rush', 'normal', 'low'];
-    return validPriorities.includes(priority) ? priority : 'normal';
-  }
-
-  function validateStatus(status) {
-    const validStatuses = ['pending', 'in-progress', 'fulfilled', 'cancelled', 'on-hold'];
-    return validStatuses.includes(status) ? status : 'pending';
-  }
-
-  function parseTagsFromString(tagString) {
-    if (!tagString || typeof tagString !== 'string') return [];
-    return tagString.split(/[,;|]/).map(t => t.trim()).filter(Boolean);
-  }
-
-  function showImportStatus(message, type) {
-    const importStatus = document.getElementById('import-status');
-    if (importStatus) {
-      importStatus.textContent = message;
-      importStatus.className = `import-status ${type}`;
-      importStatus.style.display = 'block';
-      
-      // Auto-hide success messages after 10 seconds
-      if (type === 'success') {
-        setTimeout(() => {
-          importStatus.style.display = 'none';
-        }, 10000);
-      }
+      showNotification(`Failed to export CSV: ${error.message}`, 'error');
     }
   }
 
   function downloadFile(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  async function checkMemoryBetweenChunks() {
-    if (performance.memory) {
-      const memoryMB = performance.memory.usedJSHeapSize / 1024 / 1024;
+    try {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       
-      if (memoryMB > SAFETY_LIMITS.MAX_MEMORY_USAGE) {
-        console.log('🧹 High memory usage detected, performing cleanup...');
-        
-        if (window.SilentStacks.modules.DataManager.performMemoryCleanup) {
-          window.SilentStacks.modules.DataManager.performMemoryCleanup();
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+      // Cleanup
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error('Download failed:', error);
+      throw new Error('Failed to download file');
     }
   }
 
-  // === Module Interface ===
-  const EnhancedBulkOperations = {
-    // Initialization
+  // === FIXED Module Interface ===
+  const FixedBulkOperations = {
+    // Initialization with better error handling
     initialize() {
-      console.log('🔧 Initializing Enhanced BulkOperations v1.3.0...');
+      console.log('🔧 Initializing FIXED Bulk Operations v1.4...');
       
-      // Set up file input handlers
-      const importFile = document.getElementById('import-file');
-      if (importFile) {
-        importFile.addEventListener('change', handleImport);
-      }
+      try {
+        // Set up file input handler
+        const importFile = document.getElementById('import-file');
+        if (importFile) {
+          importFile.addEventListener('change', handleImport);
+          console.log('✅ File import handler attached');
+        } else {
+          console.warn('⚠️ File input element not found');
+        }
 
-      // Set up bulk paste handler
-      const bulkPasteBtn = document.getElementById('bulk-paste-btn');
-      if (bulkPasteBtn) {
-        bulkPasteBtn.addEventListener('click', handleBulkPasteWithLookup);
-      }
+        // Set up bulk paste handler  
+        const bulkPasteBtn = document.getElementById('bulk-paste-btn');
+        if (bulkPasteBtn) {
+          bulkPasteBtn.addEventListener('click', handleBulkPasteWithLookup);
+          console.log('✅ Bulk paste handler attached');
+        } else {
+          console.warn('⚠️ Bulk paste button not found');
+        }
 
-      // Set up export handlers
-      const exportCSVBtn = document.getElementById('export-csv');
-      if (exportCSVBtn) {
-        exportCSVBtn.addEventListener('click', exportCSV);
+        // Set up export handlers
+        const exportCSVBtn = document.getElementById('export-csv');
+        if (exportCSVBtn) {
+          exportCSVBtn.addEventListener('click', exportCSV);
+          console.log('✅ CSV export handler attached');
+        } else {
+          console.warn('⚠️ CSV export button not found');
+        }
+        
+        console.log('✅ FIXED Bulk Operations v1.4 initialized successfully');
+        
+      } catch (error) {
+        console.error('❌ Bulk Operations initialization failed:', error);
       }
-      
-      console.log('✅ Enhanced BulkOperations initialized with PMID auto-fetch and DOCLINE support');
     },
 
-    // Core functions
+    // Core functionality
     handleImport,
-    processImportWithAPILookup,
-    enrichRequestWithAPI,
     handleBulkPasteWithLookup,
+    processWithAPIEnrichment,
+    enrichWithAPI,
     exportCSV,
     
-    // Bulk update functions (new)
+    // Bulk updates
     bulkUpdateStatus,
     bulkUpdatePriority,
 
-    // Utility functions
+    // Utilities
     mapCSVRowToRequest,
+    safeAddRequests,
+    isValidPMID,
+    isValidDOI,
     validatePriority,
     validateStatus,
     parseTagsFromString,
-    downloadFile,
-    checkMemoryBetweenChunks,
 
     // Configuration
-    SAFETY_LIMITS
+    SAFETY_LIMITS,
+    
+    // Version info
+    version: '1.4.0-fixed'
   };
 
-  // Register with SilentStacks
-  if (!window.SilentStacks) {
-    window.SilentStacks = { modules: {} };
-  }
-  if (!window.SilentStacks.modules) {
-    window.SilentStacks.modules = {};
+  // === FIXED Registration ===
+  try {
+    // Ensure SilentStacks structure exists
+    if (!window.SilentStacks) {
+      window.SilentStacks = { modules: {} };
+    }
+    if (!window.SilentStacks.modules) {
+      window.SilentStacks.modules = {};
+    }
+
+    // Register the module
+    window.SilentStacks.modules.BulkOperations = FixedBulkOperations;
+    
+    console.log('✅ FIXED Bulk Operations v1.4 registered successfully');
+    
+    // Auto-initialize if DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => FixedBulkOperations.initialize(), 100);
+      });
+    } else {
+      // DOM already ready, initialize after a short delay
+      setTimeout(() => FixedBulkOperations.initialize(), 100);
+    }
+    
+  } catch (error) {
+    console.error('❌ FIXED Bulk Operations registration failed:', error);
   }
 
-  window.SilentStacks.modules.BulkOperations = EnhancedBulkOperations;
-  
-  console.log('✅ Enhanced BulkOperations v1.3.0 registered successfully');
+  // === Debug Information ===
+  console.log('📊 FIXED Bulk Operations v1.4 Debug Info:');
+  console.log('- File input ID: import-file');
+  console.log('- Bulk paste button ID: bulk-paste-btn'); 
+  console.log('- Bulk paste textarea ID: bulk-paste-data');
+  console.log('- Export CSV button ID: export-csv');
+  console.log('- Import status div ID: import-status');
+  console.log('- Safety limits:', SAFETY_LIMITS);
+  console.log('- PapaCSV available:', !!window.Papa);
+  console.log('- SilentStacks structure:', !!window.SilentStacks);
 
 })();
