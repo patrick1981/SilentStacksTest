@@ -984,4 +984,4 @@ window.SilentStacksAPI = (() => {
     window.SilentStacks.modules.APIIntegration = APIIntegration;
     
     console.log('✅ APIIntegration module registered');
-})();
+}})();
