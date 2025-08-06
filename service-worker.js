@@ -73,36 +73,22 @@ const API_CACHE_PATTERNS = [
 ];
 
 // Install event - cache static assets
-self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker installing...');
-  
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('📦 Caching static assets...');
-        
-        // Cache files individually to handle errors gracefully
-        return Promise.all(
-          STATIC_CACHE_URLS.map(url => {
-            return cache.add(url).catch(err => {
-              console.warn(`Failed to cache ${url}:`, err);
-              // Continue with other files even if one fails
-              return Promise.resolve();
-            });
-          })
-        );
-      })
-      .then(() => {
-        console.log('✅ Static assets cached successfully');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('❌ Cache installation error:', error);
-        // Still skip waiting to activate
-        return self.skipWaiting();
-      })
-  );
-});
+// Cache files individually to handle errors gracefully
+return Promise.all(
+  STATIC_CACHE_URLS.map(async url => {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        await cache.put(url, response);
+        console.log('✅ Cached:', url);
+      } else {
+        console.warn(`⚠️ Skipping cache for ${url} - status: ${response.status}`);
+      }
+    } catch (err) {
+      console.warn(`Failed to fetch ${url}:`, err);
+    }
+  })
+);
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
