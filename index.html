@@ -1018,5 +1018,10 @@ setTimeout(() => {
     console.log('populateForm function:', window.SilentStacks?.modules?.RequestManager?.populateForm);
 }, 2000);
 </script>
+    const script = document.createElement('script');
+script.src = 'assets/js/modules/api-integration.js';
+script.onload = () => console.log('✅ api-integration.js loaded');
+script.onerror = () => console.log('❌ api-integration.js failed to load');
+document.head.appendChild(script);
 </body>
 </html>
