@@ -1,17 +1,17 @@
-// Updated Integrated Documentation for SilentStacks v1.3.0
+// Updated Integrated Documentation for SilentStacks v1.4.0
 // Reflects: PMID auto-fetch, bulk updates, DOCLINE support, removed Excel references
 
 (function() {
   'use strict';
 
-  console.log('📚 Loading Updated Integrated Documentation v1.3.0...');
+  console.log('📚 Loading Updated Integrated Documentation v1.4.0...');
 
   const documentationSections = [
     {
       id: "getting_started",
       title: "Getting Started",
       content: `
-        <h3>Welcome to SilentStacks v1.3.0</h3>
+        <h3>Welcome to SilentStacks v1.4.0</h3>
         
         <p>SilentStacks is a client-side application for managing Interlibrary Loan (ILL) requests with advanced features including:</p>
         
@@ -439,7 +439,7 @@ Created, Updated</pre>
     sections: documentationSections,
     
     initialize() {
-      console.log('📚 Initializing Updated Documentation v1.3.0...');
+      console.log('📚 Initializing Updated Documentation v1.4.0...');
       this.setupDocumentationUI();
       this.setupSearch();
       console.log('✅ Documentation initialized with PMID auto-fetch and DOCLINE guidance');
@@ -586,7 +586,7 @@ Created, Updated</pre>
 
   window.SilentStacks.modules.IntegratedDocumentation = IntegratedDocumentation;
   
-  console.log('✅ Updated Integrated Documentation v1.3.0 registered successfully');
+  console.log('✅ Updated Integrated Documentation v1.4.0 registered successfully');
 
 })();
 
