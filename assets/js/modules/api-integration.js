@@ -853,4 +853,135 @@ window.SilentStacksAPI = (() => {
         fetchPubMed: PubMedAPI.fetchPubMed.bind(PubMedAPI),
         fetchCrossRef: CrossRefAPI.fetchCrossRef.bind(CrossRefAPI)
     };
+    // Adapter to make this work with existing SilentStacks architecture
+(function() {
+    'use strict';
+    
+    // Create the APIIntegration module that app.js expects
+    const APIIntegration = {
+        // Map to the new API methods
+        fetchPubMed: window.SilentStacksAPI.fetchPubMed,
+        fetchCrossRef: window.SilentStacksAPI.fetchCrossRef,
+        
+        // The lookup methods your buttons expect
+        async lookupPMID() {
+            const pmidInput = document.getElementById('pmid');
+            if (!pmidInput) return;
+            
+            const pmid = pmidInput.value.trim();
+            if (!pmid) {
+                this.setStatus('Please enter a PMID', 'error');
+                return;
+            }
+            
+            if (!/^\d+$/.test(pmid)) {
+                this.setStatus('PMID must be numeric', 'error');
+                return;
+            }
+            
+            this.setStatus('Looking up PMID...', 'loading');
+            
+            try {
+                const pubmedData = await window.SilentStacksAPI.PubMedAPI.fetchPubMed(pmid);
+                
+                // Populate form
+                if (window.SilentStacks?.modules?.RequestManager?.populateForm) {
+                    window.SilentStacks.modules.RequestManager.populateForm(pubmedData);
+                }
+                
+                this.setStatus('Metadata populated successfully', 'success');
+                
+                // Display MeSH terms if available
+                if (pubmedData.meshHeadings && pubmedData.meshHeadings.length > 0) {
+                    this.displayMeSHTerms(pubmedData.meshHeadings);
+                }
+                
+            } catch (error) {
+                console.error('PMID lookup error:', error);
+                this.setStatus(`PMID lookup failed: ${error.message}`, 'error');
+            }
+        },
+        
+        async lookupDOI() {
+            const doiInput = document.getElementById('doi');
+            if (!doiInput) return;
+            
+            const doi = doiInput.value.trim();
+            if (!doi) {
+                this.setStatus('Please enter a DOI', 'error');
+                return;
+            }
+            
+            this.setStatus('Looking up DOI...', 'loading');
+            
+            try {
+                const crossrefData = await window.SilentStacksAPI.CrossRefAPI.fetchCrossRef(doi);
+                
+                // Populate form
+                if (window.SilentStacks?.modules?.RequestManager?.populateForm) {
+                    window.SilentStacks.modules.RequestManager.populateForm(crossrefData);
+                }
+                
+                this.setStatus('DOI lookup successful!', 'success');
+                
+            } catch (error) {
+                console.error('DOI lookup error:', error);
+                this.setStatus(`DOI lookup failed: ${error.message}`, 'error');
+            }
+        },
+        
+        setStatus(message, type = '') {
+            // Update PMID status
+            const pmidStatus = document.getElementById('pmid-status');
+            if (pmidStatus) {
+                pmidStatus.textContent = message;
+                pmidStatus.className = 'status-indicator ' + type;
+                pmidStatus.style.display = 'block';
+            }
+            
+            // Update DOI status
+            const doiStatus = document.getElementById('doi-status');
+            if (doiStatus) {
+                doiStatus.textContent = message;
+                doiStatus.className = 'status-indicator ' + type;
+                doiStatus.style.display = 'block';
+            }
+            
+            // Hide after success
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (pmidStatus) pmidStatus.style.display = 'none';
+                    if (doiStatus) doiStatus.style.display = 'none';
+                }, 5000);
+            }
+        },
+        
+        displayMeSHTerms(meshHeadings) {
+            const meshSection = document.getElementById('mesh-section');
+            const meshTags = document.getElementById('mesh-tags');
+            
+            if (meshSection && meshTags) {
+                meshSection.style.display = 'block';
+                
+                const meshHTML = meshHeadings.map(mesh => `
+                    <button type="button" class="mesh-tag" onclick="addMeshToTags('${mesh.term.replace(/'/g, "\\'")}')" title="${mesh.isMajorTopic ? 'Major Topic' : 'Minor Topic'}">
+                        ${mesh.term} ${mesh.isMajorTopic ? '★' : ''}
+                    </button>
+                `).join('');
+                
+                meshTags.innerHTML = meshHTML || '<div class="mesh-empty">No MeSH terms found</div>';
+            }
+        },
+        
+        // Initialize (required by app.js)
+        initialize() {
+            console.log('✅ APIIntegration adapter initialized');
+        }
+    };
+    
+    // Register with SilentStacks
+    window.SilentStacks = window.SilentStacks || { modules: {} };
+    window.SilentStacks.modules.APIIntegration = APIIntegration;
+    
+    console.log('✅ APIIntegration module registered');
 })();
