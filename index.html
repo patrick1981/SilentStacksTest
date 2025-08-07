@@ -1159,5 +1159,44 @@ script.onload = () => console.log('✅ api-integration.js loaded');
 script.onerror = () => console.log('❌ api-integration.js failed to load');
 document.head.appendChild(script);
         </script>
+    <script>
+// Final initialization after all modules loaded
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    console.log('🚀 Final application initialization...');
+    
+    // Initialize state
+    window.SilentStacks.state = window.SilentStacks.state || {
+      selectedRequests: new Set(),
+      followupOnly: false,
+      searchQuery: '',
+      activeFilters: []
+    };
+
+    // Initialize UIController with elements
+    const elementCache = {
+      requestList: document.getElementById('request-list'),
+      recentRequests: document.getElementById('recent-requests'),
+      status: document.querySelector('.lookup-status'),
+      stats: {
+        total: document.getElementById('total-requests'),
+        pending: document.getElementById('pending-requests'), 
+        fulfilled: document.getElementById('fulfilled-requests'),
+        followup: document.getElementById('followup-requests')
+      },
+      navTabs: document.querySelectorAll('[data-section]'),
+      sections: document.querySelectorAll('.section')
+    };
+
+    window.SilentStacks.modules.UIController.initialize(elementCache);
+    
+    // Initial render
+    window.SilentStacks.modules.UIController.renderRequests();
+    window.SilentStacks.modules.UIController.renderStats();
+    
+    console.log('✅ Application ready!');
+  }, 1000);
+});
+</script>
 </body>
 </html>
