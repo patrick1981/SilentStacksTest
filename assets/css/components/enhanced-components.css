@@ -1489,3 +1489,269 @@ input[type="checkbox"]:checked + .checkmark::after {
         padding: 15px;
     }
 }
+/* ===== MESH HEADINGS STYLING - Add to enhanced-components.css ===== */
+
+/* MeSH Section */
+.mesh-section {
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #f8f9fa;
+    display: none; /* Hidden by default, shown when MeSH terms are loaded */
+}
+
+.mesh-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.mesh-header svg {
+    color: #6c757d;
+}
+
+/* MeSH Terms List */
+#mesh-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0;
+}
+
+.mesh-term {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+/* Major MeSH Terms (marked with *) */
+.mesh-term.mesh-major {
+    background: #e7f3ff;
+    color: #0366d6;
+    border-color: #b3d4fc;
+    font-weight: 600;
+}
+
+.mesh-term.mesh-major:hover {
+    background: #0366d6;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(3, 102, 214, 0.3);
+}
+
+/* Minor MeSH Terms */
+.mesh-term.mesh-minor {
+    background: #f1f3f4;
+    color: #5f6368;
+    border-color: #dadce0;
+}
+
+.mesh-term.mesh-minor:hover {
+    background: #5f6368;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(95, 99, 104, 0.3);
+}
+
+/* Empty state */
+.mesh-empty {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Clinical Trials Section Enhancements */
+.clinical-trials-section {
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #f8f9fa;
+    display: none; /* Hidden by default */
+}
+
+.clinical-trials-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.clinical-trials-header svg {
+    color: #17a2b8;
+}
+
+.clinical-trial-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 8px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s ease;
+}
+
+.clinical-trial-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.clinical-trial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.clinical-trial-phase {
+    background: #17a2b8;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    font-weight: 600;
+}
+
+.clinical-trial-status {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    font-weight: 600;
+}
+
+/* Clinical trial status colors */
+.clinical-trial-status.status-completed {
+    background: #28a745;
+    color: white;
+}
+
+.clinical-trial-status.status-recruiting {
+    background: #007bff;
+    color: white;
+}
+
+.clinical-trial-status.status-active-not-recruiting {
+    background: #ffc107;
+    color: #000;
+}
+
+.clinical-trial-status.status-terminated {
+    background: #dc3545;
+    color: white;
+}
+
+.clinical-trial-status.status-unknown {
+    background: #6c757d;
+    color: white;
+}
+
+.clinical-trial-title {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.clinical-trial-conditions,
+.clinical-trial-interventions,
+.clinical-trial-enrollment,
+.clinical-trial-age,
+.clinical-trial-sponsors {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
+.clinical-trial-conditions strong,
+.clinical-trial-interventions strong,
+.clinical-trial-enrollment strong,
+.clinical-trial-age strong,
+.clinical-trial-sponsors strong {
+    color: #495057;
+}
+
+/* Enhanced status indicators */
+.status-indicator.loading {
+    color: #17a2b8;
+    font-weight: 500;
+}
+
+.status-indicator.success {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.status-indicator.error {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+/* Auto-filled form fields styling */
+.auto-filled {
+    background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%) !important;
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+/* Responsive design for MeSH and Clinical Trials */
+@media (max-width: 768px) {
+    .mesh-term {
+        font-size: 0.75em;
+        padding: 3px 6px;
+    }
+    
+    .clinical-trial-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .mesh-section,
+    .clinical-trials-section {
+        padding: 10px;
+        margin: 10px 0;
+    }
+}
+
+/* Print styles for MeSH and Clinical Trials */
+@media print {
+    .mesh-section,
+    .clinical-trials-section {
+        border: 1px solid #000;
+        box-shadow: none;
+        background: white;
+        page-break-inside: avoid;
+    }
+    
+    .mesh-term {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        border: 1px solid #000;
+    }
+    
+    .clinical-trial-card {
+        border: 1px solid #000;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    
+    .clinical-trial-phase,
+    .clinical-trial-status {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        border: 1px solid #000;
+    }
+}

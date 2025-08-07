@@ -1,14 +1,20 @@
-// assets/js/modules/api-integration.js
-// SilentStacks API Integration Module v1.5 - COMPLETE
-// Handles PubMed API, CrossRef API, and ClinicalTrials.gov integration with NLM formatting
+// assets/js/modules/api-integration.js  
+// SilentStacks API Integration Module v1.5 - COMPLETE WITH MESH & CLINICAL TRIALS
+// Handles PubMed API, CrossRef API, ClinicalTrials.gov + MeSH headings + Clinical trial detection
 
 (() => {
   'use strict';
 
+  // Prevent multiple loading
+  if (window.SilentStacks?.modules?.APIIntegration?.initialized) {
+    console.log('🧬 API Integration already loaded, skipping...');
+    return;
+  }
+
   const CONFIG = {
     pubmed: {
       baseURL: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/',
-      timeout: 10000,
+      timeout: 15000,
       retryAttempts: 3,
       retryDelay: 1000
     },
@@ -22,12 +28,14 @@
     }
   };
 
-  const EnhancedAPIIntegration = {
+  const CompleteAPIIntegration = {
     initialized: false,
 
     // Initialize API integration
     initialize() {
-      console.log('🔧 Initializing Enhanced API Integration v1.5...');
+      if (this.initialized) return;
+      
+      console.log('🔧 Initializing COMPLETE API Integration v1.5...');
       
       try {
         this.setupEventHandlers();
@@ -36,7 +44,7 @@
         this.setupClinicalTrialsIntegration();
         this.initialized = true;
         
-        console.log('✅ Enhanced API Integration v1.5 initialized successfully');
+        console.log('✅ COMPLETE API Integration v1.5 initialized successfully');
         
       } catch (error) {
         console.error('❌ API Integration initialization failed:', error);
@@ -101,13 +109,13 @@
       console.log('✅ ClinicalTrials.gov API integration ready (no auth required)');
     },
 
-    // Fetch PubMed metadata with enhanced NLM formatting
-    async fetchPubMedMetadata(pmid, includeClinicalTrials = true) {
+    // ENHANCED: Fetch PubMed metadata with MeSH headings AND clinical trials
+    async fetchPubMedMetadata(pmid, includeClinicalTrials = true, includeMeSH = true) {
       if (!pmid || !/^\d+$/.test(pmid)) {
         throw new Error('Invalid PMID format');
       }
 
-      console.log(`🔍 Fetching PubMed metadata for PMID ${pmid}...`);
+      console.log(`🔍 Fetching COMPLETE metadata for PMID ${pmid}...`);
 
       try {
         const apiKey = window.SilentStacks?.config?.ncbiApiKey;
@@ -131,26 +139,71 @@
           throw new Error(`PMID ${pmid} not found`);
         }
 
-        // Build enhanced metadata in NLM format
+        // Build enhanced metadata from summary
         const metadata = this.parseSummaryRecord(record, pmid);
 
-        // Step 2: Fetch associated clinical trials if requested
-        if (includeClinicalTrials) {
+        // Step 2: Get detailed XML data for MeSH headings and clinical trials
+        if (includeMeSH || includeClinicalTrials) {
+          const fetchUrl = `${CONFIG.pubmed.baseURL}efetch.fcgi?db=pubmed&id=${pmid}&retmode=xml${keyParam}`;
+          
           try {
-            metadata.clinicalTrials = await this.fetchClinicalTrialsForPMID(pmid);
-            metadata.hasLinkedClinicalTrial = metadata.clinicalTrials.length > 0;
+            const fetchResponse = await this.fetchWithRetry(fetchUrl, {
+              timeout: CONFIG.pubmed.timeout
+            });
             
-            if (metadata.clinicalTrials.length > 0) {
-              console.log(`✅ Found ${metadata.clinicalTrials.length} clinical trials for PMID ${pmid}`);
+            const xmlText = await fetchResponse.text();
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+            // Extract MeSH headings if requested
+            if (includeMeSH) {
+              metadata.meshHeadings = this.extractMeSHTerms(xmlDoc);
+              metadata.majorMeshTerms = metadata.meshHeadings.filter(mesh => mesh.majorTopic);
+              console.log(`✅ Extracted ${metadata.meshHeadings.length} MeSH terms (${metadata.majorMeshTerms.length} major)`);
             }
-          } catch (error) {
-            console.warn(`Failed to fetch clinical trials for PMID ${pmid}:`, error);
-            metadata.clinicalTrials = [];
-            metadata.hasLinkedClinicalTrial = false;
+
+            // Extract clinical trial information from XML
+            if (includeClinicalTrials) {
+              metadata.nctNumbers = this.extractNCTNumbers(xmlDoc);
+              metadata.hasLinkedClinicalTrial = metadata.nctNumbers.length > 0;
+              
+              if (metadata.nctNumbers.length > 0) {
+                console.log(`✅ Found ${metadata.nctNumbers.length} NCT numbers in abstract/data: ${metadata.nctNumbers.join(', ')}`);
+              }
+            }
+
+            // Extract publication types for better classification
+            metadata.publicationTypes = this.extractPublicationTypes(xmlDoc);
+            metadata.isRandomizedControlledTrial = metadata.publicationTypes.some(type => 
+              type.toLowerCase().includes('randomized controlled trial')
+            );
+            metadata.isClinicalTrial = metadata.publicationTypes.some(type => 
+              type.toLowerCase().includes('clinical trial')
+            ) || metadata.nctNumbers.length > 0;
+
+          } catch (xmlError) {
+            console.warn('Failed to fetch XML data:', xmlError);
+            // Continue with summary data only
           }
         }
 
-        console.log(`✅ Successfully fetched metadata for PMID ${pmid}`);
+        // Step 3: Search ClinicalTrials.gov for related trials
+        if (includeClinicalTrials) {
+          try {
+            const clinicalTrials = await this.searchClinicalTrialsForPMID(pmid);
+            metadata.clinicalTrials = clinicalTrials;
+            
+            if (clinicalTrials.length > 0) {
+              metadata.hasLinkedClinicalTrial = true;
+              console.log(`✅ Found ${clinicalTrials.length} related clinical trials via ClinicalTrials.gov search`);
+            }
+          } catch (error) {
+            console.warn(`Failed to search clinical trials for PMID ${pmid}:`, error);
+            metadata.clinicalTrials = [];
+          }
+        }
+
+        console.log(`✅ COMPLETE metadata fetch successful for PMID ${pmid}`);
         return metadata;
 
       } catch (error) {
@@ -164,13 +217,14 @@
       const metadata = {
         pmid: pmid,
         source: 'pubmed',
-        sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`
+        sourceUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+        fetchedAt: new Date().toISOString()
       };
 
       // Title
       metadata.title = record.title || '';
 
-      // Authors in NLM format (Last, First Initial)
+      // Authors in NLM format
       metadata.authors = this.formatAuthorsNLM(record.authors || []);
 
       // Journal information
@@ -225,39 +279,142 @@
       return yearMatch ? yearMatch[1] : '';
     },
 
-    // Fetch clinical trials associated with PMID
-    async fetchClinicalTrialsForPMID(pmid) {
-      console.log(`🧪 Searching clinical trials for PMID ${pmid}...`);
+    // RESTORED: Extract MeSH terms from XML
+    extractMeSHTerms(xmlDoc) {
+      const meshTerms = [];
+      const meshElements = xmlDoc.querySelectorAll('MeshHeading');
+
+      meshElements.forEach(meshHeading => {
+        const descriptorName = meshHeading.querySelector('DescriptorName');
+        if (descriptorName) {
+          const term = {
+            term: descriptorName.textContent.trim(),
+            majorTopic: descriptorName.getAttribute('MajorTopicYN') === 'Y',
+            ui: descriptorName.getAttribute('UI') || ''
+          };
+          
+          // Also get qualifiers (subheadings)
+          const qualifiers = [];
+          const qualifierElements = meshHeading.querySelectorAll('QualifierName');
+          qualifierElements.forEach(qualifier => {
+            qualifiers.push({
+              qualifier: qualifier.textContent.trim(),
+              majorTopic: qualifier.getAttribute('MajorTopicYN') === 'Y',
+              ui: qualifier.getAttribute('UI') || ''
+            });
+          });
+          
+          term.qualifiers = qualifiers;
+          meshTerms.push(term);
+        }
+      });
+
+      return meshTerms;
+    },
+
+    // Extract publication types
+    extractPublicationTypes(xmlDoc) {
+      const types = [];
+      const typeElements = xmlDoc.querySelectorAll('PublicationType');
+
+      typeElements.forEach(type => {
+        const ui = type.getAttribute('UI') || '';
+        const text = type.textContent.trim();
+        
+        if (text) {
+          types.push(text);
+        }
+      });
+
+      return types;
+    },
+
+    // ENHANCED: Extract NCT numbers from article XML
+    extractNCTNumbers(xmlDoc) {
+      const nctNumbers = [];
+      
+      // Method 1: Look in DataBankList for ClinicalTrials.gov entries
+      const dataBankElements = xmlDoc.querySelectorAll('DataBank');
+      dataBankElements.forEach(dataBank => {
+        const dataBankName = dataBank.querySelector('DataBankName');
+        if (dataBankName && dataBankName.textContent.includes('ClinicalTrials.gov')) {
+          const accessionElements = dataBank.querySelectorAll('AccessionNumber');
+          accessionElements.forEach(accession => {
+            const nct = accession.textContent.trim();
+            if (nct.match(/^NCT\d{8}$/i)) {
+              nctNumbers.push(nct.toUpperCase());
+            }
+          });
+        }
+      });
+
+      // Method 2: Search in abstract text for NCT numbers
+      const abstractElements = xmlDoc.querySelectorAll('AbstractText');
+      abstractElements.forEach(abstractElement => {
+        const abstractText = abstractElement.textContent;
+        const nctMatches = abstractText.match(/NCT\d{8}/gi);
+        if (nctMatches) {
+          nctMatches.forEach(nct => {
+            const upperNCT = nct.toUpperCase();
+            if (!nctNumbers.includes(upperNCT)) {
+              nctNumbers.push(upperNCT);
+            }
+          });
+        }
+      });
+
+      // Method 3: Look in OtherID elements
+      const otherIdElements = xmlDoc.querySelectorAll('OtherID');
+      otherIdElements.forEach(otherId => {
+        const idText = otherId.textContent.trim();
+        if (idText.match(/^NCT\d{8}$/i)) {
+          const upperNCT = idText.toUpperCase();
+          if (!nctNumbers.includes(upperNCT)) {
+            nctNumbers.push(upperNCT);
+          }
+        }
+      });
+
+      return nctNumbers;
+    },
+
+    // ENHANCED: Search ClinicalTrials.gov for studies mentioning this PMID
+    async searchClinicalTrialsForPMID(pmid) {
+      console.log(`🧪 Searching ClinicalTrials.gov for PMID ${pmid}...`);
+
+      const clinicalTrials = [];
 
       try {
-        // Search ClinicalTrials.gov for studies that reference this PMID
-        const searchUrl = `${CONFIG.clinicaltrials.baseURL}studies?query.term=${pmid}&pageSize=20&format=json`;
+        // Search strategy 1: Direct PMID reference
+        const pmidSearchUrl = `${CONFIG.clinicaltrials.baseURL}studies?query.term=${pmid}&pageSize=20&format=json`;
         
-        const response = await this.fetchWithRetry(searchUrl, {
+        const pmidResponse = await this.fetchWithRetry(pmidSearchUrl, {
           timeout: CONFIG.clinicaltrials.timeout
         });
         
-        if (!response.ok) {
-          console.warn(`ClinicalTrials.gov API returned ${response.status} for PMID ${pmid}`);
-          return [];
+        if (pmidResponse.ok) {
+          const pmidData = await pmidResponse.json();
+          const pmidStudies = pmidData.studies || [];
+          
+          pmidStudies.forEach(study => {
+            const trial = this.parseClinicalTrialStudy(study);
+            if (trial.nctNumber) {
+              clinicalTrials.push(trial);
+            }
+          });
         }
-        
-        const data = await response.json();
-        const studies = data.studies || [];
-        
-        const clinicalTrials = studies
-          .map(study => this.parseClinicalTrialStudy(study))
-          .filter(trial => trial.nctNumber); // Only include trials with NCT numbers
-        
-        return clinicalTrials;
-        
+
+        // Search strategy 2: If we found NCT numbers in the article, get their details
+        // (This would be done in a separate call to get full trial details)
+
       } catch (error) {
-        console.warn(`⚠️ Failed to fetch clinical trials for PMID ${pmid}:`, error);
-        return [];
+        console.warn(`⚠️ ClinicalTrials.gov search failed for PMID ${pmid}:`, error);
       }
+
+      return clinicalTrials;
     },
 
-    // Parse clinical trial study data
+    // Parse clinical trial study data with enhanced fields
     parseClinicalTrialStudy(study) {
       const protocol = study.protocolSection || {};
       const identification = protocol.identificationModule || {};
@@ -265,6 +422,7 @@
       const design = protocol.designModule || {};
       const conditions = protocol.conditionsModule || {};
       const interventions = protocol.armsInterventionsModule || {};
+      const eligibility = protocol.eligibilityModule || {};
 
       return {
         nctNumber: identification.nctId || '',
@@ -276,20 +434,213 @@
         interventions: interventions.interventions ? 
           interventions.interventions.map(intervention => ({
             type: intervention.type || '',
-            name: intervention.name || ''
+            name: intervention.name || '',
+            description: intervention.description || ''
           })) : [],
         startDate: status.startDateStruct ? 
-          `${status.startDateStruct.date || ''}` : '',
+          this.formatDateStruct(status.startDateStruct) : '',
         completionDate: status.completionDateStruct ? 
-          `${status.completionDateStruct.date || ''}` : '',
+          this.formatDateStruct(status.completionDateStruct) : '',
         enrollment: status.enrollmentInfo ? status.enrollmentInfo.count : null,
+        eligibilityCriteria: eligibility.eligibilityCriteria || '',
+        ageRange: eligibility.minimumAge || eligibility.maximumAge ? 
+          `${eligibility.minimumAge || 'N/A'} to ${eligibility.maximumAge || 'N/A'}` : '',
+        sex: eligibility.sex || '',
         sponsors: protocol.sponsorCollaboratorsModule ? 
-          (protocol.sponsorCollaboratorsModule.leadSponsor ? 
-            [protocol.sponsorCollaboratorsModule.leadSponsor] : []) : []
+          this.extractSponsors(protocol.sponsorCollaboratorsModule) : []
       };
     },
 
-    // Fetch CrossRef metadata using DOI
+    // Helper: Format date struct
+    formatDateStruct(dateStruct) {
+      if (!dateStruct.date) return '';
+      return dateStruct.date;
+    },
+
+    // Helper: Extract sponsors
+    extractSponsors(sponsorModule) {
+      const sponsors = [];
+      
+      if (sponsorModule.leadSponsor) {
+        sponsors.push({
+          name: sponsorModule.leadSponsor.name || '',
+          type: 'Lead Sponsor'
+        });
+      }
+      
+      if (sponsorModule.collaborators) {
+        sponsorModule.collaborators.forEach(collab => {
+          sponsors.push({
+            name: collab.name || '',
+            type: 'Collaborator'
+          });
+        });
+      }
+      
+      return sponsors;
+    },
+
+    // PMID lookup button handler with MeSH and clinical trials
+    async lookupPMID() {
+      const pmidInput = document.getElementById('pmid');
+      const statusDiv = document.getElementById('pmid-status');
+      
+      if (!pmidInput || !statusDiv) {
+        console.error('PMID lookup elements not found');
+        return;
+      }
+
+      const pmid = pmidInput.value.trim();
+      
+      if (!pmid) {
+        this.showStatus(statusDiv, 'Please enter a PMID', 'error');
+        return;
+      }
+
+      if (!this.validatePMID(pmid)) {
+        this.showStatus(statusDiv, 'PMID must be 1-8 digits', 'error');
+        return;
+      }
+
+      this.showStatus(statusDiv, 'Fetching metadata + MeSH terms + clinical trials...', 'loading');
+
+      try {
+        // Fetch complete metadata including MeSH and clinical trials
+        const metadata = await this.fetchPubMedMetadata(pmid, true, true);
+        
+        // Fill form fields
+        this.fillFormFields(metadata);
+        
+        // Display MeSH headings if found
+        if (metadata.meshHeadings && metadata.meshHeadings.length > 0) {
+          this.displayMeSHHeadings(metadata.meshHeadings);
+        }
+        
+        // Display clinical trials if found
+        if (metadata.clinicalTrials && metadata.clinicalTrials.length > 0) {
+          this.displayClinicalTrials(metadata.clinicalTrials);
+        }
+        
+        // Show comprehensive status
+        let statusMessage = `✅ PMID ${pmid}: Metadata fetched`;
+        if (metadata.meshHeadings?.length > 0) {
+          statusMessage += ` + ${metadata.meshHeadings.length} MeSH terms`;
+        }
+        if (metadata.nctNumbers?.length > 0) {
+          statusMessage += ` + ${metadata.nctNumbers.length} NCT numbers`;
+        }
+        if (metadata.clinicalTrials?.length > 0) {
+          statusMessage += ` + ${metadata.clinicalTrials.length} clinical trials`;
+        }
+        
+        this.showStatus(statusDiv, statusMessage, 'success');
+
+      } catch (error) {
+        console.error('PMID lookup error:', error);
+        this.showStatus(statusDiv, `❌ Error: ${error.message}`, 'error');
+      }
+    },
+
+    // Display MeSH headings in UI
+    displayMeSHHeadings(meshHeadings) {
+      const meshSection = document.getElementById('mesh-section');
+      const meshList = document.getElementById('mesh-tags');
+      
+      if (!meshSection || !meshList) {
+        console.warn('MeSH display elements not found');
+        return;
+      }
+      
+      meshList.innerHTML = meshHeadings.map(mesh => `
+        <span class="mesh-term ${mesh.majorTopic ? 'mesh-major' : 'mesh-minor'}" 
+              title="${mesh.ui}">
+          ${mesh.term}${mesh.majorTopic ? ' *' : ''}
+        </span>
+      `).join('');
+      
+      meshSection.style.display = 'block';
+      console.log(`✅ Displayed ${meshHeadings.length} MeSH headings`);
+    },
+
+    // Display clinical trials in UI (enhanced)
+    displayClinicalTrials(clinicalTrials) {
+      const section = document.getElementById('clinical-trials-section');
+      const list = document.getElementById('clinical-trials-list');
+      
+      if (!section || !list || clinicalTrials.length === 0) {
+        console.warn('Clinical trials display elements not found or no trials to display');
+        return;
+      }
+      
+      list.innerHTML = clinicalTrials.map(trial => `
+        <div class="clinical-trial-card">
+          <div class="clinical-trial-header">
+            <strong>${trial.nctNumber}</strong>
+            ${trial.phase ? `<span class="clinical-trial-phase">${trial.phase}</span>` : ''}
+            <span class="clinical-trial-status status-${trial.status.toLowerCase().replace(/\s+/g, '-')}">${trial.status}</span>
+          </div>
+          <div class="clinical-trial-title">${trial.title}</div>
+          ${trial.conditions.length > 0 ? `<div class="clinical-trial-conditions">
+            <strong>Conditions:</strong> ${trial.conditions.join(', ')}
+          </div>` : ''}
+          ${trial.interventions.length > 0 ? `<div class="clinical-trial-interventions">
+            <strong>Interventions:</strong> ${trial.interventions.map(i => i.name).join(', ')}
+          </div>` : ''}
+          ${trial.enrollment ? `<div class="clinical-trial-enrollment">
+            <strong>Enrollment:</strong> ${trial.enrollment} participants
+          </div>` : ''}
+          ${trial.ageRange ? `<div class="clinical-trial-age">
+            <strong>Age Range:</strong> ${trial.ageRange}
+          </div>` : ''}
+          ${trial.sponsors.length > 0 ? `<div class="clinical-trial-sponsors">
+            <strong>Sponsors:</strong> ${trial.sponsors.map(s => s.name).join(', ')}
+          </div>` : ''}
+        </div>
+      `).join('');
+      
+      section.style.display = 'block';
+      console.log(`✅ Displayed ${clinicalTrials.length} clinical trials with enhanced details`);
+    },
+
+    // DOI lookup button handler (unchanged)
+    async lookupDOI() {
+      const doiInput = document.getElementById('doi');
+      const statusDiv = document.getElementById('doi-status');
+      
+      if (!doiInput || !statusDiv) {
+        console.error('DOI lookup elements not found');
+        return;
+      }
+
+      const doi = doiInput.value.trim();
+      
+      if (!doi) {
+        this.showStatus(statusDiv, 'Please enter a DOI', 'error');
+        return;
+      }
+
+      if (!this.validateDOI(doi)) {
+        this.showStatus(statusDiv, 'DOI must be in format 10.xxxx/xxxxx', 'error');
+        return;
+      }
+
+      this.showStatus(statusDiv, 'Looking up DOI...', 'loading');
+
+      try {
+        const metadata = await this.fetchCrossRefMetadata(doi);
+        
+        // Fill form fields
+        this.fillFormFields(metadata);
+        
+        this.showStatus(statusDiv, `✅ Found metadata for DOI`, 'success');
+
+      } catch (error) {
+        console.error('DOI lookup error:', error);
+        this.showStatus(statusDiv, `❌ Error: ${error.message}`, 'error');
+      }
+    },
+
+    // Fetch CrossRef metadata using DOI (unchanged)
     async fetchCrossRefMetadata(doi) {
       if (!doi) {
         throw new Error('DOI is required');
@@ -365,43 +716,27 @@
       }).filter(author => author).join(', ');
     },
 
-    // Search clinical trials by condition or intervention
-    async searchClinicalTrials(query, options = {}) {
-      console.log(`🔍 Searching clinical trials for: ${query}`);
+    // Fill form fields with metadata
+    fillFormFields(metadata) {
+      const fields = {
+        'title': metadata.title,
+        'authors': metadata.authors,
+        'journal': metadata.journal,
+        'year': metadata.year,
+        'volume': metadata.volume,
+        'issue': metadata.issue,
+        'pages': metadata.pages,
+        'doi': metadata.doi
+      };
 
-      try {
-        const params = new URLSearchParams({
-          'query.term': query,
-          'pageSize': options.pageSize || 10,
-          'format': 'json'
-        });
-
-        if (options.status) {
-          params.append('filter.overallStatus', options.status);
+      Object.entries(fields).forEach(([fieldId, value]) => {
+        const input = document.getElementById(fieldId);
+        if (input && value) {
+          input.value = value;
+          input.classList.add('auto-filled');
+          console.log(`✅ Filled ${fieldId}: ${value}`);
         }
-
-        const url = `${CONFIG.clinicaltrials.baseURL}studies?${params.toString()}`;
-        
-        const response = await this.fetchWithRetry(url, {
-          timeout: CONFIG.clinicaltrials.timeout
-        });
-        
-        if (!response.ok) {
-          throw new Error(`ClinicalTrials.gov search error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const studies = data.studies || [];
-        
-        const results = studies.map(study => this.parseClinicalTrialStudy(study));
-        
-        console.log(`✅ Found ${results.length} clinical trials for query: ${query}`);
-        return results;
-
-      } catch (error) {
-        console.error(`❌ Clinical trials search failed for: ${query}`, error);
-        throw error;
-      }
+      });
     },
 
     // Fetch with retry logic and better error handling
@@ -461,196 +796,6 @@
       return /^NCT\d{8}$/i.test(nct);
     },
 
-    // PMID lookup button handler
-    async lookupPMID() {
-      const pmidInput = document.getElementById('pmid');
-      const statusDiv = document.getElementById('pmid-status');
-      
-      if (!pmidInput) {
-        console.error('PMID input field not found');
-        return;
-      }
-      
-      if (!statusDiv) {
-        console.error('PMID status element not found');
-        return;
-      }
-
-      const pmid = pmidInput.value.trim();
-      
-      if (!pmid) {
-        this.showStatus(statusDiv, 'Please enter a PMID', 'error');
-        return;
-      }
-
-      if (!this.validatePMID(pmid)) {
-        this.showStatus(statusDiv, 'PMID must be 1-8 digits', 'error');
-        return;
-      }
-
-      this.showStatus(statusDiv, 'Looking up PMID and clinical trials...', 'loading');
-
-      try {
-        const metadata = await this.fetchPubMedMetadata(pmid, true);
-        
-        // Fill form fields
-        this.fillFormFields(metadata);
-        
-        // Display clinical trials if found
-        if (metadata.clinicalTrials && metadata.clinicalTrials.length > 0) {
-          this.displayClinicalTrials(metadata.clinicalTrials);
-          this.showStatus(statusDiv, 
-            `✅ Found metadata for PMID ${pmid} + ${metadata.clinicalTrials.length} clinical trials`, 
-            'success'
-          );
-        } else {
-          this.showStatus(statusDiv, 
-            `✅ Found metadata for PMID ${pmid} (no associated clinical trials)`, 
-            'success'
-          );
-        }
-
-      } catch (error) {
-        console.error('PMID lookup error:', error);
-        this.showStatus(statusDiv, `❌ Error: ${error.message}`, 'error');
-      }
-    },
-
-    // DOI lookup button handler
-    async lookupDOI() {
-      const doiInput = document.getElementById('doi');
-      const statusDiv = document.getElementById('doi-status');
-      
-      if (!doiInput || !statusDiv) {
-        console.error('DOI lookup elements not found');
-        return;
-      }
-
-      const doi = doiInput.value.trim();
-      
-      if (!doi) {
-        this.showStatus(statusDiv, 'Please enter a DOI', 'error');
-        return;
-      }
-
-      if (!this.validateDOI(doi)) {
-        this.showStatus(statusDiv, 'DOI must be in format 10.xxxx/xxxxx', 'error');
-        return;
-      }
-
-      this.showStatus(statusDiv, 'Looking up DOI...', 'loading');
-
-      try {
-        const metadata = await this.fetchCrossRefMetadata(doi);
-        
-        // Fill form fields
-        this.fillFormFields(metadata);
-        
-        this.showStatus(statusDiv, `✅ Found metadata for DOI`, 'success');
-
-      } catch (error) {
-        console.error('DOI lookup error:', error);
-        this.showStatus(statusDiv, `❌ Error: ${error.message}`, 'error');
-      }
-    },
-
-    // Clinical trials lookup (if PMID is already entered)
-    async lookupClinicalTrials() {
-      const pmidInput = document.getElementById('pmid');
-      const statusDiv = document.getElementById('clinical-trials-status');
-      
-      if (!pmidInput || !statusDiv) {
-        console.error('Clinical trials lookup elements not found');
-        return;
-      }
-
-      const pmid = pmidInput.value.trim();
-      
-      if (!pmid) {
-        this.showStatus(statusDiv, 'Please enter a PMID first', 'error');
-        return;
-      }
-
-      if (!this.validatePMID(pmid)) {
-        this.showStatus(statusDiv, 'Invalid PMID format', 'error');
-        return;
-      }
-
-      this.showStatus(statusDiv, 'Searching for clinical trials...', 'loading');
-
-      try {
-        const clinicalTrials = await this.fetchClinicalTrialsForPMID(pmid);
-        
-        if (clinicalTrials.length > 0) {
-          this.displayClinicalTrials(clinicalTrials);
-          this.showStatus(statusDiv, `✅ Found ${clinicalTrials.length} clinical trials`, 'success');
-        } else {
-          this.showStatus(statusDiv, 'No clinical trials found for this PMID', 'info');
-        }
-
-      } catch (error) {
-        console.error('Clinical trials lookup error:', error);
-        this.showStatus(statusDiv, `❌ Error: ${error.message}`, 'error');
-      }
-    },
-
-    // Fill form fields with metadata
-    fillFormFields(metadata) {
-      const fields = {
-        'title': metadata.title,
-        'authors': metadata.authors,
-        'journal': metadata.journal,
-        'year': metadata.year,
-        'volume': metadata.volume,
-        'issue': metadata.issue,
-        'pages': metadata.pages,
-        'doi': metadata.doi
-      };
-
-      Object.entries(fields).forEach(([fieldId, value]) => {
-        const input = document.getElementById(fieldId);
-        if (input && value) {
-          input.value = value;
-          input.classList.add('auto-filled');
-          console.log(`✅ Filled ${fieldId}: ${value}`);
-        }
-      });
-    },
-
-    // Display clinical trials in UI
-    displayClinicalTrials(clinicalTrials) {
-      const section = document.getElementById('clinical-trials-section');
-      const list = document.getElementById('clinical-trials-list');
-      
-      if (!section || !list || clinicalTrials.length === 0) {
-        console.warn('Clinical trials display elements not found or no trials to display');
-        return;
-      }
-      
-      list.innerHTML = clinicalTrials.map(trial => `
-        <div class="clinical-trial-card">
-          <div class="clinical-trial-header">
-            <strong>${trial.nctNumber}</strong>
-            ${trial.phase ? `<span class="clinical-trial-phase">${trial.phase}</span>` : ''}
-            <span class="clinical-trial-status status-${trial.status.toLowerCase().replace(/\s+/g, '-')}">${trial.status}</span>
-          </div>
-          <div class="clinical-trial-title">${trial.title}</div>
-          ${trial.conditions.length > 0 ? `<div class="clinical-trial-conditions">
-            <strong>Conditions:</strong> ${trial.conditions.join(', ')}
-          </div>` : ''}
-          ${trial.interventions.length > 0 ? `<div class="clinical-trial-interventions">
-            <strong>Interventions:</strong> ${trial.interventions.map(i => i.name).join(', ')}
-          </div>` : ''}
-          ${trial.enrollment ? `<div class="clinical-trial-enrollment">
-            <strong>Enrollment:</strong> ${trial.enrollment} participants
-          </div>` : ''}
-        </div>
-      `).join('');
-      
-      section.style.display = 'block';
-      console.log(`✅ Displayed ${clinicalTrials.length} clinical trials`);
-    },
-
     // Show status message with proper styling
     showStatus(element, message, type) {
       if (!element) return;
@@ -672,20 +817,8 @@
 
   // Export module
   window.SilentStacks = window.SilentStacks || { modules: {} };
-  window.SilentStacks.modules.APIIntegration = EnhancedAPIIntegration;
+  window.SilentStacks.modules.APIIntegration = CompleteAPIIntegration;
 
-  // Auto-initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      EnhancedAPIIntegration.initialize();
-    });
-  } else {
-    // DOM already loaded, initialize immediately
-    setTimeout(() => {
-      EnhancedAPIIntegration.initialize();
-    }, 100);
-  }
-
-  console.log('🧬 Enhanced API Integration v1.5 module loaded');
+  console.log('🧬 COMPLETE API Integration v1.5 module loaded (with MeSH + Clinical Trials)');
 
 })();

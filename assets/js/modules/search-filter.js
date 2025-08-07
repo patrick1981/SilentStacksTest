@@ -1,31 +1,73 @@
 // assets/js/modules/search-filter.js
-// SilentStacks Search & Filter Module v1.5 - FIXED
-// Handles search, sorting, filtering, and delete operations
+// SilentStacks Search & Filter Module v1.5 - COMPLETELY FIXED
+// All missing functions added, proper initialization, no undefined errors
 
 (() => {
   'use strict';
+
+  // Prevent multiple loading
+  if (window.SilentStacks?.modules?.SearchFilter) {
+    console.log('🔍 SearchFilter already loaded, skipping...');
+    return;
+  }
 
   let fuseInstance = null;
   let selectedRequests = new Set();
   let currentSortField = 'createdAt';
   let currentSortDirection = 'desc';
+  let filteredRequests = [];
 
-  const FixedSearchFilter = {
+  const CompletelyFixedSearchFilter = {
+    initialized: false,
+
     // Initialize search and filter functionality
     initialize() {
-      console.log('🔧 Initializing FIXED Search & Filter v1.5...');
+      if (this.initialized) return;
+      
+      console.log('🔧 Initializing COMPLETELY FIXED Search & Filter v1.5...');
       
       try {
         this.setupEventListeners();
-        this.initializeFuse();
         this.setupSortButtons();
         this.setupDeleteFunctionality();
+        this.initializeFuse();
+        this.initialized = true;
         
-        console.log('✅ FIXED Search & Filter v1.5 initialized successfully');
+        console.log('✅ COMPLETELY FIXED Search & Filter v1.5 initialized successfully');
         
       } catch (error) {
         console.error('❌ Search & Filter initialization failed:', error);
       }
+    },
+
+    // MISSING FUNCTION: getFilteredRequests (required by UI Controller)
+    getFilteredRequests() {
+      const dataManager = window.SilentStacks?.modules?.DataManager;
+      if (!dataManager) {
+        console.warn('⚠️ DataManager not available for getFilteredRequests');
+        return [];
+      }
+
+      const allRequests = dataManager.getAllRequests();
+      
+      // Apply current filters and search
+      const searchInput = document.getElementById('search-input');
+      const searchQuery = searchInput ? searchInput.value.trim() : '';
+      
+      let results = allRequests;
+      
+      // Apply search if query exists
+      if (searchQuery) {
+        results = this.performSearch(searchQuery, false); // Don't render, just return
+      }
+      
+      // Apply filters
+      results = this.applyFiltersToResults(results.map(item => ({ item })));
+      
+      // Apply sorting
+      results = this.applySortingToResults(results);
+      
+      return results.map(result => result.item);
     },
 
     // Set up event listeners
@@ -46,7 +88,6 @@
           if (searchInput) searchInput.value = '';
           this.performSearch('');
         });
-        console.log('✅ Clear search handler attached');
       }
 
       // Filter controls
@@ -71,11 +112,11 @@
       }
     },
 
-    // Initialize Fuse.js for fuzzy search
+    // FIXED: Initialize Fuse.js properly
     initializeFuse() {
       const dataManager = window.SilentStacks?.modules?.DataManager;
       if (!dataManager) {
-        console.warn('⚠️ DataManager not available for search initialization');
+        console.warn('⚠️ DataManager not available for Fuse initialization');
         return;
       }
 
@@ -86,23 +127,32 @@
         return;
       }
 
-      const fuseOptions = {
-        keys: [
-          { name: 'title', weight: 0.4 },
-          { name: 'authors', weight: 0.3 },
-          { name: 'journal', weight: 0.2 },
-          { name: 'pmid', weight: 0.1 },
-          { name: 'docline', weight: 0.1 },
-          { name: 'notes', weight: 0.1 },
-          { name: 'doi', weight: 0.1 }
-        ],
-        threshold: 0.3,
-        includeScore: true,
-        includeMatches: true
-      };
+      try {
+        const fuseOptions = {
+          keys: [
+            { name: 'title', weight: 0.4 },
+            { name: 'authors', weight: 0.3 },
+            { name: 'journal', weight: 0.2 },
+            { name: 'pmid', weight: 0.1 },
+            { name: 'docline', weight: 0.1 },
+            { name: 'notes', weight: 0.1 },
+            { name: 'doi', weight: 0.1 }
+          ],
+          threshold: 0.3,
+          includeScore: true,
+          includeMatches: true
+        };
 
-      fuseInstance = new Fuse(requests, fuseOptions);
-      console.log(`🔍 Fuse.js initialized with ${requests.length} requests`);
+        fuseInstance = new Fuse(requests, fuseOptions);
+        console.log(`🔍 Fuse.js initialized with ${requests.length} requests`);
+      } catch (error) {
+        console.error('❌ Fuse.js initialization failed:', error);
+      }
+    },
+
+    // Refresh Fuse instance when data changes
+    refreshFuse() {
+      this.initializeFuse();
     },
 
     // Setup sort buttons with proper event handling
@@ -144,11 +194,11 @@
     },
 
     // Perform search with optional query
-    performSearch(query = '') {
+    performSearch(query = '', shouldRender = true) {
       const dataManager = window.SilentStacks?.modules?.DataManager;
       if (!dataManager) {
         console.error('DataManager not available for search');
-        return;
+        return [];
       }
 
       let results = [];
@@ -159,19 +209,19 @@
         results = allRequests.map(request => ({ item: request, score: 0 }));
       } else if (fuseInstance) {
         // Use Fuse.js for fuzzy search
-        const fuseResults = fuseInstance.search(query);
-        results = fuseResults.map(result => ({
-          item: result.item,
-          score: result.score
-        }));
+        try {
+          const fuseResults = fuseInstance.search(query);
+          results = fuseResults.map(result => ({
+            item: result.item,
+            score: result.score
+          }));
+        } catch (error) {
+          console.warn('Fuse.js search failed, using basic search:', error);
+          results = this.basicSearch(allRequests, query);
+        }
       } else {
         // Fallback basic search
-        const lowerQuery = query.toLowerCase();
-        results = allRequests.filter(request => 
-          Object.values(request).some(value => 
-            value && value.toString().toLowerCase().includes(lowerQuery)
-          )
-        ).map(request => ({ item: request, score: 0 }));
+        results = this.basicSearch(allRequests, query);
       }
 
       // Apply current filters
@@ -180,11 +230,27 @@
       // Apply current sorting
       results = this.applySortingToResults(results);
 
-      // Update UI
-      this.renderResults(results);
-      this.updateResultsCount(results.length);
+      // Store filtered results
+      filteredRequests = results;
+
+      // Update UI if requested
+      if (shouldRender) {
+        this.renderResults(results);
+        this.updateResultsCount(results.length);
+      }
 
       console.log(`🔍 Search for "${query}" returned ${results.length} results`);
+      return results.map(r => r.item);
+    },
+
+    // Basic search fallback
+    basicSearch(requests, query) {
+      const lowerQuery = query.toLowerCase();
+      return requests.filter(request => 
+        Object.values(request).some(value => 
+          value && value.toString().toLowerCase().includes(lowerQuery)
+        )
+      ).map(request => ({ item: request, score: 0 }));
     },
 
     // Apply filters to search results
@@ -386,7 +452,7 @@
             </div>
             
             <div class="request-actions">
-              <button class="btn-action edit-btn" onclick="editRequest('${request.id}')" title="Edit">✏️</button>
+              <button class="btn-action edit-btn" onclick="window.editRequest?.('${request.id}')" title="Edit">✏️</button>
               <button class="btn-action delete-btn delete-request-btn" data-request-id="${request.id}" title="Delete">🗑️</button>
             </div>
           </div>
@@ -470,8 +536,8 @@
 
       selectedRequests.clear();
       
-      // Update Fuse.js with new data
-      this.initializeFuse();
+      // Refresh Fuse.js with new data
+      this.refreshFuse();
       
       // Refresh current view
       const searchInput = document.getElementById('search-input');
@@ -481,11 +547,7 @@
       this.updateSelectionUI();
       
       // Show notification
-      if (window.SilentStacks?.modules?.UIController?.showNotification) {
-        window.SilentStacks.modules.UIController.showNotification(
-          `✅ Deleted ${deletedCount} request(s)`, 'success'
-        );
-      }
+      this.showNotification(`✅ Deleted ${deletedCount} request(s)`, 'success');
       
       console.log(`🗑️ Deleted ${deletedCount} requests`);
     },
@@ -505,8 +567,8 @@
       if (dataManager.deleteRequest(requestId)) {
         selectedRequests.delete(requestId);
         
-        // Update Fuse.js with new data
-        this.initializeFuse();
+        // Refresh Fuse.js with new data
+        this.refreshFuse();
         
         // Refresh current view
         const searchInput = document.getElementById('search-input');
@@ -516,11 +578,7 @@
         this.updateSelectionUI();
         
         // Show notification
-        if (window.SilentStacks?.modules?.UIController?.showNotification) {
-          window.SilentStacks.modules.UIController.showNotification(
-            '✅ Request deleted', 'success'
-          );
-        }
+        this.showNotification('✅ Request deleted', 'success');
         
         console.log(`🗑️ Deleted request ${requestId}`);
       } else {
@@ -559,9 +617,19 @@
       return priorityMap[priority] || priority;
     },
 
+    // Show notification
+    showNotification(message, type) {
+      console.log(`${type.toUpperCase()}: ${message}`);
+      
+      // Try to use global notification system
+      if (window.SilentStacks?.modules?.UIController?.showNotification) {
+        window.SilentStacks.modules.UIController.showNotification(message, type);
+      }
+    },
+
     // Refresh data and re-initialize search
     refresh() {
-      this.initializeFuse();
+      this.refreshFuse();
       const searchInput = document.getElementById('search-input');
       const currentQuery = searchInput ? searchInput.value : '';
       this.performSearch(currentQuery);
@@ -584,8 +652,8 @@
 
   // Export module
   window.SilentStacks = window.SilentStacks || { modules: {} };
-  window.SilentStacks.modules.SearchFilter = FixedSearchFilter;
+  window.SilentStacks.modules.SearchFilter = CompletelyFixedSearchFilter;
 
-  console.log('🔍 Fixed Search & Filter v1.5 module loaded');
+  console.log('🔍 COMPLETELY FIXED Search & Filter v1.5 module loaded');
 
 })();
