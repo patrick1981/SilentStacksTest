@@ -188,6 +188,16 @@
                             <div id="doi-status" class="status-message"></div>
                         </div>
                     </div>
+                    <!-- Clinical Trials Lookup Section -->
+<div class="identifier-group">
+    <div class="form-group">
+        <label>Clinical Trials Lookup</label>
+        <button type="button" id="lookup-clinical-trials" class="btn btn-secondary">
+            🧪 Search Clinical Trials
+        </button>
+        <div id="clinical-trials-status" class="status-message"></div>
+    </div>
+</div>
 
                     <!-- DOCLINE Section -->
                     <div class="identifier-group">
@@ -998,5 +1008,45 @@ PMID, DOCLINE, Status, Priority
             
         }, 2000);
     </script>
+    <!-- UI Controller Fix - Bottom Version -->
+<script>
+// Fix UI Controller BEFORE other modules initialize
+(function() {
+    'use strict';
+    
+    function fixUIController() {
+        const uiController = window.SilentStacks?.modules?.UIController;
+        if (uiController) {
+            if (!uiController.elementCache) {
+                uiController.elementCache = {};
+            }
+            
+            if (!uiController.elementCache.status) {
+                let statusEl = document.getElementById('form-status') || 
+                              document.querySelector('.status-message') ||
+                              document.createElement('div');
+                              
+                if (!statusEl.id) {
+                    statusEl.id = 'form-status';
+                    statusEl.className = 'status-message';
+                    statusEl.style.display = 'none';
+                    document.getElementById('request-form')?.appendChild(statusEl) || 
+                    document.body.appendChild(statusEl);
+                }
+                
+                uiController.elementCache.status = statusEl;
+                console.log('✅ Fixed UI Controller status element');
+            }
+        }
+    }
+    
+    // Try immediately (DOM is ready)
+    fixUIController();
+    
+    // Also try after a short delay to catch late-loading modules
+    setTimeout(fixUIController, 100);
+    setTimeout(fixUIController, 500);
+})();
+</script>
 </body>
 </html>

@@ -247,6 +247,21 @@
       
       return selectedIds.map(id => this.getRequest(id)).filter(Boolean);
     },
+    // CRITICAL FIX: Add missing getSettings method
+getSettings(key) {
+    if (key) {
+        return this.settings.get(key);
+    }
+    return Object.fromEntries(this.settings);
+},
+
+// CRITICAL FIX: Add missing setSetting method  
+setSetting(key, value) {
+    this.settings.set(key, value);
+    this.saveSettings();
+    this.triggerEvent('settingChanged', { key, value });
+},
+    
 
     // Save requests to localStorage
     saveRequests() {
