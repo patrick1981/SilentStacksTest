@@ -609,142 +609,136 @@ if ('serviceWorker' in navigator) {
         </section>
 
         <!-- Enhanced Import/Export Section - Clean HTML Only -->
-<section id="import-export" class="section">
-    <h2>Import/Export Data</h2>
+<!-- Import/Export Tab (Updated) -->
+<div id="import-export-tab" class="tab-content">
+    <div class="content-header">
+        <h2>Bulk Operations v1.5</h2>
+        <p>Import, export, and manage multiple requests efficiently</p>
+    </div>
 
-    <div class="import-export-grid">
-        <!-- Export Card -->
-        <div class="card import-export-card">
-            <h3>
-                <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10,9 9,9 8,9"></polyline>
-                </svg>
-                Export Data
-            </h3>
-            <p>Download your ILL requests as CSV or JSON format</p>
-            <div class="button-group">
-                <button id="export-csv" class="btn btn-primary">
-                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14,2 14,8 20,8"></polyline>
-                    </svg>
-                    Export as CSV
-                </button>
-                <button id="export-json" class="btn btn-primary">
-                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14,2 14,8 20,8"></polyline>
-                    </svg>
-                    Export as JSON
-                </button>
+    <!-- Bulk Import Section -->
+    <div class="bulk-section">
+        <h3>📥 Bulk Import with PMID Auto-Fetch</h3>
+        
+        <!-- PMID Batch Upload -->
+        <div class="import-method">
+            <h4>Method 1: PMID + DOCLINE Batch Upload</h4>
+            <p>Paste PMIDs and DOCLINE numbers (one per line or comma-separated):</p>
+            
+            <div class="form-group">
+                <label for="bulk-paste-textarea">PMID/DOCLINE Data</label>
+                <textarea id="bulk-paste-textarea" class="form-control" rows="8" 
+                    placeholder="Format examples:
+32658653
+32658653, 138ABC123
+PMID: 32658653, DOCLINE: 138ABC123
+32658653 (Any additional notes)
+
+Or CSV format:
+PMID, DOCLINE, Status, Priority
+32658653, 138ABC123, pending, normal
+12345678, 139DEF456, in-progress, rush"></textarea>
             </div>
-            <p class="export-info">
-                <strong>CSV includes:</strong> PMID, DOI, Title, Authors, Journal, Year, Status, Priority, Tags, Notes, Patron Email, DOCLINE, Created, Updated
-            </p>
+            
+            <div class="bulk-options">
+                <label>
+                    <input type="checkbox" id="bulk-paste-auto-fetch" checked> 
+                    Auto-fetch metadata from PubMed
+                </label>
+                <label>
+                    <input type="checkbox" id="bulk-paste-fetch-trials" checked> 
+                    Fetch associated clinical trials
+                </label>
+            </div>
+            
+            <button id="bulk-paste-btn" class="btn btn-primary">
+                🚀 Process PMID Batch
+            </button>
+            
+            <div id="bulk-paste-status" class="bulk-upload-status"></div>
         </div>
 
-        <!-- Import Card -->
-        <div class="card import-export-card">
-            <h3>
-                <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10,9 9,9 8,9"></polyline>
-                </svg>
-                Import Data
-            </h3>
-            <p>Upload CSV or JSON file with ILL requests</p>
-            <input type="file" id="import-file" accept=".csv,.json" class="file-input">
-            <div id="import-status" class="import-status"></div>
-            <p class="import-info">
-                <strong>Auto-enrichment:</strong> PMIDs and DOIs will automatically fetch metadata from PubMed and CrossRef APIs
-            </p>
+        <!-- CSV File Upload -->
+        <div class="import-method">
+            <h4>Method 2: CSV File Upload</h4>
+            <p>Upload CSV with PMID, DOCLINE, and other fields:</p>
+            
+            <div class="form-group">
+                <label for="import-file">Select CSV File</label>
+                <input type="file" id="import-file" accept=".csv" class="form-control">
+            </div>
+            
+            <div class="bulk-options">
+                <label>
+                    <input type="checkbox" id="csv-auto-fetch" checked> 
+                    Auto-fetch PMID metadata
+                </label>
+                <label>
+                    <input type="checkbox" id="csv-fetch-trials" checked> 
+                    Fetch clinical trials data
+                </label>
+            </div>
+            
+            <button id="upload-csv-btn" class="btn btn-primary">
+                📁 Upload & Process CSV
+            </button>
+            
+            <div id="csv-upload-status" class="bulk-upload-status"></div>
+        </div>
+
+        <!-- Supported CSV Format -->
+        <div class="format-info">
+            <h4>📋 Supported CSV Format:</h4>
+            <div class="csv-format-example">
+                <code>DOCLINE, PMID, Title, Authors, Journal, Year, Volume, Issue, Pages, DOI, Status, Priority, Patron Email, Notes</code>
+            </div>
+            <p><strong>Required:</strong> At least one of DOCLINE, PMID, or Title must be present.</p>
+            <p><strong>Auto-fetch:</strong> If PMID is present, metadata will be automatically fetched and formatted in NLM style.</p>
         </div>
     </div>
 
-    <!-- Enhanced Bulk Paste Section -->
-    <div class="bulk-paste-section">
-        <h3>
-            <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-            </svg>
-            Bulk Paste Data with Auto-Fetch
-        </h3>
-        <p class="bulk-paste-help">
-            Paste CSV data, PMID list, or DOI list. API will automatically populate missing metadata.
-        </p>
+    <!-- Bulk Export Section -->
+    <div class="bulk-section">
+        <h3>📤 Export Data</h3>
         
-        <textarea id="bulk-paste-data" rows="8" placeholder="Examples:
-
-Option 1 - Simple PMID list:
-12345678
-23456789
-34567890
-
-Option 2 - CSV with headers:
-PMID,DOCLINE,Status
-12345678,138ABC123,pending
-23456789,,in-progress
-
-Option 3 - Mixed data:
-PMID,DOI,Title,DOCLINE
-12345678,,Existing title,138ABC123
-,10.1000/xyz,Another title,139DEF456"></textarea>
-
-        <div class="bulk-paste-options">
-            <label class="checkbox-label">
-                <input type="checkbox" id="auto-enrich-api" checked>
-                <span class="checkmark"></span>
-                Automatically fetch metadata from PubMed/CrossRef
-            </label>
+        <div class="export-options">
+            <button id="export-csv" class="btn btn-secondary">
+                📊 Export CSV (NLM Format)
+            </button>
+            <button id="export-json" class="btn btn-secondary">
+                📋 Export JSON
+            </button>
         </div>
         
-        <p class="bulk-paste-help">
-            <strong>Supported headers:</strong> PMID, DOI, Title, Authors, Journal, Year, Priority, Status, Notes, Patron Email, DOCLINE, Tags
-        </p>
-        
-        <button id="bulk-paste-btn" class="btn btn-primary">
-            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14,2 14,8 20,8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10,9 9,9 8,9"></polyline>
-            </svg>
-            Import Pasted Data with Auto-Fetch
-        </button>
-        
-        <div id="bulk-paste-progress" class="progress-container" style="display: none;">
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
+        <div class="export-format-info">
+            <h4>📝 Export Format (NLM Standard):</h4>
+            <div class="csv-format-example">
+                <code>DOCLINE, PMID, Title, Authors (NLM), Journal, Year, Volume, Issue, Pages, DOI, Status, Priority, Patron Email, Clinical Trials, Created Date, Updated Date, Notes</code>
             </div>
-            <div class="progress-text">Processing...</div>
+            <ul>
+                <li><strong>NLM Author Format:</strong> "Last, First Initial; Last, First Initial"</li>
+                <li><strong>DOCLINE First:</strong> DOCLINE number is the first column for institutional compatibility</li>
+                <li><strong>Clinical Trials:</strong> Associated NCT numbers and titles included</li>
+                <li><strong>Technology Agnostic:</strong> Standard CSV format works with any spreadsheet software</li>
+            </ul>
         </div>
     </div>
 
     <!-- Bulk Update Section -->
-    <div class="bulk-update-section">
-        <h3>
-            <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-            Bulk Update Operations
-        </h3>
-        <p>Update multiple requests simultaneously. First select requests in "All Requests" section.</p>
+    <div class="bulk-section">
+        <h3>🔄 Bulk Update Selected Requests</h3>
+        <p><strong>Instructions:</strong> First select requests in the "All Requests" tab using the checkboxes, then use these controls to update multiple requests at once.</p>
+        
+        <!-- Selection Status -->
+        <div id="bulk-update-status-display" class="bulk-status-display">
+            No requests selected
+        </div>
         
         <div class="bulk-update-controls">
-            <div class="form-group">
-                <label for="bulk-status-select">Update Status:</label>
-                <div class="bulk-control-row">
-                    <select id="bulk-status-select" class="bulk-select">
+            <div class="bulk-update-row">
+                <div class="form-group">
+                    <label for="bulk-status-select">Update Status:</label>
+                    <select id="bulk-status-select" class="form-control">
                         <option value="">Select new status...</option>
                         <option value="pending">Pending</option>
                         <option value="in-progress">In Progress</option>
@@ -752,87 +746,42 @@ PMID,DOI,Title,DOCLINE
                         <option value="cancelled">Cancelled</option>
                         <option value="on-hold">On Hold</option>
                     </select>
-                    <button id="bulk-update-status" class="btn btn-secondary">
-                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 6L9 17l-5-5"></path>
-                        </svg>
+                    <button id="bulk-update-status" class="btn btn-primary" disabled>
                         Update Status
                     </button>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="bulk-priority-select">Update Priority:</label>
-                <div class="bulk-control-row">
-                    <select id="bulk-priority-select" class="bulk-select">
+                
+                <div class="form-group">
+                    <label for="bulk-priority-select">Update Priority:</label>
+                    <select id="bulk-priority-select" class="form-control">
                         <option value="">Select new priority...</option>
                         <option value="low">Low</option>
                         <option value="normal">Normal</option>
                         <option value="rush">Rush</option>
                         <option value="urgent">Urgent</option>
                     </select>
-                    <button id="bulk-update-priority" class="btn btn-secondary">
-                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                        </svg>
+                    <button id="bulk-update-priority" class="btn btn-primary" disabled>
                         Update Priority
                     </button>
                 </div>
             </div>
         </div>
         
-        <div id="bulk-update-status-display" class="bulk-status-display" style="display: none;">
-            No requests selected
-        </div>
-        
-        <p class="bulk-update-help">
-            <strong>How to use:</strong> Go to "All Requests" → Select requests using checkboxes → Return here → Choose update type → Apply changes
-        </p>
+        <div id="bulk-update-results" class="bulk-upload-status"></div>
     </div>
 
-    <!-- Advanced Options -->
-    <div class="advanced-options">
-        <h3>
-            <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6"></path>
-                <path d="m21 12-6-3-6 3-6-3-6 3"></path>
-            </svg>
-            Advanced Options
-        </h3>
-        
-        <div class="advanced-controls">
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="enable-api-enrichment" checked>
-                    <span class="checkmark"></span>
-                    Enable automatic API metadata enrichment
-                </label>
-                <small>Uncheck to disable automatic PMID/DOI lookups during import</small>
-            </div>
-            
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="preserve-existing-data" checked>
-                    <span class="checkmark"></span>
-                    Preserve existing data when enriching
-                </label>
-                <small>Imported data takes precedence over API-fetched data</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="import-batch-size">Import batch size:</label>
-                <select id="import-batch-size">
-                    <option value="10">10 (Recommended for API-heavy imports)</option>
-                    <option value="25">25 (Balanced)</option>
-                    <option value="50">50 (Fast, minimal API lookups)</option>
-                    <option value="100">100 (Local data only)</option>
-                </select>
-                <small>Smaller batches are better for imports with many API lookups</small>
-            </div>
-        </div>
+    <!-- Performance Notes -->
+    <div class="bulk-section help-section">
+        <h3>⚡ Performance Notes</h3>
+        <ul>
+            <li><strong>Rate Limiting:</strong> API requests are automatically rate-limited to avoid timeouts</li>
+            <li><strong>Batch Size:</strong> Large imports (100+ PMIDs) may take several minutes</li>
+            <li><strong>Progress Tracking:</strong> Real-time status updates show current processing progress</li>
+            <li><strong>Error Handling:</strong> Individual failures won't stop the entire batch</li>
+            <li><strong>NLM Formatting:</strong> All fetched metadata is automatically formatted to NLM standards</li>
+        </ul>
     </div>
-</section>
+</div>
 
         <!-- Settings Section - Exact same as existing -->
         <section id="settings" class="section">
