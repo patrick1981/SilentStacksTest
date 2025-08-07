@@ -1010,42 +1010,85 @@ PMID, DOCLINE, Status, Priority
     </script>
     <!-- UI Controller Fix - Bottom Version -->
 <script>
-// Fix UI Controller BEFORE other modules initialize
+// Enhanced UI Controller Fix - Multiple Strategies
 (function() {
     'use strict';
     
     function fixUIController() {
         const uiController = window.SilentStacks?.modules?.UIController;
-        if (uiController) {
-            if (!uiController.elementCache) {
-                uiController.elementCache = {};
-            }
-            
-            if (!uiController.elementCache.status) {
-                let statusEl = document.getElementById('form-status') || 
-                              document.querySelector('.status-message') ||
-                              document.createElement('div');
-                              
-                if (!statusEl.id) {
+        if (!uiController) return false;
+        
+        // Strategy 1: Fix element cache
+        if (!uiController.elementCache) {
+            uiController.elementCache = {};
+        }
+        
+        // Strategy 2: Override setStatus method to be safer
+        const originalSetStatus = uiController.setStatus;
+        uiController.setStatus = function(message, type = 'info') {
+            try {
+                if (originalSetStatus && this.elementCache?.status) {
+                    return originalSetStatus.call(this, message, type);
+                }
+                
+                // Fallback: create/find status element
+                let statusEl = this.elementCache?.status ||
+                              document.getElementById('form-status') || 
+                              document.querySelector('.status-message');
+                
+                if (!statusEl) {
+                    statusEl = document.createElement('div');
                     statusEl.id = 'form-status';
                     statusEl.className = 'status-message';
                     statusEl.style.display = 'none';
-                    document.getElementById('request-form')?.appendChild(statusEl) || 
-                    document.body.appendChild(statusEl);
+                    
+                    const form = document.getElementById('request-form');
+                    if (form) {
+                        form.appendChild(statusEl);
+                    } else {
+                        document.body.appendChild(statusEl);
+                    }
                 }
                 
-                uiController.elementCache.status = statusEl;
-                console.log('✅ Fixed UI Controller status element');
+                if (!this.elementCache) this.elementCache = {};
+                this.elementCache.status = statusEl;
+                
+                // Apply the status
+                statusEl.textContent = message;
+                statusEl.className = `status-message ${type}`;
+                statusEl.style.display = message ? 'block' : 'none';
+                
+                console.log(`✅ UI Controller status: ${message}`);
+                
+            } catch (error) {
+                console.warn('UI Controller setStatus error:', error);
             }
-        }
+        };
+        
+        return true;
     }
     
-    // Try immediately (DOM is ready)
-    fixUIController();
+    // Try multiple times with different strategies
+    let attempts = 0;
+    const maxAttempts = 10;
     
-    // Also try after a short delay to catch late-loading modules
-    setTimeout(fixUIController, 100);
-    setTimeout(fixUIController, 500);
+    const tryFix = () => {
+        attempts++;
+        if (fixUIController()) {
+            console.log('✅ Enhanced UI Controller fix applied');
+            return;
+        }
+        
+        if (attempts < maxAttempts) {
+            setTimeout(tryFix, 200);
+        }
+    };
+    
+    // Start immediately and retry
+    tryFix();
+    
+    // Also fix on form submission
+    document.addEventListener('submit', fixUIController);
 })();
 </script>
 </body>
