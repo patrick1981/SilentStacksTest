@@ -4,6 +4,15 @@
 // Enhanced request data model
 (() => {
   'use strict';
+  // Initialize SilentStacks state 
+window.SilentStacks = window.SilentStacks || { modules: {} };
+window.SilentStacks.state = {
+  selectedRequests: new Set(),
+  followupOnly: false,
+  searchQuery: '',
+  activeFilters: []
+};
+console.log('✅ SilentStacks state initialized');
 function createEnhancedRequest(data = {}) {
     return {
         id: data.id || generateId(),
