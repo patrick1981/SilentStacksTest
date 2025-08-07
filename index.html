@@ -989,9 +989,23 @@ PMID, DOCLINE, Status, Priority
             
             // Initialize UIController if available
             const uiController = window.SilentStacks?.modules?.UIController;
-            if (uiController && !uiController.initialized) {
+            
+            // Build element cache and initialize UIController
+            if (uiController && !uiController.isInitialized?.()) {
+                const elementCache = {
+                    navTabs: Array.from(document.querySelectorAll('.nav-tab')),
+                    sections: Array.from(document.querySelectorAll('.section')),
+                    stats: document.getElementById('stats-summary') || document.querySelector('.stats-summary'),
+                    requestList: document.getElementById('request-list') || document.querySelector('.request-list'),
+                    recentRequests: document.getElementById('recent-requests') || document.querySelector('#recent-requests, .recent-requests'),
+                    status: document.querySelector('.lookup-status, .status-message, #lookup-status')
+                };
+                uiController.initialize(elementCache);
+            } else if (uiController && !uiController.initialized) {
+                // Fallback for older builds
                 uiController.initialize();
             }
+
             
             // Initialize all other modules
             Object.keys(window.SilentStacks?.modules || {}).forEach(moduleName => {
