@@ -1022,6 +1022,21 @@ PMID, DOCLINE, Status, Priority
             
         }, 2000);
     </script>
+    <script>
+setTimeout(() => {
+  const ui = window.SilentStacks?.modules?.UIController;
+  if (!ui) return;
+
+  // Attach real handlers
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', e => {
+      e.preventDefault();
+      ui.switchSection(tab);
+    });
+  });
+}, 0);
+</script>
+
     <!-- UI Controller Fix - Bottom Version -->
 <script>
 // Enhanced UI Controller Fix - Multiple Strategies
