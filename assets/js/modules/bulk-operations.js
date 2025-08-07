@@ -316,28 +316,53 @@
       console.log(`✅ API processing complete. ${enrichedCount} records enriched.`);
     }
 
-    // Final UI updates
     if (totalImported > 0) {
-      // Refresh UI
-      if (window.SilentStacks.modules.RequestManager?.refreshAllViews) {
-        window.SilentStacks.modules.RequestManager.refreshAllViews();
+      // Force UI refresh using multiple methods
+      
+      // Method 1: UIController renderRequests
+      if (window.SilentStacks.modules.UIController?.renderRequests) {
+        console.log('🔄 Refreshing UI via UIController...');
+        window.SilentStacks.modules.UIController.renderRequests();
       }
       
+      // Method 2: UIController renderStats  
+      if (window.SilentStacks.modules.UIController?.renderStats) {
+        window.SilentStacks.modules.UIController.renderStats();
+      }
+      
+      // Method 3: Legacy renderAll fallback
+      if (window.renderAll && typeof window.renderAll === 'function') {
+        console.log('🔄 Refreshing UI via legacy renderAll...');
+        window.renderAll();
+      }
+      
+      // Method 4: Direct DOM refresh as last resort
+      const requestList = document.getElementById('request-list');
+      if (requestList && !requestList.children.length) {
+        console.log('🔄 Force refreshing request list DOM...');
+        const requests = window.SilentStacks.modules.DataManager.getRequests();
+        console.log(`Found ${requests.length} requests in DataManager`);
+        
+        if (requests.length > 0) {
+          // Trigger a manual re-render
+          const event = new CustomEvent('requestsUpdated', { 
+            detail: { requests, source: 'bulk-import' } 
+          });
+          document.dispatchEvent(event);
+        }
+      }
+      
+      // Success message
       showImportStatus(
-        `✅ Successfully processed ${totalImported} records${recordsNeedingAPI.length > 0 ? ' with API enrichment' : ''}`, 
+        `✅ Successfully imported ${totalImported} records${recordsNeedingAPI.length > 0 ? ' with API enrichment' : ''}`, 
         'success'
       );
       
       showNotification(
-        `Import complete! Added ${totalImported} requests.`, 
+        `Import complete! ${totalImported} records added.`,
         'success'
       );
-      
-    } else {
-      throw new Error('No records could be imported');
     }
-  }
-
   // === FIXED: API Enrichment ===
   async function enrichWithAPI(record) {
     let enriched = { ...record };
