@@ -802,10 +802,23 @@
     DataManager.initialize();
   }
 
+
+  // === FIXED DataManager Registration ===
+// Replace the existing registration lines at the end of data-manager.js with this:
+
   // Export for global access
   window.DataManager = DataManager;
- window.SilentStacks = window.SilentStacks || { modules: {} };
-window.SilentStacks.modules.DataManager = DataManager;
-console.log('✅ DataManager registered with SilentStacks modules');
+  
+  // Register with SilentStacks module system (handle property conflicts)
+  window.SilentStacks = window.SilentStacks || { modules: {} };
+  
+  // Delete any existing property descriptor that might conflict
+  if (window.SilentStacks.modules.hasOwnProperty('DataManager')) {
+    delete window.SilentStacks.modules.DataManager;
+  }
+  
+  // Now safely register the DataManager
+  window.SilentStacks.modules.DataManager = DataManager;
+  console.log('✅ DataManager registered with SilentStacks modules');
 
 })();
