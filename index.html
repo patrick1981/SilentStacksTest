@@ -938,20 +938,7 @@ PMID,DOI,Title,DOCLINE
 <!-- <script src="assets/js/modules/ill-workflow.js" defer></script> -->
 <!-- 13. Main Application (depends on ALL modules) -->
 <script src="assets/js/app.js" defer></script>
-    <script>
-// IMMEDIATE DataManager fix - run before other scripts initialize
-(function() {
-    window.SilentStacks = window.SilentStacks || { modules: {} };
-    
-    // Create immediate EnhancedDataManager alias
-    Object.defineProperty(window.SilentStacks.modules, 'DataManager', {
-        get: function() {
-            return window.SilentStacks.modules.EnhancedDataManager || null;
-        },
-        configurable: true
-    });
-})();
-</script>
+   
 <!-- Enhanced Features Compatibility Layer -->
 <!-- 14. Compatibility layers and global functions (after all modules) -->
 <script>
