@@ -363,6 +363,7 @@
         'success'
       );
     }
+  }
   // === FIXED: API Enrichment ===
   async function enrichWithAPI(record) {
     let enriched = { ...record };
