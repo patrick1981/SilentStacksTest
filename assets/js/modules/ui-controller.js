@@ -7,6 +7,18 @@
   let elements = {};
   let initialized = false;
 
+  // Build element cache if none provided
+  function buildDefaultElements() {
+    const el = {};
+    el.navTabs = Array.from(document.querySelectorAll('.nav-tab'));
+    el.sections = Array.from(document.querySelectorAll('.section'));
+    el.stats = document.getElementById('stats-summary') || document.querySelector('.stats-summary');
+    el.requestList = document.getElementById('request-list') || document.querySelector('.request-list');
+    el.recentRequests = document.getElementById('recent-requests') || document.querySelector('#recent-requests, .recent-requests');
+    el.status = document.querySelector('.lookup-status, .status-message, #lookup-status') || null;
+    return el;
+  }
+
   // === Navigation Functions ===
   function switchSection(tabEl) {
     if (!tabEl || !tabEl.dataset.section) return;
@@ -45,22 +57,42 @@
   }
 
   // === Status and Feedback Functions ===
-  function setStatus(message, type = '') {
-    if (!elements.status) return;
-    
-    elements.status.textContent = message;
-    elements.status.className = ['lookup-status', type].filter(Boolean).join(' ');
-    
-    // Auto-clear success messages after 5 seconds
-    if (type === 'success') {
-      setTimeout(() => {
-        if (elements.status.textContent === message) {
-          elements.status.textContent = '';
-          elements.status.className = 'lookup-status';
-        }
-      }, 5000);
-    }
+function setStatus(message, type = '') {
+  if (!elements || Object.keys(elements).length === 0) {
+    elements = buildDefaultElements();
   }
+
+  if (!elements.status) {
+    // create a status element
+    const statusEl = document.createElement('div');
+    statusEl.className = 'lookup-status';
+    statusEl.setAttribute('role', 'status');
+    statusEl.style.marginTop = '0.5rem';
+
+    const form = document.getElementById('request-form');
+    if (form) {
+      form.appendChild(statusEl);
+    } else {
+      const container = document.querySelector('.section[data-section="add-request"], body');
+      (container || document.body).appendChild(statusEl);
+    }
+    elements.status = statusEl;
+  }
+
+  elements.status.textContent = message;
+  elements.status.className = ['lookup-status', type].filter(Boolean).join(' ');
+
+  if (type === 'success') {
+    setTimeout(() => {
+      if (elements.status && elements.status.textContent === message) {
+        elements.status.textContent = '';
+        elements.status.className = 'lookup-status';
+      }
+    }, 5000);
+  }
+}
+
+
 
   function showNotification(message, type = 'info', duration = 5000) {
     const notification = document.createElement('div');
@@ -407,7 +439,7 @@
     // Initialization
     initialize(elementCache) {
       console.log('🔧 Initializing UIController...');
-      elements = elementCache;
+      elements = elementCache && Object.keys(elementCache).length ? elementCache : buildDefaultElements();
       initialized = true;
       console.log('✅ UIController initialized');
     },
