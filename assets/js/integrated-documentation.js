@@ -1,778 +1,610 @@
-// Updated Integrated Documentation for SilentStacks v1.4.0
-// Reflects: PMID auto-fetch, bulk updates, DOCLINE support, removed Excel references
+// assets/js/updated-documentation-v14.js
+// SilentStacks V1.4 - Updated Integrated Documentation
 
-(function() {
-  'use strict';
+export const documentationContent = {
+  getting_started: {
+    id: "getting_started",
+    title: "Getting Started with SilentStacks",
+    content: `
+      <h3>Welcome to SilentStacks V1.4</h3>
+      
+      <h4>What's New in V1.4:</h4>
+      <ul>
+        <li><strong>Fixed bulk upload display issues</strong> - Items now properly appear in All Requests</li>
+        <li><strong>Enhanced upload confirmations</strong> - Clear success/failure messaging with details</li>
+        <li><strong>Improved CSV functionality</strong> - Working CSV upload with PMID API integration</li>
+        <li><strong>Reorganized export headers</strong> - Export format matches institutional requirements</li>
+        <li><strong>Enhanced DOCLINE support</strong> - Seamless DOCLINE + PMID workflow</li>
+        <li><strong>Technology-agnostic approach</strong> - CSV format for maximum compatibility</li>
+      </ul>
 
-  console.log('📚 Loading Updated Integrated Documentation v1.4.0...');
+      <h4>Quick Start Guide:</h4>
+      <ol>
+        <li><strong>Add Single Request:</strong> Use "Add Request" tab with PMID lookup for auto-population</li>
+        <li><strong>Bulk Import:</strong> Go to Import/Export, paste PMIDs or upload CSV</li>
+        <li><strong>View & Manage:</strong> Use "All Requests" to view, search, and update requests</li>
+        <li><strong>Export Data:</strong> Download as CSV or JSON for external use</li>
+      </ol>
 
-  const documentationSections = [
-    {
-      id: "getting_started",
-      title: "Getting Started",
-      content: `
-        <h3>Welcome to SilentStacks v1.4.0</h3>
-        
-        <p>SilentStacks is a client-side application for managing Interlibrary Loan (ILL) requests with advanced features including:</p>
-        
-        <ul>
-          <li><strong>Automatic metadata fetching</strong> from PubMed and CrossRef APIs</li>
-          <li><strong>Bulk operations</strong> for importing and updating multiple requests</li>
-          <li><strong>DOCLINE integration</strong> for existing ILL workflows</li>
-          <li><strong>Offline capability</strong> with automatic sync when online</li>
-          <li><strong>Technology-agnostic CSV/JSON formats</strong> for data portability</li>
-        </ul>
+      <h4>Key Features:</h4>
+      <ul>
+        <li><strong>PubMed API Integration:</strong> Automatic metadata fetching from PMIDs</li>
+        <li><strong>CrossRef API:</strong> DOI-based metadata retrieval</li>
+        <li><strong>DOCLINE Integration:</strong> Track existing DOCLINE requests with enhanced metadata</li>
+        <li><strong>Bulk Operations:</strong> Import, export, and update multiple requests</li>
+        <li><strong>Technology Agnostic:</strong> CSV format works with any spreadsheet software</li>
+        <li><strong>Responsive Design:</strong> Works on desktop, tablet, and mobile</li>
+      </ul>
 
-        <h4>Quick Start:</h4>
-        <ol>
-          <li>Add your first request using <strong>"Add Request"</strong></li>
-          <li>Enter a PMID or DOI to automatically fetch publication details</li>
-          <li>Use <strong>"Import/Export"</strong> for bulk operations</li>
-          <li>View and manage all requests in <strong>"All Requests"</strong></li>
-        </ol>
+      <div class="help-tip">
+        <strong>🚀 Pro Tip:</strong> Start by bulk importing your existing DOCLINE numbers with PMIDs - SilentStacks will automatically enrich them with complete metadata!
+      </div>
+    `
+  },
 
-        <div class="help-tip">
-          <strong>💡 Pro Tip:</strong> Start with a few PMIDs to see the automatic metadata fetching in action!
-        </div>
-      `
-    },
-    {
-      id: "adding_requests",
-      title: "Adding Requests",
-      content: `
-        <h3>Creating New ILL Requests</h3>
-        
-        <h4>Manual Entry:</h4>
-        <ol>
-          <li>Click <strong>"Add Request"</strong> in the navigation</li>
-          <li>Fill in required fields (Title is mandatory)</li>
-          <li>Use <strong>"Lookup PMID"</strong> or <strong>"Lookup DOI"</strong> buttons for automatic population</li>
-          <li>Add DOCLINE number if this is an existing DOCLINE request</li>
-          <li>Set priority and add tags as needed</li>
-          <li>Click <strong>"Submit Request"</strong></li>
-        </ol>
+  bulk_operations: {
+    id: "bulk_operations", 
+    title: "Bulk Operations & Import - FIXED V1.4",
+    content: `
+      <h3>Working with Multiple Requests (V1.4 Fixed)</h3>
+      
+      <h4>✅ FIXED Issues in V1.4:</h4>
+      <ul>
+        <li><strong>Bulk paste items now display properly</strong> in All Requests tab</li>
+        <li><strong>Upload confirmations show detailed results</strong> including success/failure counts</li>
+        <li><strong>CSV upload functionality is now operational</strong> with API integration</li>
+        <li><strong>Progress indicators work correctly</strong> during bulk operations</li>
+      </ul>
 
-        <h4>API-Powered Lookups:</h4>
-        <p>Enter a PMID (PubMed ID) or DOI and click the respective lookup button:</p>
-        <ul>
-          <li><strong>PMID Lookup:</strong> Fetches title, authors, journal, year from PubMed</li>
-          <li><strong>DOI Lookup:</strong> Fetches metadata from CrossRef database</li>
-          <li><strong>Automatic MeSH terms:</strong> Medical subject headings are included when available</li>
-        </ul>
-
-        <h4>Form Fields:</h4>
-        <ul>
-          <li><strong>PMID/DOI:</strong> Use for automatic metadata fetching</li>
-          <li><strong>DOCLINE:</strong> Existing DOCLINE request number (e.g., 138ABC123)</li>
-          <li><strong>Title:</strong> Publication title (required)</li>
-          <li><strong>Authors, Journal, Year:</strong> Publication details</li>
-          <li><strong>Priority:</strong> Low, Normal, Rush, Urgent</li>
-          <li><strong>Status:</strong> Pending, In Progress, Fulfilled, Cancelled, On Hold</li>
-          <li><strong>Tags:</strong> Comma-separated keywords for organization</li>
-          <li><strong>Patron Email:</strong> Requesting user's contact</li>
-          <li><strong>Notes:</strong> Additional information or special instructions</li>
-        </ul>
-
-        <div class="help-tip">
-          <strong>⚡ Quick Entry:</strong> Just enter a PMID and click "Lookup PMID" - most fields will be filled automatically!
-        </div>
-      `
-    },
-    {
-      id: "bulk_operations",
-      title: "Bulk Operations & Import",
-      content: `
-        <h3>Working with Multiple Requests</h3>
-        
-        <h4>Bulk Import with Auto-Fetch:</h4>
-        <p>Import multiple requests and automatically fetch metadata:</p>
-        <ol>
-          <li>Go to <strong>Import/Export</strong> section</li>
-          <li>Choose from three import methods:</li>
-        </ol>
-
-        <h5>Method 1: File Upload</h5>
-        <ul>
-          <li>Upload CSV or JSON files</li>
-          <li>PMIDs and DOIs will automatically fetch metadata</li>
-          <li>Supports DOCLINE numbers</li>
-        </ul>
-
-        <h5>Method 2: Simple PMID/DOI List</h5>
-        <p>Paste a simple list in the bulk paste area:</p>
-        <pre>12345678
+      <h4>Bulk Import Methods:</h4>
+      
+      <h5>Method 1: Simple PMID/DOCLINE List</h5>
+      <p>Paste a simple list in the bulk paste area - most efficient for large lists:</p>
+      <pre>12345678
 23456789
-10.1000/example.doi</pre>
+34567890
+138ABC123
+139DEF456</pre>
+      <p>✅ <strong>V1.4:</strong> Items will automatically appear in All Requests after processing</p>
 
-        <h5>Method 3: CSV Data Paste</h5>
-        <p>Paste CSV data with headers:</p>
-        <pre>PMID,DOCLINE,Status,Priority
-12345678,138ABC123,pending,rush
-23456789,,in-progress,normal</pre>
+      <h5>Method 2: CSV Upload (FIXED)</h5>
+      <p>Upload CSV files with any combination of these headers:</p>
+      <pre>DOCLINE,PMID,Status,Priority,Patron Email
+138ABC123,12345678,pending,rush,user@library.edu
+139DEF456,23456789,in-progress,normal,patron@university.edu</pre>
+      <p>✅ <strong>V1.4:</strong> CSV upload now works properly with automatic API enrichment</p>
 
-        <h4>Supported Import Headers:</h4>
-        <p>The system recognizes these column headers (case-insensitive):</p>
-        <ul>
-          <li><strong>PMID/pmid:</strong> PubMed identifier</li>
-          <li><strong>DOI/doi:</strong> Digital Object Identifier</li>
-          <li><strong>DOCLINE/docline:</strong> DOCLINE request number</li>
-          <li><strong>Title/title:</strong> Publication title</li>
-          <li><strong>Authors/authors:</strong> Author names</li>
-          <li><strong>Journal/journal:</strong> Journal name</li>
-          <li><strong>Year/year:</strong> Publication year</li>
-          <li><strong>Priority/priority:</strong> Low, Normal, Rush, Urgent</li>
-          <li><strong>Status/status:</strong> Request status</li>
-          <li><strong>Tags/tags:</strong> Comma-separated keywords</li>
-          <li><strong>Patron Email/patron_email:</strong> Requesting user email</li>
-          <li><strong>Notes/notes:</strong> Additional information</li>
-        </ul>
+      <h5>Method 3: CSV Data Paste</h5>
+      <p>Copy/paste CSV data directly into the bulk paste area:</p>
+      <pre>PMID,DOCLINE,Title,Status
+12345678,138ABC123,"Existing Research Title",pending
+23456789,,"Auto-fetch this title",in-progress</pre>
 
-        <h4>Bulk Updates:</h4>
-        <p>Update multiple existing requests simultaneously:</p>
-        <ol>
-          <li>Go to <strong>All Requests</strong></li>
-          <li>Select requests using checkboxes</li>
-          <li>Go to <strong>Import/Export</strong></li>
-          <li>Use <strong>Bulk Update Operations</strong> to change status or priority</li>
-        </ol>
+      <h4>Enhanced DOCLINE + PMID Workflow:</h4>
+      <p>Perfect for existing DOCLINE users who want enhanced metadata:</p>
+      <ol>
+        <li><strong>Export from DOCLINE:</strong> Get your request list with DOCLINE numbers</li>
+        <li><strong>Add PMIDs:</strong> Include PMIDs when available</li>
+        <li><strong>Import to SilentStacks:</strong> Bulk paste or upload CSV</li>
+        <li><strong>Auto-enrichment:</strong> System fetches complete publication metadata</li>
+        <li><strong>Enhanced tracking:</strong> Now have rich metadata + DOCLINE tracking</li>
+        <li><strong>Export enriched data:</strong> Download complete dataset</li>
+      </ol>
 
-        <div class="help-tip">
-          <strong>🚀 Auto-Enrichment:</strong> Any PMID or DOI in your import will automatically fetch complete publication metadata!
-        </div>
+      <h4>Supported Import Headers (Case-Insensitive):</h4>
+      <ul>
+        <li><strong>DOCLINE/docline:</strong> DOCLINE request number (e.g., 138ABC123)</li>
+        <li><strong>PMID/pmid:</strong> PubMed identifier for auto-enrichment</li>
+        <li><strong>DOI/doi:</strong> Digital Object Identifier for auto-enrichment</li>
+        <li><strong>Title/title:</strong> Publication title</li>
+        <li><strong>Authors/authors:</strong> Author names</li>
+        <li><strong>Journal/journal:</strong> Publication source</li>
+        <li><strong>Year/year:</strong> Publication year</li>
+        <li><strong>Priority/priority:</strong> Low, Normal, Rush, Urgent</li>
+        <li><strong>Status/status:</strong> Request status</li>
+        <li><strong>Patron Email/patron_email:</strong> Requesting user contact</li>
+        <li><strong>Tags/tags:</strong> Comma-separated keywords</li>
+        <li><strong>Notes/notes:</strong> Additional information</li>
+      </ul>
 
-        <div class="help-warning">
-          <strong>⚠️ Performance:</strong> Large imports (>1000 items) with API lookups may take several minutes due to rate limiting.
-        </div>
-      `
-    },
-    {
-      id: "export_formats",
-      title: "Export & Data Portability",
-      content: `
-        <h3>Exporting Your Data</h3>
-        
-        <h4>Export Formats:</h4>
-        <ul>
-          <li><strong>CSV:</strong> Technology-agnostic format compatible with any spreadsheet software</li>
-          <li><strong>JSON:</strong> Structured data format for backup and system integration</li>
-        </ul>
+      <h4>✅ V1.4 Bulk Updates (FIXED):</h4>
+      <p>Update multiple existing requests simultaneously:</p>
+      <ol>
+        <li>Go to <strong>All Requests</strong> tab</li>
+        <li>Select requests using checkboxes</li>
+        <li>Go to <strong>Import/Export</strong> tab</li>
+        <li>Use <strong>Bulk Update Operations</strong> to change status or priority</li>
+        <li><strong>Confirmation messages</strong> now show exactly how many items were updated</li>
+      </ol>
 
-        <h4>CSV Export Fields:</h4>
-        <p>The CSV export includes all fields for maximum compatibility:</p>
-        <pre>PMID, DOI, Title, Authors, Journal, Year, Status, 
-Priority, Tags, Notes, Patron Email, DOCLINE, 
-Created, Updated</pre>
+      <div class="help-tip">
+        <strong>🔬 Auto-Enrichment:</strong> Any PMID or DOI in your import automatically fetches complete publication metadata from PubMed/CrossRef!
+      </div>
 
-        <h4>Why No Excel Support:</h4>
-        <p>SilentStacks uses technology-agnostic formats to ensure:</p>
-        <ul>
-          <li><strong>Universal compatibility:</strong> CSV works with Excel, Google Sheets, LibreOffice, and any database</li>
-          <li><strong>Long-term accessibility:</strong> CSV is a plain text format that will always be readable</li>
-          <li><strong>Cross-platform support:</strong> Works on any operating system</li>
-          <li><strong>No vendor lock-in:</strong> Your data isn't tied to specific proprietary formats</li>
-        </ul>
+      <div class="help-success">
+        <strong>✅ V1.4 Improvements:</strong> All bulk operations now provide clear feedback and properly update the All Requests view.
+      </div>
+    `
+  },
 
-        <h4>Import/Export Workflow:</h4>
-        <ol>
-          <li><strong>Export:</strong> Download your data as CSV or JSON</li>
-          <li><strong>Edit:</strong> Open CSV in any spreadsheet application</li>
-          <li><strong>Import:</strong> Upload modified CSV back to SilentStacks</li>
-          <li><strong>Auto-process:</strong> New PMIDs will automatically fetch metadata</li>
-        </ol>
+  docline_integration: {
+    id: "docline_integration",
+    title: "DOCLINE Integration & Enhanced Workflow",
+    content: `
+      <h3>DOCLINE Integration & Enhanced Workflow</h3>
+      
+      <h4>Why Use SilentStacks with DOCLINE?</h4>
+      <p>SilentStacks enhances your existing DOCLINE workflow by:</p>
+      <ul>
+        <li><strong>Automatic metadata enrichment:</strong> Turn sparse DOCLINE data into rich publication records</li>
+        <li><strong>Enhanced searching:</strong> Find requests by title, author, journal, not just DOCLINE numbers</li>
+        <li><strong>Patron communication:</strong> Track patron emails and communication</li>
+        <li><strong>Reporting:</strong> Generate detailed reports with complete publication information</li>
+        <li><strong>API integration:</strong> Automatic PubMed and CrossRef lookups</li>
+      </ul>
 
-        <div class="help-tip">
-          <strong>📊 Excel Users:</strong> Simply save your Excel files as CSV format before importing to SilentStacks!
-        </div>
-      `
-    },
-    {
-      id: "docline_integration",
-      title: "DOCLINE Integration",
-      content: `
-        <h3>Working with DOCLINE Requests</h3>
-        
-        <h4>DOCLINE Field Support:</h4>
-        <p>SilentStacks now includes full support for DOCLINE integration:</p>
-        <ul>
-          <li><strong>DOCLINE field:</strong> Track existing DOCLINE request numbers</li>
-          <li><strong>Import/Export:</strong> DOCLINE numbers included in all data operations</li>
-          <li><strong>Bulk processing:</strong> Import lists of DOCLINE numbers with PMIDs</li>
-        </ul>
-
-        <h4>DOCLINE + PMID Workflow:</h4>
-        <p>Ideal for existing DOCLINE users who want enhanced metadata:</p>
-        <ol>
-          <li>Export DOCLINE requests with PMIDs</li>
-          <li>Create CSV with columns: DOCLINE, PMID</li>
-          <li>Import to SilentStacks</li>
-          <li>System automatically fetches complete publication metadata</li>
-          <li>Export enriched data back to your workflow</li>
-        </ol>
-
-        <h4>Example DOCLINE Import:</h4>
-        <pre>DOCLINE,PMID,Status
+      <h4>DOCLINE + PMID Power Workflow:</h4>
+      <p>The most efficient way to enhance existing DOCLINE requests:</p>
+      
+      <h5>Step 1: Prepare Your Data</h5>
+      <pre>DOCLINE,PMID,Status
 138ABC123,12345678,pending
 139DEF456,23456789,in-progress
 140GHI789,34567890,pending</pre>
 
-        <h4>DOCLINE Number Format:</h4>
-        <p>Supports various DOCLINE number formats:</p>
-        <ul>
-          <li>Standard format: 138ABC123</li>
-          <li>Numeric only: 1234567</li>
-          <li>Custom institutional formats</li>
-        </ul>
+      <h5>Step 2: Bulk Import</h5>
+      <ol>
+        <li>Go to <strong>Import/Export</strong> tab</li>
+        <li>Either paste the data or upload as CSV file</li>
+        <li>Ensure <strong>"Automatically fetch metadata"</strong> is checked</li>
+        <li>Click <strong>"Import Pasted Data with Auto-Fetch"</strong></li>
+      </ol>
 
-        <div class="help-tip">
-          <strong>🔗 Best Practice:</strong> Always include both DOCLINE and PMID when possible for complete tracking and metadata!
-        </div>
-      `
-    },
-    {
-      id: "searching_filtering",
-      title: "Search & Filter",
-      content: `
-        <h3>Finding Your Requests</h3>
-        
-        <h4>Search Functionality:</h4>
-        <p>Use the search box to find requests by:</p>
-        <ul>
-          <li>Title keywords</li>
-          <li>Author names</li>
-          <li>Journal names</li>
-          <li>PMID or DOI</li>
-          <li>DOCLINE numbers</li>
-          <li>Tags</li>
-          <li>Patron email</li>
-        </ul>
+      <h5>Step 3: Automatic Enrichment</h5>
+      <p>SilentStacks will:</p>
+      <ul>
+        <li>Keep your DOCLINE numbers intact</li>
+        <li>Use PMIDs to fetch complete publication metadata</li>
+        <li>Add title, authors, journal, year, DOI</li>
+        <li>Preserve your status and priority settings</li>
+      </ul>
 
-        <h4>Filter Options:</h4>
-        <ul>
-          <li><strong>Status Filter:</strong> Show only pending, fulfilled, etc.</li>
-          <li><strong>Priority Filter:</strong> Focus on urgent or rush requests</li>
-          <li><strong>Date Range:</strong> Find requests from specific time periods</li>
-        </ul>
+      <h5>Step 4: Enhanced Management</h5>
+      <p>Now you can:</p>
+      <ul>
+        <li>Search by publication title or author name</li>
+        <li>Generate reports with complete citation information</li>
+        <li>Export enriched data back to your systems</li>
+        <li>Track patron communications</li>
+      </ul>
 
-        <h4>Sorting:</h4>
-        <p>Click column headers to sort by:</p>
-        <ul>
-          <li>Date created (newest/oldest first)</li>
-          <li>Priority level (urgent → low)</li>
-          <li>Title (alphabetical)</li>
-          <li>Status</li>
-          <li>DOCLINE number</li>
-        </ul>
+      <h4>DOCLINE Number Formats Supported:</h4>
+      <ul>
+        <li><strong>Standard DOCLINE:</strong> 138ABC123, 139DEF456</li>
+        <li><strong>Numeric only:</strong> 1234567, 9876543</li>
+        <li><strong>Institution-specific:</strong> LIB-2024-001, REQ-456789</li>
+        <li><strong>Legacy formats:</strong> Various older DOCLINE formats</li>
+      </ul>
 
-        <div class="help-tip">
-          <strong>🔍 Search Tips:</strong> Search works across all fields including DOCLINE numbers. Use partial matches for flexibility.
-        </div>
-      `
-    },
-    {
-      id: "api_integration",
-      title: "API Integration & Offline Mode",
-      content: `
-        <h3>External API Integration</h3>
-        
-        <h4>Supported APIs:</h4>
-        <ul>
-          <li><strong>PubMed eUtils:</strong> Article metadata lookup by PMID</li>
-          <li><strong>CrossRef:</strong> Article metadata lookup by DOI</li>
-          <li><strong>Automatic enrichment:</strong> Fetches title, authors, journal, year, MeSH terms</li>
-        </ul>
+      <h4>Export Options for DOCLINE Users:</h4>
+      <p>When you export, the CSV includes DOCLINE numbers in the first column:</p>
+      <pre>Docline Number,PMID,Patron E-mail,Article Title,Authors,Journal,Year,DOI,Date Stamp,Status,Priority</pre>
+      <p>This format is designed to integrate back into institutional workflows.</p>
 
-        <h4>API Features:</h4>
-        <ul>
-          <li><strong>Rate limiting:</strong> Respects API guidelines with automatic delays</li>
-          <li><strong>Error handling:</strong> Graceful fallback when APIs are unavailable</li>
-          <li><strong>Batch processing:</strong> Handles bulk imports with API lookups</li>
-          <li><strong>MeSH terms:</strong> Includes medical subject headings from PubMed</li>
-        </ul>
-
-        <h4>Offline Capability:</h4>
-        <p>SilentStacks works offline and queues API requests:</p>
-        <ul>
-          <li>All data is stored locally in your browser</li>
-          <li>API requests are queued when offline</li>
-          <li>Automatic processing when connection returns</li>
-          <li>No data loss during offline periods</li>
-        </ul>
-
-        <h4>API Rate Limiting:</h4>
-        <p>To respect API providers and ensure reliability:</p>
-        <ul>
-          <li>1-second delay between PubMed requests</li>
-          <li>Automatic retry with exponential backoff</li>
-          <li>Progress indicators for long operations</li>
-          <li>Chunked processing for large imports</li>
-        </ul>
-
-        <div class="help-tip">
-          <strong>🔑 API Performance:</strong> For best results with large imports, ensure stable internet connection and consider splitting very large batches.
-        </div>
-      `
-    },
-    {
-      id: "troubleshooting",
-      title: "Troubleshooting",
-      content: `
-        <h3>Common Issues & Solutions</h3>
-        
-        <h4>Import Issues:</h4>
-        <ul>
-          <li><strong>CSV not recognized:</strong> Ensure headers match supported field names</li>
-          <li><strong>API lookups failing:</strong> Check internet connection and try smaller batches</li>
-          <li><strong>DOCLINE numbers missing:</strong> Use "DOCLINE", "docline", or "DOCLINE_NUMBER" as header</li>
-          <li><strong>Special characters:</strong> Ensure CSV uses UTF-8 encoding</li>
-        </ul>
-
-        <h4>Performance Issues:</h4>
-        <ul>
-          <li><strong>Large imports slow:</strong> Split into batches of 100-500 items</li>
-          <li><strong>Browser freezing:</strong> Close other tabs and try smaller batches</li>
-          <li><strong>Memory warnings:</strong> Export data and refresh browser, then reimport</li>
-        </ul>
-
-        <h4>API-Related Issues:</h4>
-        <ul>
-          <li><strong>PMID not found:</strong> Verify PMID exists in PubMed database</li>
-          <li><strong>Rate limit errors:</strong> Wait a few minutes and try again</li>
-          <li><strong>Incomplete metadata:</strong> Some PubMed records may have missing fields</li>
-          <li><strong>DOI lookup failing:</strong> Check DOI format (e.g., 10.1000/example)</li>
-        </ul>
-
-        <h4>Data Export Issues:</h4>
-        <ul>
-          <li><strong>CSV opens incorrectly in Excel:</strong> Use "Data → From Text" import wizard</li>
-          <li><strong>Special characters garbled:</strong> Ensure UTF-8 encoding when opening</li>
-          <li><strong>DOCLINE numbers as dates:</strong> Format column as "Text" in spreadsheet</li>
-        </ul>
-
-        <h4>Browser Compatibility:</h4>
-        <p>SilentStacks works best with:</p>
-        <ul>
-          <li>Chrome 80+ (recommended)</li>
-          <li>Firefox 75+</li>
-          <li>Safari 13+</li>
-          <li>Edge 80+</li>
-        </ul>
-
-        <div class="help-warning">
-          <strong>⚠️ Data Safety:</strong> Always export your data before major updates or troubleshooting steps!
-        </div>
-      `
-    },
-    {
-      id: "best_practices",
-      title: "Best Practices",
-      content: `
-        <h3>Recommended Workflows</h3>
-        
-        <h4>Efficient Data Entry:</h4>
-        <ol>
-          <li><strong>Start with identifiers:</strong> Always enter PMID or DOI first for auto-population</li>
-          <li><strong>Use bulk import:</strong> For multiple requests, use CSV import rather than manual entry</li>
-          <li><strong>Include DOCLINE:</strong> Add DOCLINE numbers for existing ILL tracking</li>
-          <li><strong>Tag consistently:</strong> Use consistent tagging for better organization</li>
-        </ol>
-
-        <h4>DOCLINE Integration Workflow:</h4>
-        <ol>
-          <li>Export existing DOCLINE requests</li>
-          <li>Add PMID column where available</li>
-          <li>Import to SilentStacks for metadata enrichment</li>
-          <li>Export enriched data for enhanced ILL management</li>
-        </ol>
-
-        <h4>Data Management:</h4>
-        <ul>
-          <li><strong>Regular exports:</strong> Export data weekly as backup</li>
-          <li><strong>Clean imports:</strong> Review import data before processing</li>
-          <li><strong>Batch updates:</strong> Use bulk update features for status changes</li>
-          <li><strong>Tag strategy:</strong> Develop consistent tagging for departments/subjects</li>
-        </ul>
-
-        <h4>Performance Optimization:</h4>
-        <ul>
-          <li><strong>Batch size:</strong> Import 100-500 items at a time for best performance</li>
-          <li><strong>API timing:</strong> Schedule large imports during off-peak hours</li>
-          <li><strong>Browser maintenance:</strong> Clear cache periodically, keep updated</li>
-          <li><strong>Data cleanup:</strong> Remove fulfilled requests periodically</li>
-        </ul>
-
-        <h4>Collaboration Tips:</h4>
-        <ul>
-          <li><strong>Shared CSV files:</strong> Use shared drives for team CSV imports/exports</li>
-          <li><strong>Consistent formatting:</strong> Establish team standards for data entry</li>
-          <li><strong>Status updates:</strong> Use bulk updates for team status changes</li>
-          <li><strong>Documentation:</strong> Document custom tags and workflows</li>
-        </ul>
-
-        <div class="help-tip">
-          <strong>💡 Pro Workflow:</strong> DOCLINE → CSV Export → SilentStacks Import → Metadata Enrichment → Enhanced ILL Management
-        </div>
-      `
-    }
-  ];
-
-  // Generate HTML content for all sections
-  function generateDocumentationHTML() {
-    const sectionsHTML = documentationSections.map(section => `
-      <div class="doc-section" id="${section.id}">
-        <h2>${section.title}</h2>
-        ${section.content}
+      <div class="help-tip">
+        <strong>🔗 Best Practice:</strong> Always include both DOCLINE number and PMID when possible for complete tracking and automatic metadata enhancement!
       </div>
-    `).join('');
 
-    const navigationHTML = documentationSections.map(section => `
-      <li><a href="#${section.id}" class="doc-nav-link">${section.title}</a></li>
-    `).join('');
+      <div class="help-success">
+        <strong>💡 Efficiency Tip:</strong> Export your DOCLINE requests with PMIDs, import to SilentStacks for enrichment, then export the enhanced data for reporting or integration with other systems.
+      </div>
+    `
+  },
 
-    return {
-      navigation: `<ul class="doc-navigation">${navigationHTML}</ul>`,
-      content: sectionsHTML
-    };
-  }
-
-  // Enhanced documentation with search
-  const IntegratedDocumentation = {
-    sections: documentationSections,
-    
-    initialize() {
-      console.log('📚 Initializing Updated Documentation v1.4.0...');
-      this.setupDocumentationUI();
-      this.setupSearch();
-      console.log('✅ Documentation initialized with PMID auto-fetch and DOCLINE guidance');
-    },
-
-    setupDocumentationUI() {
-      const docContainer = document.getElementById('documentation-content');
-      if (docContainer) {
-        const { navigation, content } = generateDocumentationHTML();
-        
-        docContainer.innerHTML = `
-          <div class="documentation-layout">
-            <aside class="doc-sidebar">
-              <div class="doc-search-container">
-                <input type="text" id="doc-search" placeholder="Search documentation..." class="doc-search-input">
-              </div>
-              ${navigation}
-            </aside>
-            <main class="doc-content">
-              ${content}
-            </main>
-          </div>
-        `;
-
-        // Add navigation click handlers
-        document.querySelectorAll('.doc-nav-link').forEach(link => {
-          link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const targetId = link.getAttribute('href').substring(1);
-            this.showSection(targetId);
-          });
-        });
-
-        // Show first section by default
-        this.showSection(documentationSections[0].id);
-      }
-    },
-
-    setupSearch() {
-      const searchInput = document.getElementById('doc-search');
-      if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-          this.searchDocumentation(e.target.value);
-        });
-      }
-    },
-
-    showSection(sectionId) {
-      // Hide all sections
-      document.querySelectorAll('.doc-section').forEach(section => {
-        section.style.display = 'none';
-      });
-
-      // Show target section
-      const targetSection = document.getElementById(sectionId);
-      if (targetSection) {
-        targetSection.style.display = 'block';
-        targetSection.scrollIntoView({ behavior: 'smooth' });
-      }
-
-      // Update navigation
-      document.querySelectorAll('.doc-nav-link').forEach(link => {
-        link.classList.remove('active');
-      });
+  export_formats: {
+    id: "export_formats",
+    title: "Export & Data Portability - Updated V1.4",
+    content: `
+      <h3>Export & Data Portability (V1.4 Updated)</h3>
       
-      const activeLink = document.querySelector(`a[href="#${sectionId}"]`);
-      if (activeLink) {
-        activeLink.classList.add('active');
-      }
-    },
+      <h4>✅ V1.4 Export Improvements:</h4>
+      <ul>
+        <li><strong>Fixed header order:</strong> CSV exports now use institutional standard field order</li>
+        <li><strong>Enhanced confirmation:</strong> Clear success messages with file names</li>
+        <li><strong>Technology-agnostic focus:</strong> Removed Excel references, emphasized CSV compatibility</li>
+        <li><strong>DOCLINE-first ordering:</strong> Export format optimized for DOCLINE workflows</li>
+      </ul>
 
-    searchDocumentation(query) {
-      if (!query.trim()) {
-        // Show all sections if no search query
-        document.querySelectorAll('.doc-section').forEach(section => {
-          section.style.display = 'block';
-        });
-        return;
-      }
+      <h4>Export Formats:</h4>
+      
+      <h5>CSV Export (Recommended)</h5>
+      <p>Technology-agnostic format with institutional header order:</p>
+      <pre>Docline Number, PMID, Patron E-mail, Article Title, Authors, Journal, 
+Year, DOI, Date Stamp, Status, Priority, Tags, Notes, Last Updated</pre>
+      
+      <p><strong>Compatible with:</strong></p>
+      <ul>
+        <li>Microsoft Excel (any version)</li>
+        <li>Google Sheets</li>
+        <li>LibreOffice Calc</li>
+        <li>Apple Numbers</li>
+        <li>Any database system</li>
+        <li>Statistical software (R, SPSS, etc.)</li>
+        <li>Custom applications via CSV import</li>
+      </ul>
 
-      const searchTerm = query.toLowerCase();
-      let foundSections = [];
+      <h5>JSON Export</h5>
+      <p>Structured data format for system integration and backup:</p>
+      <pre>{
+  "exportInfo": {
+    "application": "SilentStacks",
+    "version": "1.4",
+    "exportDate": "2024-08-07T10:30:00Z",
+    "recordCount": 150
+  },
+  "requests": [ ... ]
+}</pre>
 
-      documentationSections.forEach(section => {
-        const content = section.content.toLowerCase();
-        const title = section.title.toLowerCase();
-        
-        if (content.includes(searchTerm) || title.includes(searchTerm)) {
-          foundSections.push(section.id);
-        }
-      });
+      <h4>Why No Excel/XLSX Support?</h4>
+      <p>SilentStacks uses technology-agnostic formats to ensure:</p>
+      <ul>
+        <li><strong>Universal compatibility:</strong> CSV works everywhere, forever</li>
+        <li><strong>No vendor lock-in:</strong> Your data isn't tied to proprietary formats</li>
+        <li><strong>Long-term accessibility:</strong> CSV is plain text, always readable</li>
+        <li><strong>Cross-platform support:</strong> Works on Windows, Mac, Linux, mobile</li>
+        <li><strong>Smaller file sizes:</strong> More efficient than binary formats</li>
+        <li><strong>Version independent:</strong> No compatibility issues between software versions</li>
+      </ul>
 
-      // Show/hide sections based on search
-      document.querySelectorAll('.doc-section').forEach(section => {
-        if (foundSections.includes(section.id)) {
-          section.style.display = 'block';
-          this.highlightSearchTerms(section, searchTerm);
-        } else {
-          section.style.display = 'none';
-        }
-      });
+      <h4>Excel Users Workflow:</h4>
+      <ol>
+        <li><strong>Export from SilentStacks:</strong> Download CSV file</li>
+        <li><strong>Open in Excel:</strong> CSV files open directly in Excel</li>
+        <li><strong>Edit as needed:</strong> Use Excel's full functionality</li>
+        <li><strong>Save as CSV:</strong> File → Save As → CSV format</li>
+        <li><strong>Re-import to SilentStacks:</strong> Upload the modified CSV</li>
+      </ol>
 
-      // Update navigation to show relevant sections
-      document.querySelectorAll('.doc-nav-link').forEach(link => {
-        const sectionId = link.getAttribute('href').substring(1);
-        if (foundSections.includes(sectionId)) {
-          link.style.display = 'block';
-          link.classList.add('search-match');
-        } else {
-          link.style.display = 'none';
-          link.classList.remove('search-match');
-        }
-      });
-    },
+      <h4>Export Data Structure:</h4>
+      <p>All exports include complete request information:</p>
+      <ul>
+        <li><strong>Identification:</strong> DOCLINE number, PMID, DOI</li>
+        <li><strong>Publication data:</strong> Title, authors, journal, year</li>
+        <li><strong>Request details:</strong> Status, priority, patron email</li>
+        <li><strong>Tracking info:</strong> Creation date, last update</li>
+        <li><strong>Organization:</strong> Tags, notes, custom fields</li>
+      </ul>
 
-    highlightSearchTerms(section, searchTerm) {
-      // Simple highlighting (can be enhanced)
-      const content = section.innerHTML;
-      const regex = new RegExp(`(${searchTerm})`, 'gi');
-      section.innerHTML = content.replace(regex, '<mark>$1</mark>');
-    },
+      <h4>Selective Export:</h4>
+      <p>Export only the records you need:</p>
+      <ol>
+        <li>Go to <strong>All Requests</strong> tab</li>
+        <li>Use filters to find desired records</li>
+        <li>Select specific requests using checkboxes</li>
+        <li>Go to <strong>Import/Export</strong> tab</li>
+        <li>Use bulk export functions for selected items</li>
+      </ol>
 
-    // Public methods for external use
-    openSection(sectionId) {
-      this.showSection(sectionId);
-    },
+      <div class="help-tip">
+        <strong>📊 For Excel Users:</strong> Just open our CSV exports directly in Excel - they'll display perfectly formatted and ready to use!
+      </div>
 
-    getSection(sectionId) {
-      return documentationSections.find(section => section.id === sectionId);
-    },
+      <div class="help-success">
+        <strong>🌐 Technology Agnostic:</strong> SilentStacks' CSV format ensures your data will always be accessible, regardless of what software you use now or in the future.
+      </div>
+    `
+  },
 
-    getAllSections() {
-      return documentationSections;
-    }
-  };
+  adding_requests: {
+    id: "adding_requests",
+    title: "Adding Requests - Enhanced V1.4",
+    content: `
+      <h3>Creating New ILL Requests (V1.4 Enhanced)</h3>
+      
+      <h4>Manual Entry Process:</h4>
+      <ol>
+        <li>Click <strong>"Add Request"</strong> in the navigation</li>
+        <li>Choose your entry method based on available information:</li>
+      </ol>
 
-  // Register with SilentStacks
-  if (!window.SilentStacks) {
-    window.SilentStacks = { modules: {} };
+      <h5>Method 1: PMID Lookup (Fastest)</h5>
+      <ol>
+        <li>Enter PMID in the PMID field (e.g., 12345678)</li>
+        <li>Click <strong>"Lookup PMID"</strong> button</li>
+        <li>System automatically fills: title, authors, journal, year, DOI</li>
+        <li>Add DOCLINE number if this relates to existing DOCLINE request</li>
+        <li>Set priority and add patron email</li>
+        <li>Click <strong>"Submit Request"</strong></li>
+      </ol>
+
+      <h5>Method 2: DOI Lookup</h5>
+      <ol>
+        <li>Enter DOI (e.g., 10.1000/example.doi)</li>
+        <li>Click <strong>"Lookup DOI"</strong> button</li>
+        <li>System fetches metadata from CrossRef</li>
+        <li>Complete remaining fields as needed</li>
+      </ol>
+
+      <h5>Method 3: Manual Entry</h5>
+      <ol>
+        <li>Fill in publication details manually</li>
+        <li>Include DOCLINE number for tracking</li>
+        <li>Set appropriate priority level</li>
+        <li>Add patron contact information</li>
+      </ol>
+
+      <h4>Form Fields Explained:</h4>
+      
+      <h5>Identification Fields:</h5>
+      <ul>
+        <li><strong>PMID:</strong> PubMed identifier - enables automatic metadata fetching</li>
+        <li><strong>DOI:</strong> Digital Object Identifier - alternative to PMID for lookups</li>
+        <li><strong>DOCLINE:</strong> Existing DOCLINE request number (e.g., 138ABC123)</li>
+      </ul>
+
+      <h5>Publication Details:</h5>
+      <ul>
+        <li><strong>Title:</strong> Publication title (required if no PMID/DOI)</li>
+        <li><strong>Authors:</strong> Use "Last, First Initial" format, separate with semicolons</li>
+        <li><strong>Journal:</strong> Full journal name or publication source</li>
+        <li><strong>Year:</strong> 4-digit publication year</li>
+      </ul>
+
+      <h5>Request Management:</h5>
+      <ul>
+        <li><strong>Priority:</strong> 
+          <ul>
+            <li><em>Urgent</em> - Critical patient care</li>
+            <li><em>Rush</em> - Expedited timeline</li>
+            <li><em>Normal</em> - Standard processing</li>
+            <li><em>Low</em> - No rush</li>
+          </ul>
+        </li>
+        <li><strong>Status:</strong> Pending, In Progress, Fulfilled, Cancelled, On Hold</li>
+        <li><strong>Patron Email:</strong> Contact information for requesting user</li>
+        <li><strong>Tags:</strong> Keywords for organization (comma-separated)</li>
+        <li><strong>Notes:</strong> Special instructions or additional information</li>
+      </ul>
+
+      <h4>DOCLINE Integration Workflow:</h4>
+      <p>When adding requests that originated from DOCLINE:</p>
+      <ol>
+        <li><strong>Include DOCLINE number:</strong> Maintain link to original request</li>
+        <li><strong>Use PMID lookup:</strong> Enhance sparse DOCLINE data with rich metadata</li>
+        <li><strong>Preserve request details:</strong> Keep original priority and status</li>
+        <li><strong>Add patron info:</strong> Include contact details for follow-up</li>
+      </ol>
+
+      <h4>API-Powered Features:</h4>
+      <ul>
+        <li><strong>PubMed Integration:</strong> Automatic title, authors, journal, year, MeSH terms</li>
+        <li><strong>CrossRef Integration:</strong> DOI-based metadata retrieval</li>
+        <li><strong>Automatic validation:</strong> System checks data consistency</li>
+        <li><strong>Duplicate detection:</strong> Warns if similar requests exist</li>
+      </ul>
+
+      <div class="help-tip">
+        <strong>⚡ Speed Tip:</strong> For fastest entry, just paste a PMID and click "Lookup PMID" - most fields fill automatically!
+      </div>
+
+      <div class="help-success">
+        <strong>🔗 DOCLINE Users:</strong> Include your DOCLINE number when creating requests to maintain full traceability between systems.
+      </div>
+    `
+  },
+
+  searching_filtering: {
+    id: "searching_filtering", 
+    title: "Search & Filter - Enhanced V1.4",
+    content: `
+      <h3>Finding Your Requests (V1.4 Enhanced)</h3>
+      
+      <h4>✅ V1.4 Search Improvements:</h4>
+      <ul>
+        <li><strong>Fixed result display:</strong> Search results now properly update the view</li>
+        <li><strong>Enhanced DOCLINE search:</strong> Find requests by DOCLINE numbers</li>
+        <li><strong>Improved filtering:</strong> Multiple filter combinations work correctly</li>
+      </ul>
+
+      <h4>Search Functionality:</h4>
+      <p>Use the search box to find requests across all fields:</p>
+      
+      <h5>Search by Publication Info:</h5>
+      <ul>
+        <li><strong>Title keywords:</strong> "cancer therapy", "covid treatment"</li>
+        <li><strong>Author names:</strong> "Smith", "Johnson", "Garcia"</li>
+        <li><strong>Journal names:</strong> "Nature", "NEJM", "Cell"</li>
+        <li><strong>Publication years:</strong> "2023", "2024"</li>
+      </ul>
+
+      <h5>Search by Request Details:</h5>
+      <ul>
+        <li><strong>PMID numbers:</strong> "12345678", "87654321"</li>
+        <li><strong>DOI strings:</strong> "10.1000", "nature.2024"</li>
+        <li><strong>DOCLINE numbers:</strong> "138ABC123", "DEF456"</li>
+        <li><strong>Patron emails:</strong> "user@library.edu", "patron@university"</li>
+        <li><strong>Tags/keywords:</strong> "oncology", "urgent", "cardiology"</li>
+      </ul>
+
+      <h4>Advanced Filtering:</h4>
+      
+      <h5>Status Filtering:</h5>
+      <ul>
+        <li><strong>Pending:</strong> New requests awaiting action</li>
+        <li><strong>In Progress:</strong> Currently being processed</li>
+        <li><strong>Fulfilled:</strong> Successfully completed</li>
+        <li><strong>Cancelled:</strong> Cancelled requests</li>
+        <li><strong>On Hold:</strong> Temporarily suspended</li>
+      </ul>
+
+      <h5>Priority Filtering:</h5>
+      <ul>
+        <li><strong>Urgent:</strong> Critical patient care requests</li>
+        <li><strong>Rush:</strong> Expedited timeline requests</li>
+        <li><strong>Normal:</strong> Standard processing requests</li>
+        <li><strong>Low:</strong> No-rush requests</li>
+      </ul>
+
+      <h5>Date Range Filtering:</h5>
+      <ul>
+        <li><strong>Today:</strong> Requests created today</li>
+        <li><strong>This Week:</strong> Last 7 days</li>
+        <li><strong>This Month:</strong> Last 30 days</li>
+        <li><strong>Custom Range:</strong> Specify exact date range</li>
+      </ul>
+
+      <h4>Sorting Options:</h4>
+      <p>Click column headers to sort by:</p>
+      <ul>
+        <li><strong>Date Created:</strong> Newest or oldest first</li>
+        <li><strong>Priority Level:</strong> Urgent → Low or Low → Urgent</li>
+        <li><strong>Title:</strong> Alphabetical order</li>
+        <li><strong>Status:</strong> Group by request status</li>
+        <li><strong>DOCLINE Number:</strong> Numerical/alphabetical order</li>
+        <li><strong>Patron Email:</strong> Alphabetical by patron</li>
+      </ul>
+
+      <h4>Combined Search & Filter:</h4>
+      <p>Use multiple criteria for precise results:</p>
+      <ol>
+        <li><strong>Filter by status:</strong> Show only "Pending" requests</li>
+        <li><strong>Filter by priority:</strong> Add "Rush" priority filter</li>
+        <li><strong>Search by keyword:</strong> Add "cardiology" in search box</li>
+        <li><strong>Result:</strong> Only pending, rush-priority cardiology requests</li>
+      </ol>
+
+      <h4>DOCLINE-Specific Searching:</h4>
+      <p>Enhanced search capabilities for DOCLINE users:</p>
+      <ul>
+        <li><strong>DOCLINE number search:</strong> Find by exact or partial DOCLINE numbers</li>
+        <li><strong>Batch DOCLINE search:</strong> Search for multiple DOCLINE numbers</li>
+        <li><strong>DOCLINE + content search:</strong> Find DOCLINE requests about specific topics</li>
+        <li><strong>Missing DOCLINE filter:</strong> Find requests without DOCLINE numbers</li>
+      </ul>
+
+      <h4>Quick Filter Shortcuts:</h4>
+      <ul>
+        <li><strong>Today's Requests:</strong> Click date filter → Today</li>
+        <li><strong>Urgent Items:</strong> Priority filter → Urgent</li>
+        <li><strong>Pending Work:</strong> Status filter → Pending + In Progress</li>
+        <li><strong>My Patron's Requests:</strong> Search by patron email domain</li>
+      </ul>
+
+      <div class="help-tip">
+        <strong>🔍 Search Tips:</strong> Search works across all fields including DOCLINE numbers. Use partial matches for flexibility - searching "138" will find "138ABC123".
+      </div>
+
+      <div class="help-success">
+        <strong>💡 Pro Tip:</strong> Combine filters with search for powerful query capabilities. For example: Priority=Rush + Search="cardiology" finds all urgent cardiology requests.
+      </div>
+    `
+  },
+
+  troubleshooting_v14: {
+    id: "troubleshooting_v14",
+    title: "V1.4 Troubleshooting & Known Issues",
+    content: `
+      <h3>V1.4 Troubleshooting & Fixed Issues</h3>
+      
+      <h4>✅ FIXED in V1.4:</h4>
+      
+      <h5>1. Bulk Upload Display Issue</h5>
+      <p><strong>Problem:</strong> Items uploaded via bulk paste/CSV not appearing in All Requests tab</p>
+      <p><strong>Status:</strong> ✅ FIXED - Items now properly refresh and display</p>
+      <p><strong>Solution implemented:</strong> Enhanced refresh mechanism forces All Requests view update</p>
+
+      <h5>2. Missing Upload Confirmations</h5>
+      <p><strong>Problem:</strong> No feedback on successful/failed uploads</p>
+      <p><strong>Status:</strong> ✅ FIXED - Detailed confirmation messages now display</p>
+      <p><strong>Details shown:</strong> Total processed, successful, failed, API-enriched counts</p>
+
+      <h5>3. CSV Upload Functionality</h5>
+      <p><strong>Problem:</strong> CSV file upload was non-operational</p>
+      <p><strong>Status:</strong> ✅ FIXED - CSV upload now works with PMID API integration</p>
+      <p><strong>Features:</strong> Auto-enrichment, progress tracking, error handling</p>
+
+      <h5>4. Export Header Order</h5>
+      <p><strong>Problem:</strong> Export headers didn't match institutional requirements</p>
+      <p><strong>Status:</strong> ✅ FIXED - Headers now follow required format</p>
+      <p><strong>New order:</strong> Docline Number, PMID, Patron E-mail, Article Metadata, Date Stamp</p>
+
+      <h4>Current V1.4 Capabilities:</h4>
+      <ul>
+        <li>✅ Bulk paste with immediate display in All Requests</li>
+        <li>✅ CSV file upload with progress tracking</li>
+        <li>✅ Detailed upload success/failure confirmations</li>
+        <li>✅ Working bulk status and priority updates</li>
+        <li>✅ PMID API auto-enrichment during uploads</li>
+        <li>✅ DOCLINE + PMID workflow integration</li>
+        <li>✅ Technology-agnostic CSV export format</li>
+        <li>✅ Enhanced error reporting and handling</li>
+      </ul>
+
+      <h4>If You Still Experience Issues:</h4>
+      
+      <h5>Clear Browser Cache</h5>
+      <ol>
+        <li>Hard refresh: Ctrl+F5 (Windows) or Cmd+Shift+R (Mac)</li>
+        <li>Or clear browser cache and reload page</li>
+        <li>This ensures you're using V1.4 JavaScript files</li>
+      </ol>
+
+      <h5>Check Console for Errors</h5>
+      <ol>
+        <li>Press F12 to open developer tools</li>
+        <li>Click "Console" tab</li>
+        <li>Look for error messages during upload/display</li>
+        <li>V1.4 includes enhanced console logging for debugging</li>
+      </ol>
+
+      <h5>Verify Upload Data Format</h5>
+      <p>Ensure your data includes minimum required fields:</p>
+      <ul>
+        <li><strong>Minimum required:</strong> Title OR PMID OR DOI OR DOCLINE</li>
+        <li><strong>Recommended:</strong> DOCLINE + PMID for best results</li>
+        <li><strong>Headers:</strong> Use supported header names (case-insensitive)</li>
+      </ul>
+
+      <h4>Performance Notes:</h4>
+      <ul>
+        <li><strong>Large imports:</strong> 1000+ items may take several minutes due to API rate limits</li>
+        <li><strong>API lookups:</strong> PMID/DOI enrichment adds processing time but provides rich metadata</li>
+        <li><strong>Batch processing:</strong> V1.4 processes in small batches to avoid timeouts</li>
+      </ul>
+
+      <h4>Data Validation:</h4>
+      <p>V1.4 includes enhanced data validation:</p>
+      <ul>
+        <li><strong>PMID format:</strong> Must be numeric (e.g., 12345678)</li>
+        <li><strong>DOI format:</strong> Must contain "10." prefix</li>
+        <li><strong>Email format:</strong> Basic email validation for patron emails</li>
+        <li><strong>Priority values:</strong> Must be: urgent, rush, normal, low</li>
+        <li><strong>Status values:</strong> Must be: pending, in-progress, fulfilled, cancelled, on-hold</li>
+      </ul>
+
+      <div class="help-success">
+        <strong>✅ V1.4 Status:</strong> All major bulk operation issues have been resolved. Upload confirmations, display refresh, and CSV functionality are now working properly.
+      </div>
+
+      <div class="help-tip">
+        <strong>🔧 Debug Mode:</strong> V1.4 includes enhanced console logging. Check browser console (F12) for detailed processing information during bulk operations.
+      </div>
+    `
   }
-  if (!window.SilentStacks.modules) {
-    window.SilentStacks.modules = {};
-  }
+};
 
-  window.SilentStacks.modules.IntegratedDocumentation = IntegratedDocumentation;
-  
-  console.log('✅ Updated Integrated Documentation v1.4.0 registered successfully');
-
-})();
-
-// CSS Styles for Documentation
-const documentationStyles = `
-<style>
-.documentation-layout {
-  display: flex;
-  height: 80vh;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.doc-sidebar {
-  width: 300px;
-  background: #f8f9fa;
-  border-right: 1px solid #dee2e6;
-  overflow-y: auto;
-  padding: 1rem;
-}
-
-.doc-search-container {
-  margin-bottom: 1rem;
-}
-
-.doc-search-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.doc-navigation {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.doc-navigation li {
-  margin-bottom: 0.25rem;
-}
-
-.doc-nav-link {
-  display: block;
-  padding: 0.5rem 0.75rem;
-  color: #495057;
-  text-decoration: none;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-  font-size: 0.9rem;
-}
-
-.doc-nav-link:hover {
-  background-color: #e9ecef;
-  color: #007bff;
-}
-
-.doc-nav-link.active {
-  background-color: #007bff;
-  color: white;
-}
-
-.doc-nav-link.search-match {
-  background-color: #fff3cd;
-  border-left: 3px solid #ffc107;
-}
-
-.doc-content {
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
-  background: white;
-}
-
-.doc-section {
-  display: none;
-  max-width: 800px;
-}
-
-.doc-section h2 {
-  color: #007bff;
-  border-bottom: 2px solid #007bff;
-  padding-bottom: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.doc-section h3 {
-  color: #495057;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-}
-
-.doc-section h4 {
-  color: #6c757d;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.doc-section h5 {
-  color: #6c757d;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.doc-section ul, .doc-section ol {
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
-}
-
-.doc-section li {
-  margin-bottom: 0.25rem;
-  line-height: 1.5;
-}
-
-.doc-section pre {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 4px;
-  padding: 1rem;
-  margin: 1rem 0;
-  overflow-x: auto;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.9rem;
-}
-
-.doc-section code {
-  background: #f8f9fa;
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.9rem;
-}
-
-.help-tip {
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 4px;
-  padding: 1rem;
-  margin: 1rem 0;
-  border-left: 4px solid #28a745;
-}
-
-.help-warning {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 4px;
-  padding: 1rem;
-  margin: 1rem 0;
-  border-left: 4px solid #ffc107;
-}
-
-.help-tip strong, .help-warning strong {
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-mark {
-  background-color: #fff3cd;
-  padding: 0.1rem 0.2rem;
-  border-radius: 2px;
-}
-
-@media (max-width: 768px) {
-  .documentation-layout {
-    flex-direction: column;
-    height: auto;
-  }
-  
-  .doc-sidebar {
-    width: 100%;
-    max-height: 200px;
-  }
-  
-  .doc-content {
-    padding: 1rem;
+// Export the documentation content for use in the main documentation system
+export function updateDocumentationContent() {
+  // This function updates the integrated documentation with V1.4 content
+  if (window.IntegratedDocumentation) {
+    Object.keys(documentationContent).forEach(key => {
+      window.IntegratedDocumentation.updateSection(key, documentationContent[key]);
+    });
+    console.log('📚 Documentation updated to V1.4');
   }
 }
-</style>
-`;
 
-// Inject styles
-if (!document.getElementById('documentation-styles')) {
-  const styleElement = document.createElement('div');
-  styleElement.id = 'documentation-styles';
-  styleElement.innerHTML = documentationStyles;
-  document.head.appendChild(styleElement);
-}
+// Auto-update documentation when this module loads
+document.addEventListener('DOMContentLoaded', () => {
+  updateDocumentationContent();
+});
