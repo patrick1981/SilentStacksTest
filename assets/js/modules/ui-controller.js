@@ -474,7 +474,7 @@
     renderRequests();
   };
 
-window.quickStatusChange = (index, newStatus) => {
+  window.quickStatusChange = (index, newStatus) => {
     try {
       window.SilentStacks.modules.DataManager.updateRequest(index, { status: newStatus });
       renderStats();
@@ -489,10 +489,11 @@ window.quickStatusChange = (index, newStatus) => {
       }
       
       showNotification(`Request status updated to ${newStatus}`, 'success', 2000);
-    } catch (error) {  // <-- REMOVED THE COMMA HERE
+    } catch (error) {
       console.error('Failed to update request status:', error);
       showNotification('Failed to update request status', 'error');
     }
+  };
 
   // === Module Interface ===
   const UIController = {
@@ -529,7 +530,7 @@ window.quickStatusChange = (index, newStatus) => {
 
     // Utility
     isInitialized: () => initialized,
-    getElements: () => elements,
+    getElements: () => elements
   };
 
   // Register module
