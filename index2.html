@@ -1,1 +1,543 @@
-assets/fonts/reddit-sans
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SilentStacks v2.0 - Literature Request Management</title>
+
+  <!-- Security Headers -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline';
+                 style-src 'self' 'unsafe-inline';
+                 font-src 'self';
+                 connect-src 'self' https://eutils.ncbi.nlm.nih.gov https://api.crossref.org https://clinicaltrials.gov;
+                 img-src 'self' data:;
+                 object-src 'none';
+                 base-uri 'self';
+                 form-action 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta name="theme-color" content="#667eea" />
+  <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>"/>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loading-screen" style="position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 10000;">
+    <div style="text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 16px;">📚</div>
+      <h2>SilentStacks v2.0</h2>
+      <div class="loading-spinner" style="margin: 20px auto;"></div>
+      <p id="loading-status">Initializing system...</p>
+    </div>
+  </div>
+
+  <!-- Main Application Container -->
+  <div id="app-container" class="silentstacks-app" style="display: none;">
+    <!-- Skip link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Nav -->
+    <nav class="main-nav" role="navigation" aria-label="Main navigation">
+      <div class="nav-container">
+        <div class="nav-brand">
+          <h1><span class="brand-icon">📚</span> SilentStacks <span class="version-badge">v2.0</span></h1>
+        </div>
+        <div class="nav-tabs" role="tablist">
+          <button class="nav-tab active" data-section="dashboard" role="tab" aria-selected="true" aria-controls="dashboard">📊 Dashboard</button>
+          <button class="nav-tab" data-section="add-request" role="tab" aria-selected="false" aria-controls="add-request">➕ Add Request</button>
+          <button class="nav-tab" data-section="all-requests" role="tab" aria-selected="false" aria-controls="all-requests">📋 All Requests</button>
+          <button class="nav-tab" data-section="workflows" role="tab" aria-selected="false" aria-controls="workflows">🏥 ILL Workflow</button>
+          <button class="nav-tab" data-section="settings" role="tab" aria-selected="false" aria-controls="settings">⚙️ Settings</button>
+        </div>
+        <div class="system-status" id="system-status"><span class="status-indicator" title="System Status">🟢</span></div>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main id="main-content" role="main">
+      <!-- Dashboard -->
+      <section id="dashboard" class="section active" role="tabpanel" aria-labelledby="dashboard-tab">
+        <div class="section-header">
+          <h2>Dashboard</h2>
+          <p class="section-description">Overview of your literature requests and system status</p>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="stat-card" id="total-requests-card">
+            <div class="stat-icon">📚</div>
+            <div class="stat-content"><h3>Total Requests</h3><div class="stat-number" id="total-requests">0</div></div>
+          </div>
+
+          <div class="stat-card" id="pending-requests-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content"><h3>Pending</h3><div class="stat-number" id="pending-requests">0</div></div>
+          </div>
+
+          <div class="stat-card" id="urgent-requests-card">
+            <div class="stat-icon">🚨</div>
+            <div class="stat-content"><h3>Urgent</h3><div class="stat-number" id="urgent-requests">0</div></div>
+          </div>
+
+          <div class="stat-card" id="completed-requests-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content"><h3>Completed</h3><div class="stat-number" id="completed-requests">0</div></div>
+          </div>
+
+          <div class="stat-card system-health-card">
+            <div class="stat-icon">🔧</div>
+            <div class="stat-content">
+              <h3>System Health</h3>
+              <div class="health-status" id="health-status">Checking...</div>
+            </div>
+            <button class="health-details-btn" onclick="window.SilentStacks?.debug?.showDiagnostics()">Details</button>
+          </div>
+
+          <div class="quick-actions-card">
+            <h3>Quick Actions</h3>
+            <div class="quick-actions">
+              <button class="quick-action-btn" onclick="switchToSection('add-request')">➕ Add Request</button>
+              <button class="quick-action-btn" onclick="showBulkUpload()">📤 Bulk Upload</button>
+              <button class="quick-action-btn" onclick="exportData()">💾 Export Data</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="recent-requests-section">
+          <h3>Recent Requests</h3>
+          <div id="recent-requests" class="recent-requests-list"></div>
+        </div>
+      </section>
+
+      <!-- Add Request -->
+      <section id="add-request" class="section" role="tabpanel" aria-labelledby="add-request-tab">
+        <div class="section-header">
+          <h2>Add New Request</h2>
+          <p class="section-description">Create a new literature request with automatic metadata fetching</p>
+        </div>
+
+        <div class="form-container">
+          <form id="request-form" class="request-form" novalidate>
+            <!-- Identifiers -->
+            <fieldset class="form-section">
+              <legend>📋 Identifiers</legend>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="pmid">PMID:</label>
+                  <div class="input-group">
+                    <input type="text" id="pmid" name="pmid" data-type="pmid" placeholder="Enter PubMed ID" aria-describedby="pmid-help">
+                    <button type="button" id="fetch-pmid" class="btn btn-secondary">Fetch Data</button>
+                  </div>
+                  <small id="pmid-help" class="form-help">Enter a PubMed ID to automatically fetch citation data</small>
+                </div>
+                <div class="form-group">
+                  <label for="doi">DOI:</label>
+                  <input type="text" id="doi" name="doi" data-type="doi" placeholder="10.1000/example" aria-describedby="doi-help">
+                  <small id="doi-help" class="form-help">Digital Object Identifier (optional)</small>
+                </div>
+              </div>
+            </fieldset>
+
+            <!-- Citation Details -->
+            <fieldset class="form-section">
+              <legend>📖 Citation Details</legend>
+              <div class="form-group">
+                <label for="title">Title: <span class="required">*</span></label>
+                <input type="text" id="title" name="title" data-type="text" required aria-describedby="title-help">
+                <small id="title-help" class="form-help">Full title of the publication</small>
+              </div>
+              <div class="form-group">
+                <label for="authors">Authors:</label>
+                <input type="text" id="authors" name="authors" data-type="text" placeholder="Last, First M; Last, First M" aria-describedby="authors-help">
+                <small id="authors-help" class="form-help">List authors separated by semicolons</small>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="journal">Journal:</label>
+                  <input type="text" id="journal" name="journal" data-type="text">
+                </div>
+                <div class="form-group">
+                  <label for="year">Year:</label>
+                  <input type="number" id="year" name="year" min="1800" max="2030" placeholder="2025">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label for="volume">Volume:</label><input type="text" id="volume" name="volume" data-type="text"></div>
+                <div class="form-group"><label for="issue">Issue:</label><input type="text" id="issue" name="issue" data-type="text"></div>
+                <div class="form-group"><label for="pages">Pages:</label><input type="text" id="pages" name="pages" data-type="text" placeholder="123-130"></div>
+              </div>
+            </fieldset>
+
+            <!-- Request Details -->
+            <fieldset class="form-section">
+              <legend>🎯 Request Details</legend>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="priority">Priority:</label>
+                  <select id="priority" name="priority">
+                    <option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="status">Status:</label>
+                  <select id="status" name="status">
+                    <option value="pending">Pending</option><option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="tags">Tags:</label>
+                <input type="text" id="tags" name="tags" data-type="text" placeholder="cancer, treatment, systematic review" aria-describedby="tags-help">
+                <small id="tags-help" class="form-help">Comma-separated tags for organization</small>
+              </div>
+              <div class="form-group">
+                <label for="notes">Notes:</label>
+                <textarea id="notes" name="notes" data-type="text" rows="3" placeholder="Additional notes or special instructions"></textarea>
+              </div>
+            </fieldset>
+
+            <!-- Dynamic Sections -->
+            <fieldset class="form-section" id="mesh-section" style="display: none;">
+              <legend>🏷️ MeSH Headings</legend>
+              <div id="mesh-headings" class="mesh-headings-container"></div>
+            </fieldset>
+
+            <fieldset class="form-section" id="trials-section" style="display: none;">
+              <legend>🧪 Associated Clinical Trials</legend>
+              <div id="clinical-trials" class="clinical-trials-container"></div>
+            </fieldset>
+
+            <!-- Actions -->
+            <div class="form-actions">
+              <button type="submit" id="submit-request" class="btn btn-primary">Add Request</button>
+              <button type="button" id="clear-form" class="btn btn-secondary">Clear Form</button>
+              <button type="button" id="save-draft" class="btn btn-outline">Save Draft</button>
+            </div>
+          </form>
+          <div id="form-status" class="status-message" role="status" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- All Requests -->
+      <section id="all-requests" class="section" role="tabpanel" aria-labelledby="all-requests-tab">
+        <div class="section-header">
+          <h2>All Requests</h2>
+          <p class="section-description">Manage and search through all your literature requests</p>
+        </div>
+
+        <div class="controls-bar">
+          <div class="search-controls">
+            <div class="search-group">
+              <input type="search" id="search-input" placeholder="Search requests..." data-type="text" aria-label="Search requests">
+              <button id="clear-search" class="btn btn-ghost" title="Clear search">✕</button>
+            </div>
+            <div class="filter-controls">
+              <select id="filter-status" aria-label="Filter by status">
+                <option value="all">All Status</option><option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option><option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select id="filter-priority" aria-label="Filter by priority">
+                <option value="all">All Priority</option><option value="normal">Normal</option>
+                <option value="high">High</option><option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div class="action-controls">
+            <button id="bulk-actions-btn" class="btn btn-secondary" disabled>Bulk Actions</button>
+            <button id="export-btn" class="btn btn-outline">📤 Export</button>
+            <button id="import-btn" class="btn btn-outline">📥 Import</button>
+          </div>
+        </div>
+
+        <!-- Bulk Upload Panel -->
+        <div class="bulk-upload-panel" id="bulk-upload-panel" style="display: none;">
+          <h3>Bulk Upload</h3>
+          <p>Upload multiple requests at once using PMIDs, CSV data, or other formats.</p>
+
+          <div class="upload-tabs">
+            <button class="upload-tab active" data-tab="pmid">PMID List</button>
+            <button class="upload-tab" data-tab="csv">CSV File</button>
+            <button class="upload-tab" data-tab="docline">PMID+DOCLINE</button>
+          </div>
+
+          <div class="upload-content">
+            <div id="pmid-upload" class="upload-section active">
+              <textarea id="bulk-paste-textarea" placeholder="Paste PMIDs (one per line or comma-separated)..." rows="6"></textarea>
+            </div>
+            <div id="csv-upload" class="upload-section">
+              <input type="file" id="csv-file-input" accept=".csv" />
+              <div class="file-drop-zone" id="csv-drop-zone"><p>Drag and drop CSV file here or click to select</p></div>
+            </div>
+            <div id="docline-upload" class="upload-section">
+              <textarea id="docline-textarea" placeholder="PMID,DOCLINE pairs (e.g., 12345678,DOC123456)..." rows="6"></textarea>
+            </div>
+          </div>
+
+          <div class="upload-actions">
+            <button id="process-bulk-btn" class="btn btn-primary">Process Upload</button>
+            <button id="cancel-bulk-btn" class="btn btn-secondary">Cancel</button>
+          </div>
+
+          <div id="bulk-status" class="status-message" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="requests-container">
+          <!-- Sort header will be inserted above this list by UIController -->
+          <div id="request-list" class="request-list"></div>
+          <div class="list-footer">
+            <div id="results-count" class="results-count">0 requests</div>
+            <div class="pagination" id="pagination"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ILL Workflow -->
+      <section id="workflows" class="section" role="tabpanel" aria-labelledby="workflows-tab">
+        <div class="section-header">
+          <h2>ILL Workflow Management</h2>
+          <p class="section-description">Manage interlibrary loan workflows and track progress</p>
+        </div>
+        <div class="workflow-dashboard">
+          <div class="workflow-section">
+            <h3>Active Workflows</h3>
+            <div id="active-workflows" class="workflow-list"></div>
+          </div>
+          <div class="workflow-stats">
+            <div class="workflow-stat-card"><div class="stat-icon">🏥</div><div class="stat-content"><h4>Total Workflows</h4><div class="stat-number" id="total-workflows">0</div></div></div>
+            <div class="workflow-stat-card"><div class="stat-icon">⏰</div><div class="stat-content"><h4>Pending Follow-ups</h4><div class="stat-number" id="pending-followups">0</div></div></div>
+            <div class="workflow-stat-card"><div class="stat-icon">📧</div><div class="stat-content"><h4>Notifications Sent</h4><div class="stat-number" id="notifications-sent">0</div></div></div>
+          </div>
+          <div class="workflow-actions">
+            <button class="btn btn-primary" onclick="startNewWorkflow()">🏥 Start New ILL Workflow</button>
+            <button class="btn btn-secondary" onclick="showFollowUpManager()">⏰ Manage Follow-ups</button>
+            <button class="btn btn-outline" onclick="exportWorkflowData()">📊 Export Workflow Data</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="settings" class="section" role="tabpanel" aria-labelledby="settings-tab">
+        <div class="section-header">
+          <h2>Settings</h2>
+          <p class="section-description">Configure your SilentStacks experience</p>
+        </div>
+
+        <div class="settings-container">
+          <!-- Appearance -->
+          <div class="setting-group">
+            <h3>🎨 Appearance</h3>
+            <div class="setting-item"><label for="theme-select">Theme:</label>
+              <select id="theme-select">
+                <option value="light">Light</option><option value="dark">Dark</option><option value="high-contrast">High Contrast</option><option value="auto">Auto (System)</option>
+              </select>
+            </div>
+            <div class="setting-item"><label><input type="checkbox" id="performance-mode"> Performance Mode (reduces animations)</label></div>
+            <div class="setting-item"><label><input type="checkbox" id="compact-view"> Compact View (dense layout)</label></div>
+          </div>
+
+          <!-- System -->
+          <div class="setting-group">
+            <h3>⚙️ System</h3>
+            <div class="setting-item"><label for="api-rate-limit">API Rate Limit (requests/second):</label><input type="number" id="api-rate-limit" min="1" max="10" value="2"/></div>
+            <div class="setting-item"><label for="search-debounce">Search Debounce (milliseconds):</label><input type="number" id="search-debounce" min="100" max="1000" step="50" value="300"/></div>
+            <div class="setting-item"><label><input type="checkbox" id="auto-save"> Auto-save changes</label></div>
+            <div class="setting-item"><label><input type="checkbox" id="debug-mode"> Debug Mode (detailed logging)</label></div>
+          </div>
+
+          <!-- Security & Privacy -->
+          <div class="setting-group">
+            <h3>🔒 Security & Privacy</h3>
+            <div class="security-status">
+              <div class="security-item"><span class="security-label">Input Sanitization:</span><span id="sanitization-status" class="security-status-indicator">🔒 Active</span></div>
+              <div class="security-item"><span class="security-label">Rate Limiting:</span><span id="rate-limit-status" class="security-status-indicator">🔒 Active</span></div>
+              <div class="security-item"><span class="security-label">XSS Protection:</span><span id="xss-protection-status" class="security-status-indicator">🔒 Active</span></div>
+              <div class="security-item"><span class="security-label">Data Encryption:</span><span id="encryption-status" class="security-status-indicator">🔒 Local Storage</span></div>
+            </div>
+            <button id="security-test" class="btn btn-outline">🧪 Run Security Test</button>
+            <button id="clear-data" class="btn btn-danger">🗑️ Clear All Data</button>
+          </div>
+
+          <!-- Data Management -->
+          <div class="setting-group">
+            <h3>💾 Data Management</h3>
+            <div class="data-stats">
+              <div class="data-stat"><span class="data-label">Requests:</span><span id="data-requests-count">0</span></div>
+              <div class="data-stat"><span class="data-label">Storage Used:</span><span id="data-storage-used">0 KB</span></div>
+              <div class="data-stat"><span class="data-label">Last Backup:</span><span id="data-last-backup">Never</span></div>
+            </div>
+            <div class="data-actions">
+              <button id="backup-data" class="btn btn-primary">💾 Create Backup</button>
+              <button id="restore-data" class="btn btn-secondary">📥 Restore Backup</button>
+              <button id="export-all" class="btn btn-outline">📤 Export All Data</button>
+            </div>
+            <input type="file" id="restore-file" accept=".json" style="display:none;">
+          </div>
+
+          <!-- System Info -->
+          <div class="setting-group">
+            <h3>ℹ️ System Information</h3>
+            <div class="system-info">
+              <div class="info-item"><span class="info-label">Version:</span><span class="info-value">SilentStacks v2.0</span></div>
+              <div class="info-item"><span class="info-label">Modules Loaded:</span><span id="modules-loaded" class="info-value">0/0</span></div>
+              <div class="info-item"><span class="info-label">System Status:</span><span id="system-health" class="info-value">Checking...</span></div>
+              <div class="info-item"><span class="info-label">Last Updated:</span><span class="info-value">August 2025</span></div>
+            </div>
+            <div class="system-actions">
+              <button id="show-diagnostics" class="btn btn-outline">🔧 Show Diagnostics</button>
+              <button id="restart-system" class="btn btn-warning">🔄 Restart System</button>
+              <button id="check-updates" class="btn btn-ghost">🔍 Check for Updates</button>
+            </div>
+          </div>
+
+          <!-- About -->
+          <div class="setting-group">
+            <h3>ℹ️ About</h3>
+            <p>SilentStacks v2.0 is a comprehensive literature request management system designed for librarians and researchers.</p>
+            <div class="about-links">
+              <a href="#" class="about-link">Documentation</a>
+              <a href="#" class="about-link">Support</a>
+              <a href="#" class="about-link">GitHub Repository</a>
+              <a href="#" class="about-link">Report Issue</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Notifications + Modal root -->
+  <div class="notifications-container" id="notifications" role="region" aria-label="Notifications"></div>
+  <div id="modal-container" class="modal-container"></div>
+
+  <!-- Boot helpers -->
+  <script>
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingStatus = document.getElementById('loading-status');
+    const appContainer = document.getElementById('app-container');
+
+    function updateLoadingStatus(message) { if (loadingStatus) loadingStatus.textContent = message; }
+    function hideLoadingScreen() { loadingScreen.style.display = 'none'; appContainer.style.display = 'block'; }
+    function showLoadingError(error) {
+      loadingStatus.innerHTML = '<div style="color:red;margin-top:20px;"><strong>Initialization Failed</strong><br>' +
+        String(error) + '<br><br><button onclick="window.location.reload()" style="padding:8px 16px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;">Retry</button></div>';
+    }
+
+    function switchToSection(sectionId){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-selected','false');});
+      const section=document.getElementById(sectionId);const tab=document.querySelector(`[data-section="${sectionId}"]`);
+      if(section&&tab){section.classList.add('active');tab.classList.add('active');tab.setAttribute('aria-selected','true');}}
+    function showBulkUpload(){switchToSection('all-requests');setTimeout(()=>{const p=document.getElementById('bulk-upload-panel');if(p){p.style.display='block';p.scrollIntoView({behavior:'smooth'});}},300);}
+    function exportData(){const RM=window.SilentStacks?.modules?.RequestManager;if(!RM) return; const data=RM.exportRequests?.('json');const blob=new Blob([data],{type:'application/json'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`silentstacks-export-${Date.now()}.json`;a.click();URL.revokeObjectURL(url);}
+    function startNewWorkflow(){console.log('Starting new ILL workflow...');}
+    function showFollowUpManager(){console.log('Showing follow-up manager...');}
+    function exportWorkflowData(){console.log('Exporting workflow data...');}
+
+    let initializationComplete = false;
+    document.addEventListener('DOMContentLoaded', () => {
+      updateLoadingStatus('Loading core system...');
+      const checkInitialization = () => {
+        if (window.SilentStacks?.initialized) {
+          updateLoadingStatus('System ready!');
+          setTimeout(() => {
+            hideLoadingScreen();
+            initializationComplete = true;
+            updateSystemStatus();
+          }, 500);
+        } else if (window.SilentStacks?.initializing) {
+          updateLoadingStatus('Initializing modules...');
+          setTimeout(checkInitialization, 500);
+        } else {
+          setTimeout(checkInitialization, 100);
+        }
+      };
+      setTimeout(checkInitialization, 1000);
+      setTimeout(() => { if (!initializationComplete) showLoadingError('System initialization timed out.'); }, 30000);
+      setInterval(updateSystemStatus, 5000);
+    });
+
+    function updateSystemStatus() {
+      const healthStatus = document.getElementById('health-status');
+      const systemStatus = document.getElementById('system-status');
+      const systemHealth = document.getElementById('system-health');
+      const modulesLoaded = document.getElementById('modules-loaded');
+      if (window.SilentStacks?.getHealthStatus) {
+        const health = window.SilentStacks.getHealthStatus();
+        if (healthStatus) { healthStatus.textContent = health.status === 'running' ? '✅ Healthy' : '⚠️ Issues Detected'; healthStatus.className = health.status === 'running' ? 'health-good' : 'health-warning'; }
+        if (systemStatus) { const i = systemStatus.querySelector('.status-indicator'); if (i) { i.textContent = health.status === 'running' ? '🟢' : '🟡'; i.title = `System Status: ${health.status}`; } }
+        if (systemHealth) systemHealth.textContent = health.status === 'running' ? '✅ Healthy' : '⚠️ Issues';
+        if (modulesLoaded) modulesLoaded.textContent = `${health.modules.loaded}/${health.modules.total}`;
+      }
+    }
+  </script>
+
+  <!-- Load Core -->
+  <script>updateLoadingStatus('Loading bootstrap system...');</script>
+  <script src="core/bootstrap.js"></script>
+
+  <!-- Utils -->
+  <script>updateLoadingStatus('Loading utilities...');</script>
+  <script src="utils/dom-utils.js"></script>
+  <script src="utils/validators.js"></script>
+  <script src="utils/formatters.js"></script>
+  <script src="utils/debug-utils.js"></script>
+
+  <!-- Config -->
+  <script>updateLoadingStatus('Loading configuration...');</script>
+  <script src="config/app-config.js"></script>
+  <script src="config/api-endpoints.js"></script>
+  <script src="config/feature-flags.js"></script>
+
+  <!-- Local Libraries (correct paths!) -->
+  <script>updateLoadingStatus('Loading libraries...');</script>
+  <script src="assets/js/fuse.js"></script>
+  <script src="assets/js/papaparse.js"></script>
+
+  <!-- Data Modules -->
+  <script>updateLoadingStatus('Loading data modules...');</script>
+  <script src="modules/data/request-manager.js"></script>
+  <script src="modules/data/api-client.js"></script>
+  <script src="modules/data/storage-adapter.js"></script>
+
+  <!-- UI Modules -->
+  <script>updateLoadingStatus('Loading UI modules...');</script>
+  <script src="modules/ui/ui-controller.js"></script>
+  <script src="modules/ui/forms.js"></script>
+  <script src="modules/ui/search-filter.js"></script>
+  <script src="modules/ui/notifications.js"></script>
+
+  <!-- Workflows -->
+  <script>updateLoadingStatus('Loading workflow modules...');</script>
+  <script src="modules/workflows/ill-workflow.js"></script>
+  <script src="modules/workflows/bulk-upload.js"></script>
+  <script src="modules/workflows/export-manager.js"></script>
+
+  <!-- Integrations -->
+  <script>updateLoadingStatus('Loading integration modules...');</script>
+  <script src="modules/integrations/pubmed-integration.js"></script>
+  <script src="modules/integrations/clinical-trials.js"></script>
+  <script src="modules/integrations/mesh-integration.js"></script>
+
+  <!-- Tab Nav + SW registration -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => { e.preventDefault(); const section = tab.dataset.section; if (section) switchToSection(section); });
+        tab.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tab.click(); } });
+      });
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('[SW] registered', reg.scope))
+          .catch(err => console.warn('[SW] registration failed', err));
+      }
+    });
+  </script>
+</body>
+</html>
