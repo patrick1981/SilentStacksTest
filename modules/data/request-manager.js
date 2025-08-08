@@ -748,6 +748,41 @@
     window.SilentStacks.modules.RequestManager = requestManager;
   }
 
-  console.log('📚 Request Manager module loaded');
+  // ---- Robust self-registration (handles late bootstrap & exact name) ----
+  const __rmInstance = new RequestManager();
 
+  function __registerNow() {
+    try {
+      // The bootstrap expects EXACT name: 'RequestManager'
+      if (window.SilentStacks?.registerModule) {
+        window.SilentStacks.registerModule('RequestManager', __rmInstance);
+      } else {
+        // Fallback: ensure the module is discoverable even before bootstrap
+        window.SilentStacks = window.SilentStacks || { modules: {} };
+        window.SilentStacks.modules = window.SilentStacks.modules || {};
+        window.SilentStacks.modules.RequestManager = __rmInstance;
+      }
+      console.log('📚 RequestManager registered');
+      return true;
+    } catch (e) {
+      console.warn('[RequestManager] registration failed (will retry):', e);
+      return false;
+    }
+  }
+
+  // Try immediately…
+  if (!__registerNow()) {
+    // …then retry a few times in case bootstrap isn’t ready yet.
+    let tries = 0;
+    const maxTries = 30; // ~3s total
+    const timer = setInterval(() => {
+      tries++;
+      if (__registerNow() || tries >= maxTries) clearInterval(timer);
+    }, 100);
+
+    // If your bootstrap dispatches an event when ready, catch it too.
+    window.addEventListener('SilentStacks:readyForModules', __registerNow, { once: true });
+  }
+
+  console.log('📚 RequestManager module loaded');
 })();
