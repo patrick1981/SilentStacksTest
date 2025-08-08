@@ -26,6 +26,50 @@
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>"/>
 </head>
 <body>
+  <!-- DEBUG SECTION - Remove after fixing -->
+<div id="debug-info" style="position: fixed; top: 0; right: 0; background: black; color: white; padding: 10px; z-index: 9999; font-family: monospace; font-size: 12px; max-width: 300px;">
+  <div>Loading Debug Info:</div>
+  <div id="debug-log"></div>
+</div>
+
+<script>
+// Debug logging
+const debugLog = document.getElementById('debug-log');
+const originalError = console.error;
+const originalLog = console.log;
+
+function addDebugLine(message, type = 'info') {
+  const line = document.createElement('div');
+  line.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'white';
+  line.textContent = message;
+  debugLog.appendChild(line);
+  debugLog.scrollTop = debugLog.scrollHeight;
+}
+
+console.error = function(...args) {
+  addDebugLine('ERROR: ' + args.join(' '), 'error');
+  originalError.apply(console, args);
+};
+
+console.log = function(...args) {
+  if (args[0] && typeof args[0] === 'string' && args[0].includes('✅')) {
+    addDebugLine(args.join(' '), 'success');
+  }
+  originalLog.apply(console, args);
+};
+
+// Log script loading
+window.addEventListener('load', () => {
+  addDebugLine('Page fully loaded', 'success');
+});
+
+// Log any script errors
+window.addEventListener('error', (e) => {
+  addDebugLine(`Script error: ${e.filename}:${e.lineno} - ${e.message}`, 'error');
+});
+
+addDebugLine('Debug logging active');
+</script>
   <!-- Loading Screen -->
   <div id="loading-screen" style="position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 10000;">
     <div style="text-align: center;">
