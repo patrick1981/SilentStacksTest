@@ -43,8 +43,13 @@ function applyTheme(themeName = null) {
   
   // Update settings if theme was explicitly changed
   if (themeName && themeName !== settings.theme) {
-    window.SilentStacks.modules.DataManager.updateSettings({ theme: themeName });
-  }
+ // Only update settings if DataManager is available and initialized
+if (window.SilentStacks?.modules?.DataManager?.updateSettings) {
+  window.SilentStacks.modules.DataManager.updateSettings({ theme: theme });
+} else {
+  // Fallback: save to localStorage directly
+  localStorage.setItem('silentstacks_theme', theme);
+}}
   
   // Update theme selector if it exists
   const themeSelect = document.getElementById('theme');
