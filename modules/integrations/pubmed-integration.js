@@ -31,29 +31,31 @@
 
     async setupModule() {}
 
-    // ===== Required API =====
+    // ===== Public API =====
     async fetchPubMedRecord(pmid) {
-      // Dual strategy: ESummary (JSON) + EFetch (XML)
-      const summary = await this.api.fetchPubMedData(pmid); // esummary
-      let xmlDoc = null, xmlStr = '';
+      const summary = await this.api.fetchPubMedData(pmid);
 
+      // EFetch (XML) for MeSH, abstract, publication types
+      let xmlDoc = null, xmlStr = '';
       try {
         const url = await this.api.buildSecureURL(
-          window.SilentStacks.config.api.endpoints.pubmed,
+          window.SilentStacks.config.api.endpoints.pubmed || this.api.endpoints.pubmed,
           '/efetch.fcgi',
           { db: 'pubmed', id: pmid, retmode: 'xml' }
         );
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         xmlStr = await res.text();
         xmlDoc = this.parseXMLResponse(xmlStr);
       } catch (e) {
-        this.recordError('EFetch failed; continuing with summary only', e);
+        this.recordError('EFetch failed; proceeding with ESummary only', e);
       }
 
       const mesh = xmlDoc ? this.extractMeshHeadings(xmlDoc) : [];
       const abstract = xmlDoc ? (xmlDoc.querySelector('AbstractText')?.textContent || '') : '';
+      const pubTypes = xmlDoc ? this.extractPublicationTypes(xmlDoc) : [];
+      const classification = this.classifyPublication(pubTypes);
 
-      return { summary, xml: xmlStr, mesh, abstract };
+      return { summary, xml: xmlStr, mesh, abstract, pubTypes, classification };
     }
 
     parseXMLResponse(xmlData) {
@@ -78,6 +80,29 @@
       return heads;
     }
 
+    extractPublicationTypes(xmlDoc) {
+      const types = [];
+      xmlDoc.querySelectorAll('PublicationTypeList > PublicationType').forEach(pt => {
+        types.push(pt.textContent.trim());
+      });
+      return types;
+    }
+
+    classifyPublication(pubTypes = []) {
+      const T = pubTypes.map(t => t.toLowerCase());
+      const has = (needle) => T.some(t => t.includes(needle));
+
+      if (has('randomized controlled trial') || has('randomised controlled trial')) return 'Randomized Controlled Trial';
+      if (has('clinical trial')) return 'Clinical Trial';
+      if (has('systematic review')) return 'Systematic Review';
+      if (has('meta-analysis')) return 'Meta-analysis';
+      if (has('comparative study')) return 'Comparative Study';
+      if (has('case-control')) return 'Case-Control Study';
+      if (has('cohort')) return 'Cohort Study';
+      if (has('case reports')) return 'Case Report';
+      return pubTypes[0] || 'Article';
+    }
+
     formatAuthors(authorsArray) {
       const safe = Array.isArray(authorsArray) ? authorsArray : [];
       return safe.map(a => {
@@ -88,14 +113,13 @@
     }
 
     async getRelatedArticles(pmid) {
-      // simple esearch “related” call (optional)
       try {
         const url = await this.api.buildSecureURL(
-          window.SilentStacks.config.api.endpoints.pubmed, '/elink.fcgi',
+          window.SilentStacks.config.api.endpoints.pubmed || this.api.endpoints.pubmed,
+          '/elink.fcgi',
           { dbfrom: 'pubmed', id: pmid, cmd: 'prlinks' }
         );
         const res = await fetch(url);
-        // Many linkouts are HTML-ish; leaving as optional placeholder
         return { linksFetched: res.ok };
       } catch (e) {
         this.recordError('Related fetch failed', e); return { linksFetched: false };
@@ -103,7 +127,6 @@
     }
 
     formatCitation(record, style = 'NLM') {
-      // record expected fields: authors(string), title, journal, year, volume, issue, pages
       const title = record?.title || '';
       const journal = record?.journal || '';
       const year = record?.year || '';
@@ -112,11 +135,10 @@
       const pages = record?.pages || '';
       const authors = (record?.authors || '').replace(/\s*;\s*/g, '; ');
       if (style === 'NLM') {
-        const volIssue = [volume, issue && `(${issue})`].filter(Boolean).join('');
-        const pagePart = pages ? `:${pages}` : '';
-        return `${authors}. ${title}. ${journal}. ${year};${volIssue}${pagePart}.`;
+        const vi = [volume, issue && `(${issue})`].filter(Boolean).join('');
+        const p = pages ? `:${pages}` : '';
+        return `${authors}. ${title}. ${journal}. ${year};${vi}${p}.`;
       }
-      // Fallback basic
       return `${authors}. ${title}. ${journal}. ${year}.`;
     }
 

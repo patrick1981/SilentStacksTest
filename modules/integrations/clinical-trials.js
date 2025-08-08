@@ -33,9 +33,8 @@
 
     async setupModule() {}
 
-    // ===== Required API =====
+    // ===== Public API =====
     async findTrialsByPMID(pmid) {
-      // Pull abstract using PubMedIntegration → extract NCTs → fetch each trial
       const rec = await this.pubmed.fetchPubMedRecord(pmid);
       const ncts = this.extractNCTFromText(rec.abstract || '');
       const out = [];
@@ -59,22 +58,17 @@
       return [...ids];
     }
 
-    formatTrialInfo(trialData) {
-      // produce a compact summary string
-      if (!trialData || trialData.notFound) return 'Trial not found';
-      const title = trialData?.protocolSection?.identificationModule?.officialTitle || '';
-      const status = this.getTrialStatus(trialData) || '';
-      const phase = this.getTrialPhase(trialData) || '';
-      const enroll = trialData?.protocolSection?.designModule?.enrollmentInfo?.count || '';
-      return `${title} — ${status}, ${phase}, N=${enroll}`;
-    }
-
-    getTrialPhase(trialData) {
-      return trialData?.protocolSection?.designModule?.phases?.join(', ') || '';
-    }
-
-    getTrialStatus(trialData) {
-      return trialData?.protocolSection?.statusModule?.overallStatus || '';
+    cardFromStudy(study = {}) {
+      if (!study || study.notFound) return { nctId: study?.nctId || '', title: 'Not found', status: '—', phase: '—', enrollment: '—', sponsor: '—', url: '' };
+      const id = study.nctId || study.protocolSection?.identificationModule?.nctId || '';
+      const title = study.protocolSection?.identificationModule?.officialTitle || study.protocolSection?.identificationModule?.briefTitle || '—';
+      const status = study.protocolSection?.statusModule?.overallStatus || '—';
+      const phases = study.protocolSection?.designModule?.phases || [];
+      const phase = Array.isArray(phases) ? phases.join(', ') : (phases || '—');
+      const enrollment = study.protocolSection?.designModule?.enrollmentInfo?.count || '—';
+      const sponsor = study.protocolSection?.sponsorCollaboratorsModule?.leadSponsor?.name || '—';
+      const url = id ? `https://clinicaltrials.gov/study/${id}` : '';
+      return { nctId: id, title, status, phase, enrollment, sponsor, url };
     }
 
     // ===== Boilerplate =====

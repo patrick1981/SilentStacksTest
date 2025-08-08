@@ -11,7 +11,7 @@
       this.lastActivity = new Date().toISOString();
       this.errors = [];
 
-      // Core refs
+      // Core
       this.stateManager = null;
       this.eventBus = null;
 
@@ -20,11 +20,11 @@
       this.pubmed = null;
       this.clinical = null;
 
-      // UI state
+      // UI
       this.loadingCount = 0;
       this.activeSectionId = 'dashboard';
       this.currentTheme = 'light';
-      this.selectedIds = new Set(); // bulk ops
+      this.selectedIds = new Set();
       this.sortHeadersConfigured = false;
 
       // Utils
@@ -36,16 +36,13 @@
 
     async initialize() {
       try {
-        // Core
         this.stateManager = window.SilentStacks?.core?.stateManager ?? null;
         this.eventBus = window.SilentStacks?.core?.eventBus ?? null;
 
-        // Modules
         this.requestManager = window.SilentStacks?.modules?.RequestManager ?? null;
         this.pubmed = window.SilentStacks?.modules?.PubMedIntegration ?? null;
         this.clinical = window.SilentStacks?.modules?.ClinicalTrialsIntegration ?? null;
 
-        // Utils
         this.dom = window.SilentStacks?.utils?.domUtils || window.SilentStacks?.utils?.dom || null;
         this.sanitizer = window.SilentStacks?.security?.sanitizer || null;
         this.formatters = window.SilentStacks?.utils?.formatters || null;
@@ -54,12 +51,8 @@
 
         this.initialized = true;
         this.lastActivity = new Date().toISOString();
-
         return { status: 'success', module: 'UIController' };
-      } catch (error) {
-        this.recordError('Initialization failed', error);
-        throw error;
-      }
+      } catch (e) { this.recordError('Initialization failed', e); throw e; }
     }
 
     async setupModule() {
@@ -67,8 +60,7 @@
         this.recordError('dom-utils not available', new Error('Missing dom-utils'));
       }
 
-      // Tabs
-      document.querySelectorAll('.nav-tab').forEach((tab) => {
+      document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
           e.preventDefault();
           const section = tab.getAttribute('data-section');
@@ -77,13 +69,12 @@
       });
       this.switchSection(document.querySelector('.section.active')?.id || 'dashboard');
 
-      // Event pipeline
+      // Events
       this.eventBus?.on?.('ui:render:requests', ({ items, total }) => this.renderRequestList(items, total));
       this.eventBus?.on?.('request:created', () => this.updateStatistics());
       this.eventBus?.on?.('request:changed', () => this.updateStatistics());
       this.eventBus?.on?.('request:deleted', () => { this.updateStatistics(); this.selectedIds.clear(); this.updateBulkToolbar(); });
 
-      // Diagnostics & network
       this.eventBus?.on?.('ui:showDiagnostics', () => window.SilentStacks?.debug?.showDiagnostics?.());
       this.eventBus?.on?.('net:started', () => this.showLoadingState('Loading...'));
       this.eventBus?.on?.('net:completed', () => this.hideLoadingState());
@@ -99,10 +90,8 @@
       const main = document.getElementById('main-content');
       if (main) this.resizeObserver.observe(main);
 
-      // Sorting header UI
+      // Sorting + Bulk toolbar
       this.ensureSortHeaderUI();
-
-      // Bulk toolbar
       this.ensureBulkToolbar();
 
       // Initial stats + render
@@ -110,17 +99,15 @@
       const all = this.requestManager?.getAllRequests?.() || [];
       this.renderRequestList(all.slice(0, 20), all.length);
 
-      this.log('UIController setup complete (Phase 3)');
+      this.log('UIController setup complete');
     }
 
     // ===== Required Methods =====
 
     switchSection(sectionId) {
       const target = this.sanitizeText(sectionId);
-      document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
-      document.querySelectorAll('.nav-tab').forEach((t) => {
-        t.classList.remove('active'); t.setAttribute('aria-selected', 'false');
-      });
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
       const section = document.getElementById(target);
       const tab = document.querySelector(`.nav-tab[data-section="${target}"]`);
       if (section) section.classList.add('active');
@@ -132,10 +119,7 @@
     showLoadingState(message = 'Loading...') {
       this.loadingCount = Math.max(0, this.loadingCount + 1);
       const el = document.getElementById('form-status') || document.querySelector('.loading-spinner');
-      if (el && this.dom?.safeSetText) {
-        this.dom.safeSetText(el, message);
-        el.classList.add('loading');
-      }
+      if (el && this.dom?.safeSetText) { this.dom.safeSetText(el, message); el.classList.add('loading'); }
     }
 
     hideLoadingState() {
@@ -165,7 +149,6 @@
         panel.appendChild(content);
       }
 
-      // Footer actions
       if (Array.isArray(options.actions)) {
         const bar = this.dom.createElement('div', { class: 'modal-actions' });
         options.actions.forEach(a => {
@@ -185,29 +168,23 @@
     updateStatistics() {
       try {
         const all = this.requestManager?.getAllRequests?.() || [];
-
         const setNum = (id, val) => {
           const el = document.getElementById(id);
           if (el && this.dom?.safeSetText) this.dom.safeSetText(el, String(val));
         };
-
         setNum('total-requests', all.length);
         setNum('pending-requests', all.filter(r => (r.status || 'pending') === 'pending').length);
         setNum('completed-requests', all.filter(r => (r.status || '') === 'completed').length);
         setNum('urgent-requests', all.filter(r => (r.priority || 'normal') === 'urgent').length);
 
-        // Recent
         const recentWrap = document.getElementById('recent-requests');
         if (recentWrap) {
           recentWrap.textContent = '';
-          [...all]
-            .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
-            .slice(0, 5)
-            .forEach((r) => {
-              const item = this.dom.createElement('div', { class: 'request-card' });
-              this.dom.safeSetText(item, this.buildNLMString(r));
-              recentWrap.appendChild(item);
-            });
+          [...all].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 5).forEach(r => {
+            const item = this.dom.createElement('div', { class: 'request-card' });
+            this.dom.safeSetText(item, this.buildNLMString(r));
+            recentWrap.appendChild(item);
+          });
         }
 
         this.lastActivity = new Date().toISOString();
@@ -224,14 +201,12 @@
       this.lastActivity = new Date().toISOString();
     }
 
-    // ===== Sorting header UI =====
+    // ===== Sorting Header =====
     ensureSortHeaderUI() {
       if (this.sortHeadersConfigured) return;
-      const pagination = document.getElementById('pagination');
       const list = document.getElementById('request-list');
       if (!list) return;
 
-      // Create simple header bar above list (Title, Journal, Priority, Status, Updated)
       const header = this.dom.createElement('div', { class: 'list-header' });
       const makeBtn = (label, field) => {
         const b = this.dom.createElement('button', { class: 'sort-btn', 'data-field': field, type: 'button', 'aria-label': `Sort by ${label}` });
@@ -253,9 +228,8 @@
       header.appendChild(makeBtn('Status', 'status'));
       header.appendChild(makeBtn('Updated', 'updatedAt'));
 
-      // Insert header before list
       list.parentNode.insertBefore(header, list);
-      // Initialize indicator from saved sort
+
       const sf = window.SilentStacks?.modules?.SearchFilter;
       if (sf) this.updateSortIndicators(sf.sort.field, sf.sort.dir, header);
 
@@ -265,17 +239,17 @@
     updateSortIndicators(activeField, dir, headerEl) {
       headerEl.querySelectorAll('.sort-btn').forEach(btn => {
         const f = btn.getAttribute('data-field');
+        const base = btn.textContent.replace(/[ ↑↓]$/,'').split(' ')[0];
         const arrow = (f === activeField) ? (dir === 'asc' ? ' ↑' : ' ↓') : '';
-        this.dom.safeSetText(btn, btn.textContent.replace(/[ ↑↓]$/,'').split(' ')[0] + arrow);
+        this.dom.safeSetText(btn, base + arrow);
       });
     }
 
-    // ===== Bulk operations toolbar =====
+    // ===== Bulk Operations =====
     ensureBulkToolbar() {
       const controls = document.querySelector('.controls-bar .action-controls');
       if (!controls) return;
 
-      // If not present, add the select-all & actions
       if (!document.getElementById('bulk-toolbar')) {
         const bar = this.dom.createElement('div', { id: 'bulk-toolbar', class: 'bulk-toolbar' });
 
@@ -383,19 +357,17 @@
     }
 
     // ===== Rendering =====
-
     renderRequestList(items = [], total = 0) {
       const listEl = document.getElementById('request-list');
       if (!listEl || !this.dom) return;
 
       listEl.textContent = '';
-
       items.forEach((rec) => {
         const id = rec.id || rec._id || String(rec.pmid || rec.doi || Math.random());
         const card = this.dom.createElement('div', { class: 'request-card' });
         card.classList.add(`priority--${(rec.priority || 'normal').toLowerCase()}`);
 
-        // Selection cb
+        // selection
         const selWrap = this.dom.createElement('div', { class: 'request-select' });
         const cb = this.dom.createElement('input', { type: 'checkbox', 'data-id': id });
         cb.checked = this.selectedIds.has(id);
@@ -405,14 +377,12 @@
         });
         selWrap.appendChild(cb);
 
-        // Title / Citation
+        // citation
         const titleEl = this.dom.createElement('div', { class: 'request-title', role: 'heading', 'aria-level': '3' });
-        const citation = (this.formatters?.citationNLM)
-          ? this.formatters.citationNLM(rec)
-          : this.buildNLMString(rec);
+        const citation = (this.formatters?.citationNLM) ? this.formatters.citationNLM(rec) : this.buildNLMString(rec);
         this.dom.safeSetText(titleEl, citation);
 
-        // Meta
+        // meta
         const metaEl = this.dom.createElement('div', { class: 'request-meta' });
         const pubType = rec.publicationType || rec.classification || '';
         const pmid = rec.pmid ? `PMID: ${rec.pmid}` : 'PMID: —';
@@ -421,7 +391,7 @@
         const info = [pmid, doi, status, pubType ? `Type: ${pubType}` : ''].filter(Boolean).join('  •  ');
         this.dom.safeSetText(metaEl, info);
 
-        // MeSH tags (clickable → filter)
+        // tags (MeSH / tags)
         const meshWrap = this.dom.createElement('div', { class: 'request-tags' });
         const mesh = Array.isArray(rec.mesh) ? rec.mesh : this._parseMeshString(rec.tags);
         mesh.forEach(m => {
@@ -440,17 +410,15 @@
           meshWrap.appendChild(tag);
         });
 
-        // Trials (if present)
+        // trials
         const trialsWrap = this.dom.createElement('div', { class: 'trials-wrap' });
-        const trials = Array.isArray(rec.clinicalTrials) ? rec.clinicalTrials : [];
-        trials.slice(0, 3).forEach(t => {
-          const cardT = this.dom.createElement('a', { class: 'trial-card', href: this._trialUrl(t), target: '_blank', rel: 'noopener noreferrer' });
+        (rec.clinicalTrials || []).slice(0, 3).forEach(t => {
+          const a = this.dom.createElement('a', { class: 'trial-card', href: this._trialUrl(t), target: '_blank', rel: 'noopener noreferrer' });
           const summary = this._trialSummary(t);
-          this.dom.safeSetText(cardT, summary);
-          trialsWrap.appendChild(cardT);
+          this.dom.safeSetText(a, summary);
+          trialsWrap.appendChild(a);
         });
 
-        // Assemble
         const topRow = this.dom.createElement('div', { class: 'request-row' });
         topRow.appendChild(selWrap);
         topRow.appendChild(titleEl);
@@ -474,12 +442,10 @@
       const arr = String(s || '').split(',').map(x => x.trim()).filter(Boolean);
       return arr.map(x => ({ term: x, major: false }));
     }
-
     _trialUrl(t) {
       const id = t?.nctId || t?.protocolSection?.identificationModule?.nctId || '';
       return id ? `https://clinicaltrials.gov/study/${id}` : '#';
     }
-
     _trialSummary(t) {
       const id = t?.nctId || t?.protocolSection?.identificationModule?.nctId || '';
       const title = t?.protocolSection?.identificationModule?.briefTitle || t?.protocolSection?.identificationModule?.officialTitle || 'Clinical trial';
@@ -491,7 +457,6 @@
     }
 
     // ===== Helpers =====
-
     buildNLMString(rec = {}) {
       const authors = String(rec.authors || '').replace(/\s*;\s*/g, '; ');
       const title = rec.title || '';
@@ -519,15 +484,15 @@
       const s = String(tag || '');
       let h = 0;
       for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-      const idx = (h % 8) + 1; // 1..8 buckets
+      const idx = (h % 8) + 1;
       return `tag--c${idx}`;
     }
 
-    // ===== Health / Diagnostics / Logging =====
     getHealthStatus() {
       return { name: 'UIController', status: this.initialized ? 'healthy' : 'not-initialized',
         initialized: this.initialized, lastActivity: this.lastActivity, errors: this.errors.slice(-5), performance: {} };
     }
+
     recordError(message, error) {
       const errorRecord = {
         message,
@@ -539,6 +504,7 @@
       if (this.errors.length > 100) this.errors = this.errors.slice(-100);
       window.SilentStacks?.core?.diagnostics?.recordIssue?.({ type: 'error', module: 'UIController', message, error });
     }
+
     log(message) { if (window.SilentStacks?.config?.debug) console.log(`[UIController] ${message}`); }
 
     sanitizeText(text) {

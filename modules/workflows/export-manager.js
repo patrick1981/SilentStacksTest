@@ -50,7 +50,7 @@
       return json;
     }
 
-    // DOCLINE-first CSV, no blank fields (use "—")
+    // DOCLINE-first CSV + no blank fields (uses "—")
     exportToCSV(requests, { filename } = {}) {
       const rows = [];
       const H = [
@@ -106,10 +106,9 @@
     }
 
     exportToRIS(requests, { filename } = {}) {
-      const mapType = (r) => 'JOUR'; // basic journal article
       const lines = requests.map(r => {
         const out = [
-          `TY  - ${mapType(r)}`,
+          `TY  - JOUR`,
           `TI  - ${this._nz(r.title)}`,
           `AU  - ${this._nz(r.authors)}`,
           `JO  - ${this._nz(r.journal)}`,
