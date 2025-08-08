@@ -20,35 +20,43 @@
   };
 
   // === Theme Application ===
-  function applyTheme(themeName = null) {
-    const settings = window.SilentStacks.modules.DataManager.getSettings();
-    const theme = themeName || settings.theme || 'light';
-    
-    // Validate theme
-    if (!THEMES[theme]) {
-      console.warn(`Invalid theme: ${theme}, falling back to light`);
-      theme = 'light';
-    }
-    
-    // Apply theme to document
-    document.documentElement.setAttribute('data-theme', theme);
-    
-    // Update settings if theme was changed
-    if (themeName && themeName !== settings.theme) {
-      window.SilentStacks.modules.DataManager.updateSettings({ theme: themeName });
-    }
-    
-    // Update theme selector
-    const themeSelect = document.getElementById('theme');
-    if (themeSelect && themeSelect.value !== theme) {
-      themeSelect.value = theme;
-    }
-    
-    console.log(`✅ Applied theme: ${theme}`);
-    
-    // Announce theme change for accessibility
-    announceThemeChange(theme);
+// === Theme Application (FIXED VERSION) ===
+function applyTheme(themeName = null) {
+  const settings = window.SilentStacks.modules.DataManager.getSettings();
+  let theme = themeName || settings.theme;
+  
+  // If no explicit theme set, detect system preference once
+  if (!theme) {
+    theme = detectSystemTheme();
+    // Save the detected theme to prevent repeated detection
+    window.SilentStacks.modules.DataManager.updateSettings({ theme: theme });
   }
+  
+  // Validate theme
+  if (!THEMES[theme]) {
+    console.warn(`Invalid theme: ${theme}, falling back to light`);
+    theme = 'light';
+  }
+  
+  // Apply theme immediately to prevent flash
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  // Update settings if theme was explicitly changed
+  if (themeName && themeName !== settings.theme) {
+    window.SilentStacks.modules.DataManager.updateSettings({ theme: themeName });
+  }
+  
+  // Update theme selector if it exists
+  const themeSelect = document.getElementById('theme');
+  if (themeSelect && themeSelect.value !== theme) {
+    themeSelect.value = theme;
+  }
+  
+  console.log(`✅ Applied theme: ${theme}`);
+  
+  // Announce theme change for accessibility
+  announceThemeChange(theme);
+}
 
   function announceThemeChange(theme) {
     const themeName = THEMES[theme]?.name || theme;
