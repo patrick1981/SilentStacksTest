@@ -19,19 +19,53 @@
     return el;
   }
 
-  // === Navigation Functions ===
+  // === Navigation Functions (FIXED VERSION) ===
   function switchSection(tabEl) {
     if (!tabEl || !tabEl.dataset.section) return;
     
+    console.log('🔄 Switching to section:', tabEl.dataset.section);
+    
+    // Ensure elements are available
+    if (!elements || !elements.navTabs || !elements.sections) {
+      elements = buildDefaultElements();
+    }
+    
     // Update navigation tabs
     elements.navTabs.forEach(t => {
-      t.classList.toggle('active', t === tabEl);
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
     });
     
     // Update sections
     elements.sections.forEach(s => {
-      s.classList.toggle('active', s.id === tabEl.dataset.section);
+      s.classList.remove('active');
+      s.setAttribute('aria-hidden', 'true');
     });
+    
+    // Activate clicked tab
+    tabEl.classList.add('active');
+    tabEl.setAttribute('aria-selected', 'true');
+    
+    // Activate corresponding section
+    const targetSection = document.getElementById(tabEl.dataset.section);
+    if (targetSection) {
+      targetSection.classList.add('active');
+      targetSection.setAttribute('aria-hidden', 'false');
+      
+      // Dispatch section activation event for other modules
+      const sectionEvent = new CustomEvent('section:activated', {
+        detail: { 
+          id: tabEl.dataset.section, 
+          section: targetSection,
+          tab: tabEl
+        }
+      });
+      document.dispatchEvent(sectionEvent);
+      
+      console.log('✅ Section activated:', tabEl.dataset.section);
+    } else {
+      console.warn('⚠️ Target section not found:', tabEl.dataset.section);
+    }
     
     // Announce section change for accessibility
     announceSectionChange(tabEl.dataset.section);
@@ -53,46 +87,73 @@
     announcement.textContent = `Switched to ${sectionNames[sectionId] || sectionId} section`;
     
     document.body.appendChild(announcement);
-    setTimeout(() => document.body.removeChild(announcement), 1000);
+    setTimeout(() => {
+      if (announcement.parentNode) {
+        document.body.removeChild(announcement);
+      }
+    }, 1000);
+  }
+
+  // === Clean Tab Handler Setup ===
+  function setupTabHandlers() {
+    console.log('🔧 Setting up clean tab handlers...');
+    
+    // Remove any existing handlers by cloning nodes
+    elements.navTabs.forEach(tab => {
+      const newTab = tab.cloneNode(true);
+      tab.parentNode.replaceChild(newTab, tab);
+    });
+    
+    // Rebuild elements cache with new nodes
+    elements.navTabs = Array.from(document.querySelectorAll('.nav-tab'));
+    
+    // Attach single, clean event handler to each tab
+    elements.navTabs.forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        switchSection(this);
+      });
+    });
+    
+    console.log('✅ Clean tab handlers attached to', elements.navTabs.length, 'tabs');
   }
 
   // === Status and Feedback Functions ===
-function setStatus(message, type = '') {
-  if (!elements || Object.keys(elements).length === 0) {
-    elements = buildDefaultElements();
-  }
-
-  if (!elements.status) {
-    // create a status element
-    const statusEl = document.createElement('div');
-    statusEl.className = 'lookup-status';
-    statusEl.setAttribute('role', 'status');
-    statusEl.style.marginTop = '0.5rem';
-
-    const form = document.getElementById('request-form');
-    if (form) {
-      form.appendChild(statusEl);
-    } else {
-      const container = document.querySelector('.section[data-section="add-request"], body');
-      (container || document.body).appendChild(statusEl);
+  function setStatus(message, type = '') {
+    if (!elements || Object.keys(elements).length === 0) {
+      elements = buildDefaultElements();
     }
-    elements.status = statusEl;
-  }
 
-  elements.status.textContent = message;
-  elements.status.className = ['lookup-status', type].filter(Boolean).join(' ');
+    if (!elements.status) {
+      // create a status element
+      const statusEl = document.createElement('div');
+      statusEl.className = 'lookup-status';
+      statusEl.setAttribute('role', 'status');
+      statusEl.style.marginTop = '0.5rem';
 
-  if (type === 'success') {
-    setTimeout(() => {
-      if (elements.status && elements.status.textContent === message) {
-        elements.status.textContent = '';
-        elements.status.className = 'lookup-status';
+      const form = document.getElementById('request-form');
+      if (form) {
+        form.appendChild(statusEl);
+      } else {
+        const container = document.querySelector('.section[data-section="add-request"], body');
+        (container || document.body).appendChild(statusEl);
       }
-    }, 5000);
+      elements.status = statusEl;
+    }
+
+    elements.status.textContent = message;
+    elements.status.className = ['lookup-status', type].filter(Boolean).join(' ');
+
+    if (type === 'success') {
+      setTimeout(() => {
+        if (elements.status && elements.status.textContent === message) {
+          elements.status.textContent = '';
+          elements.status.className = 'lookup-status';
+        }
+      }, 5000);
+    }
   }
-}
-
-
 
   function showNotification(message, type = 'info', duration = 5000) {
     const notification = document.createElement('div');
@@ -413,7 +474,7 @@ function setStatus(message, type = '') {
     renderRequests();
   };
 
-  window.quickStatusChange = (index, newStatus) => {
+window.quickStatusChange = (index, newStatus) => {
     try {
       window.SilentStacks.modules.DataManager.updateRequest(index, { status: newStatus });
       renderStats();
@@ -428,20 +489,25 @@ function setStatus(message, type = '') {
       }
       
       showNotification(`Request status updated to ${newStatus}`, 'success', 2000);
-    } catch (error) {
+    } catch (error) {  // <-- REMOVED THE COMMA HERE
       console.error('Failed to update request status:', error);
       showNotification('Failed to update request status', 'error');
     }
-  };
 
   // === Module Interface ===
   const UIController = {
     // Initialization
     initialize(elementCache) {
       console.log('🔧 Initializing UIController...');
+      
+      // Build element cache
       elements = elementCache && Object.keys(elementCache).length ? elementCache : buildDefaultElements();
+      
+      // Attach clean tab handlers
+      setupTabHandlers();
+      
       initialized = true;
-      console.log('✅ UIController initialized');
+      console.log('✅ UIController initialized with', elements.navTabs.length, 'tabs');
     },
 
     // Navigation
@@ -463,7 +529,7 @@ function setStatus(message, type = '') {
 
     // Utility
     isInitialized: () => initialized,
-    getElements: () => elements
+    getElements: () => elements,
   };
 
   // Register module

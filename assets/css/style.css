@@ -846,3 +846,18 @@
 .low-memory-mode .btn:hover {
     background-color: var(--primary-color) !important;
 }
+/* BULK OPERATIONS SCOPING FIX */
+.section:not(#import-export) .bulk-actions-bar,
+.section:not(#import-export) .bulk-operations,
+.section:not(#import-export) .bulk-update-controls,
+.section:not(#import-export) .bulk-paste-section,
+.section:not(#import-export) .bulk-update-section {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+#import-export .bulk-actions-bar.active {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+}

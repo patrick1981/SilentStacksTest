@@ -956,31 +956,7 @@ PMID, DOCLINE, Status, Priority
             }
         }, 1000); // Wait for SearchFilter to load
     </script>
-
-    <!-- Debug Tab Functionality -->
-    <script>
-        // Debug tab functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔍 DEBUG: Checking tab setup...');
-            
-            const tabs = document.querySelectorAll('.nav-tab');
-            console.log('Found tabs:', tabs.length);
-            
-            // Check if modules loaded
-            console.log('SilentStacks object:', window.SilentStacks);
-            console.log('UIController available?', window.SilentStacks?.modules?.UIController);
-            
-            // Debug handlers
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    console.log('🔵 Tab clicked:', this.dataset.section);
-                });
-            });
-            
-            console.log('✅ Debug handlers attached');
-        });
-    </script>
-
+    
     <!-- Final Application Initialize -->
     <script>
         // Final application initialization
