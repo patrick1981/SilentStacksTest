@@ -1,46 +1,56 @@
-// config/api-endpoints.js
+// modules/config/api-endpoints.js — SilentStacks v2.0
 (() => {
   'use strict';
 
-  const AppConfig = window.SilentStacks?.config || (window.SilentStacks = { config: {} }).config;
+  // === SAFE NAMESPACE INIT (never overwrite SilentStacks object) ===
+  const SS = (window.SilentStacks = window.SilentStacks || {});
+  SS.config = SS.config || {};
+  const AppConfig = SS.config;
 
+  // === API ENDPOINTS CONFIG ===
   AppConfig.api = AppConfig.api || {};
+
   AppConfig.api.endpoints = {
-    pubmed: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils', // esummary/efetch
+    pubmed: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils',
     crossref: 'https://api.crossref.org/works',
     clinicaltrials: 'https://clinicaltrials.gov/api/v2/studies'
   };
 
-  // Optional polite pool identifiers
+  // Optional: default headers for all API calls
   AppConfig.api.headers = {
+    // Example:
     // 'User-Agent': 'SilentStacks/2.0 (mailto:you@example.org)'
   };
 
-  AppConfig.api.timeoutMs = 30000;
-  AppConfig.api.maxRetries = 3;
-  AppConfig.api.jitterMs = 150;
+  // Optional: interceptors to modify requests/responses centrally
+  AppConfig.api.interceptors = AppConfig.api.interceptors || { request: [], response: [] };
 
-  AppConfig.limits = AppConfig.limits || {};
-  AppConfig.limits.externalRPS = 2; // 2 req/s default
+  // Basic request passthrough
+  AppConfig.api.interceptors.request.push(({ url, init }) => {
+    // Modify init.headers here if needed
+    return { url, init };
+  });
 
-  // Interceptors (optional): add functions to mutate requests/responses
-  AppConfig.api.interceptors = {
-    request: [
-      (ctx) => {
-        // Add polite headers if provided
-        const hdrs = window.SilentStacks?.config?.api?.headers;
-        if (hdrs) Object.entries(hdrs).forEach(([k, v]) => ctx.headers.set(k, v));
-        return ctx;
-      }
-    ],
-    response: [
-      ({ url, response }) => {
-        if (window.SilentStacks?.config?.debug) {
-          console.debug('[API response]', response.status, url);
-        }
-      }
-    ]
-  };
+  // Basic response passthrough
+  AppConfig.api.interceptors.response.push(({ url, response }) => {
+    // You could add logging or response transformation here
+    return { url, response };
+  });
 
   console.log('⚙️ api-endpoints configured');
+
+  // === REGISTER WITH LOADER ===
+  // This ensures bootstrap.js knows the module is ready
+  if (typeof SS.registerModule === 'function') {
+    SS.registerModule('ApiEndpoints', {
+      ready: true,
+      endpoints: AppConfig.api.endpoints
+    });
+  } else {
+    SS.modules = SS.modules || {};
+    SS.modules.ApiEndpoints = {
+      ready: true,
+      endpoints: AppConfig.api.endpoints
+    };
+  }
 })();
