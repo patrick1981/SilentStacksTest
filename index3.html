@@ -608,6 +608,34 @@
       trials: new RateLimiter(800)
     };
 
+    // ---------- Network helpers with CORS fallback ----------
+    function proxyURL(url){
+      // Use r.jina.ai as a read-only CORS passthrough when needed
+      // It accepts full target URL appended after the slash.
+      return 'https://r.jina.ai/' + url;
+    }
+
+    async function smartFetch(url, {as='json', headers={}} = {}){
+      try{
+        const r = await fetch(url, {headers});
+        if(r.ok){ return as==='json' ? r.json() : r.text(); }
+        // If blocked or bad status, try proxy
+        log('warn', `Direct fetch failed (${r.status}) → proxy: ${url}`);
+      }catch(e){
+        log('warn', `Direct fetch error (${e.message}) → proxy: ${url}`);
+      }
+      // Proxy fallback
+      const pu = proxyURL(url);
+      const r2 = await fetch(pu, {headers:{...headers, 'X-SS-Proxy':'1'}});
+      if(!r2.ok){ throw new Error('Proxy fetch failed '+r2.status); }
+      const body = await (as==='json' ? r2.text() : r2.text());
+      if(as==='json'){
+        try { return JSON.parse(body); } catch(e){ throw new Error('Proxy JSON parse failed'); }
+      }
+      return body;
+    }
+
+
     // ---------- API Integration (deep enrichment) ----------
     const API = {
       normalizeDOI(x){
@@ -622,9 +650,7 @@
         try{
           await RL.pubmed.wait();
           const url = `https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?format=json&ids=${encodeURIComponent(id)}`;
-          const r = await fetch(url, {headers:{'Accept':'application/json'}});
-          if(!r.ok) throw new Error('HTTP '+r.status);
-          const j = await r.json();
+          const j = await smartFetch(url, {as:'json', headers:{'Accept':'application/json'}});
           const rec = j?.records?.[0]||{};
           return {
             pmid: rec.pmid ? String(rec.pmid) : '',
@@ -640,9 +666,7 @@
         try{
           await RL.crossref.wait();
           const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
-          const r = await fetch(url, {headers:{'Accept':'application/json'}});
-          if(!r.ok) throw new Error('HTTP '+r.status);
-          const m = (await r.json())?.message || {};
+          const m = (await smartFetch(url, {as:'json', headers:{'Accept':'application/json'}}))?.message || {};
           const authors = (m.author||[]).map(a=>{
             const fam = a.family||''; const giv = a.given||'';
             const initials = giv.split(/\\s+/).map(s=>s[0]).filter(Boolean).join('');
@@ -668,9 +692,7 @@
           await RL.trials.wait();
           // v2 detail endpoint
           const url = `https://clinicaltrials.gov/api/v2/studies/${encodeURIComponent(nct)}`;
-          const r = await fetch(url, {headers:{'Accept':'application/json'}});
-          if(!r.ok) throw new Error('HTTP '+r.status);
-          const j = await r.json();
+          const j = await smartFetch(url, {as:'json', headers:{'Accept':'application/json'}});
           // Try multiple possible locations for references with PMIDs
           const refs = j?.protocolSection?.referencesModule?.references
                     || j?.protocolSection?.referenceModule?.referenceList
@@ -688,9 +710,7 @@
         try{
           await RL.pubmed.wait();
           const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=json`;
-          const res = await fetch(url, {headers:{'Accept':'application/json'}});
-          if(!res.ok) throw new Error('HTTP '+res.status);
-          const data = await res.json();
+          const data = await smartFetch(url, {as:'json', headers:{'Accept':'application/json'}});
           const uid = data.result?.uids?.[0];
           if(!uid) return null;
           const r = data.result[uid];
@@ -712,9 +732,7 @@
         try{
           await RL.pubmed.wait();
           const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=xml`;
-          const res = await fetch(url);
-          if(!res.ok) throw new Error('HTTP '+res.status);
-          const xml = await res.text();
+          const xml = await smartFetch(url, {as:'text'});
           const doc = new DOMParser().parseFromString(xml, 'application/xml');
 
           const pick = (sel)=>doc.querySelector(sel)?.textContent?.trim()||'';
