@@ -1,8 +1,8 @@
-// core/bootstrap.js — SilentStacks v2 loader with AUTO-REGISTRATION
+// core/bootstrap.js — SilentStacks v2 FINAL (auto-register + config-only tolerant)
 (() => {
   'use strict';
 
-  // ===== Namespace shim =====
+  // ===== Namespace shim (NEVER overwrite) =====
   const W = window;
   const SS = (W.SilentStacks = W.SilentStacks || {});
   SS.modules = SS.modules || {};
@@ -11,17 +11,17 @@
     SS.registerModule = function (name, api) { SS.modules[name] = api; };
   }
 
-  // ===== Tiny diagnostics in console only (no UI noise) =====
+  // ===== Minimal console diagnostics =====
   const log = (...a) => console.log('[SS]', ...a);
   const warn = (...a) => console.warn('[SS]', ...a);
   const err = (...a) => console.error('[SS]', ...a);
 
-  // ===== Known export name hints per module (so we can auto-register) =====
+  // ===== Export name hints (for auto-registration) =====
   const EXPORT_HINTS = {
     // Config
-    AppConfig:        ['AppConfig', 'appConfig'],
-    FeatureFlags:     ['FeatureFlags', 'featureFlags'],
-    ApiEndpoints:     ['ApiEndpoints', 'APIEndpoints', 'API_ENDPOINTS', 'apiEndpoints'],
+    AppConfig:        ['AppConfig', 'appConfig', ['config','AppConfig']], // nested hints supported
+    FeatureFlags:     ['FeatureFlags', 'featureFlags', ['config','featureFlags']],
+    ApiEndpoints:     ['ApiEndpoints', 'APIEndpoints', 'API_ENDPOINTS', 'apiEndpoints', ['config','api']],
 
     // Data
     StorageAdapter:   ['StorageAdapter'],
@@ -50,41 +50,38 @@
     ExportManager:    ['ExportManager'],
   };
 
-  // ===== Module definitions (order only; the files may define globals) =====
+  // Modules that are "config-only" (don’t export a runtime API)
+  const CONFIG_ONLY = new Set(['AppConfig', 'FeatureFlags', 'ApiEndpoints']);
+
+  // ===== Module definitions (your posted order) =====
   const MODULES = SS.moduleDefinitions || {
-    // Config
     AppConfig:        { path: 'modules/config/app-config.js',        dependencies: [] },
     FeatureFlags:     { path: 'modules/config/feature-flags.js',     dependencies: [] },
     ApiEndpoints:     { path: 'modules/config/api-endpoints.js',     dependencies: [] },
 
-    // Data chain
     StorageAdapter:   { path: 'modules/data/storage-adapter.js',     dependencies: [] },
     DataManager:      { path: 'modules/data/data-manager.js',        dependencies: ['StorageAdapter'] },
     RequestManager:   { path: 'modules/data/request-manager.js',     dependencies: ['DataManager'] },
     APIClient:        { path: 'modules/data/api-client.js',          dependencies: ['RequestManager','ApiEndpoints'] },
 
-    // Offline
     OfflineManager:   { path: 'modules/offline/offline-manager.js',  dependencies: [] },
 
-    // Integrations
     PubMedIntegration:{ path: 'modules/integrations/pubmed-integration.js', dependencies: ['APIClient'] },
     ClinicalTrials:   { path: 'modules/integrations/clinical-trials.js',    dependencies: ['APIClient'] },
     MeshIntegration:  { path: 'modules/integrations/mesh-integration.js',   dependencies: ['APIClient'] },
 
-    // UI
     UIController:     { path: 'modules/ui/ui-controller.js',         dependencies: ['RequestManager'] },
     Forms:            { path: 'modules/ui/forms.js',                 dependencies: ['UIController'] },
     Notifications:    { path: 'modules/ui/notifications.js',         dependencies: ['UIController'] },
     SearchFilter:     { path: 'modules/ui/search-filter.js',         dependencies: ['RequestManager'] },
     IntegratedHelp:   { path: 'modules/ui/integrated-help.js',       dependencies: ['UIController'] },
 
-    // Workflows
     ILLWorkflow:      { path: 'modules/workflows/ill-workflow.js',   dependencies: ['RequestManager','UIController'] },
     BulkUpload:       { path: 'modules/workflows/bulk-upload.js',    dependencies: ['RequestManager'] },
     ExportManager:    { path: 'modules/workflows/export-manager.js', dependencies: ['RequestManager'] },
   };
 
-  // ===== Helper: load <script> and await onload/error =====
+  // ===== Utilities =====
   function injectScript(src) {
     return new Promise((resolve, reject) => {
       const el = document.createElement('script');
@@ -95,32 +92,34 @@
     });
   }
 
-  // ===== Helper: try to auto-register a module by scanning globals =====
+  // get nested path like ['config','api'] -> SS.config.api
+  function getFromPath(root, pathArr) {
+    try {
+      return pathArr.reduce((o, k) => (o && o[k] != null ? o[k] : undefined), root);
+    } catch { return undefined; }
+  }
+
+  // Try to auto-register using hints
   function tryAutoRegister(name) {
-    if (SS.modules[name]) return true; // already registered
+    if (SS.modules[name]) return true;
     const hints = EXPORT_HINTS[name] || [name];
 
     for (const h of hints) {
-      const cand =
-        SS[h] ??
-        W[h] ??
-        (W.SilentStacks && W.SilentStacks[h]) ??
-        undefined;
-
+      let cand;
+      if (Array.isArray(h)) {
+        cand = getFromPath(SS, h) ?? getFromPath(W, ['SilentStacks', ...h]);
+      } else {
+        cand = SS[h] ?? W[h] ?? (W.SilentStacks && W.SilentStacks[h]);
+      }
       if (cand) {
         SS.registerModule(name, cand);
-        log(`📦 Auto-registered ${name} via global "${h}"`);
+        log(`📦 Auto-registered ${name} via hint:`, h);
         return true;
       }
     }
-
-    // Some modules only log “loaded” but don’t export. If the file ran,
-    // at least mark as “seen” so dependents can continue. We won’t
-    // add an API object, but we won’t block the graph either.
     return false;
   }
 
-  // ===== Topological order =====
   function topoOrder(defs) {
     const visited = new Set(), out = [];
     const visit = (n) => {
@@ -146,63 +145,72 @@
       const def = this.defs[name];
       if (!def) throw new Error(`Unknown module: ${name}`);
 
-      // Ensure dependencies have been marked loaded
+      // Dependencies
       for (const dep of def.dependencies) {
         if (!this.loaded.has(dep)) {
           throw new Error(`Dependency ${dep} not loaded for module ${name}`);
         }
       }
 
+      // Already registered?
       if (SS.modules[name]) { this.loaded.add(name); log(`✅ ${name}: pre-registered`); return; }
 
-      // Load the script
+      // Load script
       await injectScript(def.path);
 
-      // First attempt: auto-register immediately
-      if (tryAutoRegister(name)) { this.loaded.add(name); log(`✅ ${name}: loaded`); return; }
+      // Immediate attempts
+      if (SS.modules[name] || tryAutoRegister(name)) {
+        this.loaded.add(name);
+        log(`✅ ${name}: loaded`);
+        return;
+      }
 
-      // Second attempt: poll briefly in case the script registers asynchronously
+      // Config-only fallback (treat as loaded if no explicit API)
+      if (CONFIG_ONLY.has(name)) {
+        log(`ℹ️ ${name} is config-only; marking as loaded`);
+        this.loaded.add(name);
+        return;
+      }
+
+      // Give it a short window to self-register async
       const deadline = performance.now() + 1500;
       while (performance.now() < deadline) {
-        if (SS.modules[name]) { this.loaded.add(name); log(`✅ ${name}: registered late`); return; }
-        if (tryAutoRegister(name)) { this.loaded.add(name); log(`✅ ${name}: auto-registered late`); return; }
+        if (SS.modules[name] || tryAutoRegister(name)) {
+          this.loaded.add(name);
+          log(`✅ ${name}: registered late`);
+          return;
+        }
         await new Promise(r => setTimeout(r, 50));
       }
 
-      // Give up but don’t block the rest—record failure and continue
+      // Fail (but continue list)
       this.failed.add(name);
-      warn(`❌ ${name}: did not register (continuing)`);
+      warn(`❌ ${name}: did not register`);
     }
 
     async loadAll() {
       const order = topoOrder(this.defs);
       log('📋 Load order:', order.join(' → '));
+
       for (const n of order) {
-        try {
-          await this.loadOne(n);
-        } catch (e) {
-          this.failed.add(n);
-          err(`❌ ${n}:`, e.message);
-        }
+        try { await this.loadOne(n); }
+        catch (e) { this.failed.add(n); err(`❌ ${n}:`, e.message); }
       }
+
       const ms = Math.round(performance.now() - this.t0);
       log(`📊 Modules: ${this.loaded.size}/${order.length} loaded in ${ms}ms; failed: ${[...this.failed].join(', ') || 'none'}`);
 
       // Kick UI if present
-      try {
-        SS.modules.UIController?.initialize?.();
-      } catch (e) {
-        err('UI initialize failed:', e.message);
-      }
+      try { SS.modules.UIController?.initialize?.(); }
+      catch (e) { err('UI initialize failed:', e.message); }
     }
   }
 
-  // ===== Start after DOM is ready (Firefox-safe) =====
+  // ===== Start (Firefox-safe) =====
   const start = () => new Loader(MODULES).loadAll();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start, { once: true });
   } else {
-    if ('requestIdleCallback' in W) W.requestIdleCallback(start, { timeout: 1 });
-    else setTimeout(start, 0);
+    'requestIdleCallback' in W ? W.requestIdleCallback(start, { timeout: 1 }) : setTimeout(start, 0);
   }
 })();
