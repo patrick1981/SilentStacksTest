@@ -77,7 +77,7 @@
       };
     }
 
-    // Very small UI helper used by “Show Diagnostics” button
+    // Very small UI helper used by "Show Diagnostics" button
     showDiagnostics() {
       const recent = this.getRecent(20)
         .map(i => `${i.ts} — [${i.type}] ${i.module}: ${i.message}${i.error ? `\n  ↳ ${i.error}` : ''}`)
