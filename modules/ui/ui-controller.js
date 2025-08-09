@@ -377,28 +377,33 @@
         });
         selWrap.appendChild(cb);
 
-        // citation
+        // NLM Citation Format
         const titleEl = this.dom.createElement('div', { class: 'request-title', role: 'heading', 'aria-level': '3' });
-        const citation = (this.formatters?.citationNLM) ? this.formatters.citationNLM(rec) : this.buildNLMString(rec);
+        const citation = this.buildNLMCitation(rec);
         this.dom.safeSetText(titleEl, citation);
 
-        // meta
+        // metadata with clinical trials indicator
         const metaEl = this.dom.createElement('div', { class: 'request-meta' });
         const pubType = rec.publicationType || rec.classification || '';
         const pmid = rec.pmid ? `PMID: ${rec.pmid}` : 'PMID: —';
         const doi = rec.doi ? `DOI: ${rec.doi}` : 'DOI: —';
         const status = `Status: ${rec.status || 'pending'}`;
-        const info = [pmid, doi, status, pubType ? `Type: ${pubType}` : ''].filter(Boolean).join('  •  ');
+        const clinicalTrialsCount = rec.clinicalTrials?.length || 0;
+        const trialsInfo = clinicalTrialsCount > 0 ? `🧪 ${clinicalTrialsCount} Clinical Trial(s)` : '';
+        const info = [pmid, doi, status, pubType ? `Type: ${pubType}` : '', trialsInfo].filter(Boolean).join('  •  ');
         this.dom.safeSetText(metaEl, info);
 
-        // tags (MeSH / tags)
+        // MeSH tags and regular tags
         const meshWrap = this.dom.createElement('div', { class: 'request-tags' });
-        const mesh = Array.isArray(rec.mesh) ? rec.mesh : this._parseMeshString(rec.tags);
+        const mesh = Array.isArray(rec.meshHeadings) ? rec.meshHeadings : this._parseMeshString(rec.tags);
         mesh.forEach(m => {
           const isObj = m && typeof m === 'object';
           const label = isObj ? m.term : String(m);
-          const tag = this.dom.createElement('span', { class: `tag ${this.tagColorClass(label)} ${isObj && m.major ? 'tag--major' : ''}`, title: label });
-          this.dom.safeSetText(tag, isObj && m.major ? `${label} *` : label);
+          const tag = this.dom.createElement('span', { 
+            class: `tag ${this.tagColorClass(label)} ${isObj && m.isMajor ? 'tag--major' : ''}`, 
+            title: label 
+          });
+          this.dom.safeSetText(tag, isObj && m.isMajor ? `${label} ⭐` : label);
           tag.addEventListener('click', () => {
             const sf = window.SilentStacks?.modules?.SearchFilter;
             if (!sf) return;
@@ -410,7 +415,7 @@
           meshWrap.appendChild(tag);
         });
 
-        // trials
+        // Clinical trials display
         const trialsWrap = this.dom.createElement('div', { class: 'trials-wrap' });
         (rec.clinicalTrials || []).slice(0, 3).forEach(t => {
           const a = this.dom.createElement('a', { class: 'trial-card', href: this._trialUrl(t), target: '_blank', rel: 'noopener noreferrer' });
@@ -438,22 +443,69 @@
       this.lastActivity = new Date().toISOString();
     }
 
-    _parseMeshString(s) {
-      const arr = String(s || '').split(',').map(x => x.trim()).filter(Boolean);
-      return arr.map(x => ({ term: x, major: false }));
+    // ===== NLM Citation Builder =====
+    buildNLMCitation(rec = {}) {
+      // NLM Citation Format: Authors. Title. Journal. Year;Volume(Issue):Pages. PMID: xxxxx.
+      const parts = [];
+      
+      // Authors (limit to 6, add et al if more)
+      if (rec.authors) {
+        const authorList = rec.authors.split(',').map(a => a.trim()).slice(0, 6);
+        const authorsText = authorList.join(', ');
+        const etAl = rec.authors.split(',').length > 6 ? ', et al' : '';
+        parts.push(`${authorsText}${etAl}.`);
+      }
+      
+      // Title
+      if (rec.title) {
+        const title = rec.title.endsWith('.') ? rec.title : `${rec.title}.`;
+        parts.push(title);
+      }
+      
+      // Journal with volume/issue/pages
+      if (rec.journal) {
+        let journalPart = rec.journal;
+        if (rec.year) journalPart += `. ${rec.year}`;
+        if (rec.volume) {
+          journalPart += `;${rec.volume}`;
+          if (rec.issue) journalPart += `(${rec.issue})`;
+          if (rec.pages) journalPart += `:${rec.pages}`;
+        }
+        journalPart += '.';
+        parts.push(journalPart);
+      }
+      
+      // PMID
+      if (rec.pmid) {
+        parts.push(`PMID: ${rec.pmid}.`);
+      }
+      
+      // DOI
+      if (rec.doi) {
+        parts.push(`doi: ${rec.doi}.`);
+      }
+      
+      return parts.join(' ').replace(/\s+/g, ' ').trim();
     }
+
+    _parseMeshString(s) {
+      if (!s) return [];
+      const arr = String(s).split(',').map(x => x.trim()).filter(Boolean);
+      return arr.map(x => ({ term: x, isMajor: false }));
+    }
+    
     _trialUrl(t) {
-      const id = t?.nctId || t?.protocolSection?.identificationModule?.nctId || '';
+      const id = t?.nctId || '';
       return id ? `https://clinicaltrials.gov/study/${id}` : '#';
     }
+    
     _trialSummary(t) {
-      const id = t?.nctId || t?.protocolSection?.identificationModule?.nctId || '';
-      const title = t?.protocolSection?.identificationModule?.briefTitle || t?.protocolSection?.identificationModule?.officialTitle || 'Clinical trial';
-      const status = t?.protocolSection?.statusModule?.overallStatus || '—';
-      const phases = t?.protocolSection?.designModule?.phases || [];
-      const phase = Array.isArray(phases) ? phases.join(', ') : phases || '—';
-      const enroll = t?.protocolSection?.designModule?.enrollmentInfo?.count || '—';
-      return `${id || ''} — ${status}, ${phase}, N=${enroll} — ${title}`;
+      const id = t?.nctId || '';
+      const title = t?.title || 'Clinical trial';
+      const status = t?.status || '—';
+      const phase = t?.phase || '—';
+      const enrollment = t?.enrollment || '—';
+      return `${id} — ${status}, ${phase}, N=${enrollment} — ${title}`;
     }
 
     // ===== Helpers =====
