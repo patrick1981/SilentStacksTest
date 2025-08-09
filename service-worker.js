@@ -1,41 +1,80 @@
-// service-worker.js — SilentStacks v2.0 (offline-first, runtime caching, background sync)
+// service-worker.js — SilentStacks v2.0 offline-first
+const SW_VERSION = '2.0.3';
+const CACHE_APP = `silentstacks-app-${SW_VERSION}`;
+const CACHE_RUNTIME = `silentstacks-runtime-${SW_VERSION}`;
 
-const VERSION = '2.1.0';
-const APP_CACHE = `ss-app-${VERSION}`;
-const PAGE_CACHE = `ss-pages-${VERSION}`;
-const JS_CACHE = `ss-js-${VERSION}`;
-const CSS_CACHE = `ss-css-${VERSION}`;
-const IMG_CACHE = `ss-img-${VERSION}`;
-const API_CACHE = `ss-api-${VERSION}`;
-const RUNTIME_CACHES = [APP_CACHE, PAGE_CACHE, JS_CACHE, CSS_CACHE, IMG_CACHE, API_CACHE];
+const APP_SHELL = [
+  '/',
+  '/index.html',
 
-// ---- App Shell to Precache (keep small; runtime caching will grab the rest) ----
-const PRECACHE_URLS = [
-  '/', '/index.html',
-  '/assets/css/style.css',
-
-  // Core + utils + config
+  // Core
   '/core/bootstrap.js',
-  '/utils/dom-utils.js',
-  '/utils/validators.js',
-  '/utils/formatters.js',
-  '/utils/debug-utils.js',
-  '/config/app-config.js',
-  '/config/api-endpoints.js',
-  '/config/feature-flags.js',
+  '/core/state-manager.js',
+  '/core/event-bus.js',
+  '/core/diagnostics.js',
+  '/core/module-loder.js',
 
-  // Data modules
+  // CSS (include what exists in your repo)
+  '/assets/css/style.css',
+  '/assets/css/enhanced-styles.css',
+  '/assets/css/base/design-tokens.css',
+  '/assets/css/base/reset.css',
+  '/assets/css/base/typography.css',
+  '/assets/css/components/buttons.css',
+  '/assets/css/components/cards.css',
+  '/assets/css/components/enhanced-components.css',
+  '/assets/css/components/forms.css',
+  '/assets/css/components/progress.css',
+  '/assets/css/components/tables.css',
+  '/assets/css/layout/grid.css',
+  '/assets/css/layout/navigation.css',
+  '/assets/css/layout/responsive.css',
+  '/assets/css/themes/light-theme.css',
+  '/assets/css/themes/dark-theme.css',
+  '/assets/css/themes/high-contrast-theme.css',
+  '/assets/css/utilities/accessibility.css',
+  '/assets/css/utilities/print.css',
+
+  // Fonts
+  '/assets/fonts/reddit-sans/reddit-sans.css',
+  '/assets/fonts/reddit-sans/RedditSans-Regular.woff2',
+  '/assets/fonts/reddit-sans/RedditSans-Medium.woff2',
+  '/assets/fonts/reddit-sans/RedditSans-SemiBold.woff2',
+  '/assets/fonts/reddit-sans/RedditSans-Bold.woff2',
+
+  // Vendor libs (local)
+  '/assets/js/fuse.min.js',
+  '/assets/js/papaparse.min.js',
+
+  // Utils & Config (under modules/)
+  '/modules/utils/dom-utils.js',
+  '/modules/utils/validators.js',
+  '/modules/utils/formatters.js',
+  '/modules/utils/debug-utils.js',
+  '/modules/config/app-config.js',
+  '/modules/config/api-endpoints.js',
+  '/modules/config/feature-flags.js',
+
+  // Security & Offline helpers
+  '/modules/security/input-sanitizer.js',
+  '/modules/security/security-patches.js',
+  '/modules/offline/offline-manager.js',
+
+  // Data
   '/modules/data/request-manager.js',
   '/modules/data/api-client.js',
   '/modules/data/storage-adapter.js',
+  '/modules/data/local-api-cache.js',
+  '/modules/data/data-manager.js',
 
-  // UI modules
+  // UI
   '/modules/ui/ui-controller.js',
   '/modules/ui/forms.js',
   '/modules/ui/search-filter.js',
   '/modules/ui/notifications.js',
+  '/modules/ui/integrated-help.js',
 
-  // Workflow modules
+  // Workflows
   '/modules/workflows/ill-workflow.js',
   '/modules/workflows/bulk-upload.js',
   '/modules/workflows/export-manager.js',
@@ -45,300 +84,120 @@ const PRECACHE_URLS = [
   '/modules/integrations/clinical-trials.js',
   '/modules/integrations/mesh-integration.js',
 
-  // Icons
+  // Icons (if present)
   '/icon-192.png',
   '/icon-512.png'
 ];
 
-// External API host allowlist (must match CSP/connect-src)
-const API_HOSTS = new Set([
-  'eutils.ncbi.nlm.nih.gov',
-  'api.crossref.org',
-  'clinicaltrials.gov'
-]);
-
-// ---- Install ----
 self.addEventListener('install', (event) => {
-  // Precache app shell
-  event.waitUntil(
-    caches.open(APP_CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
-      .catch((err) => console.error('[SW] Precache failed:', err))
-  );
-  self.skipWaiting();
-});
-
-// ---- Activate ----
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    (async () => {
-      // Delete old caches
-      const keys = await caches.keys();
-      await Promise.all(
-        keys
-          .filter((k) => !RUNTIME_CACHES.includes(k))
-          .map((k) => caches.delete(k))
-      );
-
-      // Claim clients so the new SW controls pages immediately
-      await self.clients.claim();
-
-      // Notify pages we’re active
-      const allClients = await self.clients.matchAll({ includeUncontrolled: true });
-      allClients.forEach(c => c.postMessage({ type: 'SW_READY', version: VERSION }));
-    })()
-  );
-});
-
-// ---- Fetch Strategy Router ----
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Don’t touch chrome-extension or non-HTTP(S)
-  if (!/^https?:/.test(url.protocol)) return;
-
-  // POST/PUT/DELETE → try network; on failure, queue for background sync
-  if (request.method !== 'GET') {
-    event.respondWith(networkOrQueue(request));
-    return;
-  }
-
-  // HTML navigations → network-first (fresh app shell), fallback to cache
-  if (request.mode === 'navigate' || (request.headers.get('accept') || '').includes('text/html')) {
-    event.respondWith(networkFirst(request, PAGE_CACHE));
-    return;
-  }
-
-  // External API GETs → network-first with short-lived cache fallback
-  if (API_HOSTS.has(url.host)) {
-    event.respondWith(apiNetworkFirst(request));
-    return;
-  }
-
-  // JS/CSS → stale-while-revalidate (fast offline boot + background refresh)
-  if (url.pathname.endsWith('.js')) {
-    event.respondWith(staleWhileRevalidate(request, JS_CACHE, 300));
-    return;
-  }
-  if (url.pathname.endsWith('.css')) {
-    event.respondWith(staleWhileRevalidate(request, CSS_CACHE, 150));
-    return;
-  }
-
-  // Images & icons → cache-first with gentle revalidation
-  if (/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(url.pathname)) {
-    event.respondWith(cacheFirst(request, IMG_CACHE, 200));
-    return;
-  }
-
-  // Fallback for all other GETs → try cache, then network, then cache
-  event.respondWith(staleWhileRevalidate(request, APP_CACHE, 200));
-});
-
-// ---- Strategies ----
-
-async function networkFirst(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  try {
-    const response = await fetch(request);
-    if (response && response.status === 200) {
-      cache.put(request, response.clone());
-      notifyUpdated(request.url);
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_APP);
+    try {
+      await cache.addAll(APP_SHELL);
+      await self.skipWaiting();
+      console.log('[SW] App shell cached', SW_VERSION);
+    } catch (e) {
+      console.warn('[SW] Install failed:', e);
     }
-    return response;
-  } catch {
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    // as a last resort, try app cache
-    const fallback = await caches.match('/index.html');
-    return fallback || new Response('Offline', { status: 503, statusText: 'Offline' });
-  }
-}
+  })());
+});
 
-async function apiNetworkFirst(request) {
-  const cache = await caches.open(API_CACHE);
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => {
+      if (k !== CACHE_APP && k !== CACHE_RUNTIME) return caches.delete(k);
+    }));
+    await self.clients.claim();
+    console.log('[SW] Activated', SW_VERSION);
+  })());
+});
+
+// Fetch strategy:
+// - JS/CSS: Network-first (so updates land quickly), fallback to cache
+// - HTML/Images/Fonts: Cache-first (fast), background update
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
+
+  if (req.method !== 'GET') return;
+  if (url.origin !== location.origin) return; // same-origin only
+
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    event.respondWith(networkFirst(req));
+  } else if (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.endsWith('.png') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.woff2')) {
+    event.respondWith(cacheFirst(req));
+  } else {
+    event.respondWith(staleWhileRevalidate(req));
+  }
+});
+
+async function networkFirst(request) {
   try {
     const res = await fetch(request);
-    // cache only 200 OK and CORS/opaque acceptable
-    if (res && (res.status === 200 || res.type === 'opaqueredirect' || res.type === 'opaque')) {
-      cache.put(request, res.clone());
-      trimCache(API_CACHE, 300);
-    }
+    const cache = await caches.open(CACHE_RUNTIME);
+    cache.put(request, res.clone());
     return res;
-  } catch {
-    // Network failed → fallback to cache (best-effort)
-    const cached = await cache.match(request);
+  } catch (err) {
+    const cached = await caches.match(request);
     if (cached) return cached;
-    return new Response(JSON.stringify({ error: 'offline', cached: false }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 503
-    });
+    throw err;
   }
 }
 
-async function staleWhileRevalidate(request, cacheName, maxEntries = 500) {
-  const cache = await caches.open(cacheName);
-  const cachedPromise = cache.match(request);
-  const fetchPromise = fetch(request)
-    .then((response) => {
-      if (response && response.status === 200) {
-        cache.put(request, response.clone());
-        trimCache(cacheName, maxEntries);
-        notifyUpdated(request.url);
-      }
-      return response;
-    })
-    .catch(() => null);
-
-  const cached = await cachedPromise;
-  if (cached) return cached;
-
-  const fresh = await fetchPromise;
-  if (fresh) return fresh;
-
-  // Nothing → generic offline response
-  return new Response('Offline', { status: 503, statusText: 'Offline' });
-}
-
-async function cacheFirst(request, cacheName, maxEntries = 500) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
   if (cached) {
-    // Revalidate in background
-    fetch(request).then((response) => {
-      if (response && response.status === 200) {
-        cache.put(request, response.clone());
-        trimCache(cacheName, maxEntries);
-        notifyUpdated(request.url);
+    // try to update in background
+    fetch(request).then(async (res) => {
+      if (res && res.ok) {
+        const cache = await caches.open(CACHE_RUNTIME);
+        cache.put(request, res.clone());
       }
-    }).catch(() => {});
+    }).catch(()=>{});
     return cached;
   }
-  try {
-    const res = await fetch(request);
-    if (res && res.status === 200) {
-      cache.put(request, res.clone());
-      trimCache(cacheName, maxEntries);
-    }
-    return res;
-  } catch {
-    return new Response('Offline', { status: 503, statusText: 'Offline' });
+  const res = await fetch(request);
+  if (res && res.ok) {
+    const cache = await caches.open(CACHE_RUNTIME);
+    cache.put(request, res.clone());
   }
+  return res;
 }
 
-// ---- Background Sync queue for non-GET requests ----
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_RUNTIME);
+  const cached = await cache.match(request);
+  const network = fetch(request).then((res) => {
+    if (res && res.ok) cache.put(request, res.clone());
+    return res;
+  }).catch(() => cached);
+  return cached || network;
+}
 
-const QUEUE_DB = 'ss-sync-db';
-const QUEUE_STORE = 'requests';
-
+// Background sync stub: ping clients to flush API queues
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-requests') {
-    event.waitUntil(replayQueue());
+  if (event.tag === 'silentstacks-sync') {
+    event.waitUntil(notifyClientsToFlush());
   }
 });
-
-async function networkOrQueue(request) {
-  try {
-    // Try network first
-    return await fetch(request);
-  } catch (err) {
-    // If offline/failed, queue and ack
-    await queueRequest(request);
-    try { await self.registration.sync.register('sync-requests'); } catch {}
-    return new Response(
-      JSON.stringify({ queued: true, message: 'Request stored and will be synced when online.' }),
-      { headers: { 'Content-Type': 'application/json' }, status: 202 }
-    );
-  }
+async function notifyClientsToFlush() {
+  const all = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+  all.forEach(c => c.postMessage({ type: 'SS_SYNC_REQUESTS' }));
+  console.log('[SW] Notified clients to flush offline API queue');
 }
 
-async function queueRequest(request) {
-  const body = request.clone().arrayBuffer ? await request.clone().arrayBuffer() : null;
-  const entry = {
-    url: request.url,
-    method: request.method,
-    headers: [...request.headers.entries()],
-    body: body ? Array.from(new Uint8Array(body)) : null,
-    time: Date.now()
-  };
-  const db = await openQueueDB();
-  const tx = db.transaction(QUEUE_STORE, 'readwrite');
-  await tx.objectStore(QUEUE_STORE).add(entry);
-  await tx.done;
-}
-
-async function replayQueue() {
-  const db = await openQueueDB();
-  const tx = db.transaction(QUEUE_STORE, 'readwrite');
-  const store = tx.objectStore(QUEUE_STORE);
-  const all = await store.getAll();
-  for (const item of all) {
-    try {
-      const resp = await fetch(item.url, {
-        method: item.method,
-        headers: new Headers(item.headers),
-        body: item.body ? new Uint8Array(item.body) : undefined
-      });
-      if (resp && resp.ok) {
-        await store.delete(item.time);
-      }
-    } catch {
-      // keep in queue
-    }
-  }
-  await tx.done;
-}
-
-// Minimal IndexedDB helpers (tiny, no external deps)
-async function openQueueDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(QUEUE_DB, 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(QUEUE_STORE)) {
-        db.createObjectStore(QUEUE_STORE, { keyPath: 'time' });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-// ---- Cache maintenance & client notifications ----
-
-async function trimCache(cacheName, maxEntries) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-  if (keys.length <= maxEntries) return;
-  const excess = keys.length - maxEntries;
-  for (let i = 0; i < excess; i++) {
-    await cache.delete(keys[i]);
-  }
-}
-
-function notifyUpdated(url) {
-  self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-    clients.forEach((c) => c.postMessage({ type: 'ASSET_UPDATED', url }));
-  });
-}
-
-// ---- Messages from clients ----
+// Manual messages (skip waiting / clear caches)
 self.addEventListener('message', (event) => {
   const data = event.data || {};
-  if (data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  } else if (data.type === 'CLEAR_CACHE') {
-    event.waitUntil(
-      (async () => {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-        const clients = await self.clients.matchAll({ includeUncontrolled: true });
-        clients.forEach(c => c.postMessage({ type: 'CACHE_CLEARED' }));
-      })()
-    );
-  } else if (data.type === 'GET_VERSION') {
-    event.source?.postMessage?.({ type: 'SW_VERSION', version: VERSION });
+  if (data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (data.type === 'CLEAR_CACHE') {
+    event.waitUntil((async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      event.source?.postMessage?.({ type: 'CACHE_CLEARED' });
+    })());
   }
 });
 
-console.log(`[ServiceWorker] SilentStacks ${VERSION} ready`);
+console.log(`[SW] Ready ${SW_VERSION}`);
