@@ -46,7 +46,7 @@
         {
           id: 'trials',
           title: 'Clinical Trials',
-          body: 'When a PMID is added, the app tries to find NCT IDs in the abstract, then fetches trial details. You'll see trial cards on the request.'
+          body: 'When a PMID is added, the app tries to find NCT IDs in the abstract, then fetches trial details. You\'ll see trial cards on the request.'
         },
         {
           id: 'export',
@@ -56,7 +56,7 @@
         {
           id: 'offline',
           title: 'Working Offline',
-          body: 'Everything works offline. Requests save locally. API calls are queued and sync when online. You don't have to do anything.'
+          body: 'Everything works offline. Requests save locally. API calls are queued and sync when online. You don\'t have to do anything.'
         }
       ];
     }
