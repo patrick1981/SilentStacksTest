@@ -1,5 +1,5 @@
 // service-worker.js — SilentStacks v2.0.4 (FINAL)
-const SW_VERSION = '2.0.4';
+const SW_VERSION = '2.0.5';
 const CACHE_APP = `silentstacks-app-${SW_VERSION}`;
 const CACHE_RUNTIME = `silentstacks-runtime-${SW_VERSION}`;
 
