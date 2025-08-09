@@ -1,4 +1,4 @@
-// modules/data/storage-adapter.js
+// modules/data/storage-adapter.js - FIXED
 (() => {
   'use strict';
 
@@ -9,7 +9,7 @@
    * - Backups, integrity checks, quota hints, batch ops
    */
   class StorageAdapter {
-    static dependencies = ['AppConfig'];
+    static dependencies = [];
     static required = true;
 
     constructor() {
@@ -31,24 +31,25 @@
       this._keyMetaKey = 'ss2:crypto:key.v1'; // base64 key in sessionStorage (not persistent)
       this._nonceLen = 12; // AES-GCM nonce length
 
-      // Config
-      const cfg = window.SilentStacks?.config ?? {};
-      this.ns = cfg?.storage?.namespace || 'ss2';
-      this.maxBackups = cfg?.storage?.maxBackupEntries ?? 10;
+      // Config - FIXED: Safe config access
+      this.ns = 'ss2';
+      this.maxBackups = 10;
     }
 
     async initialize() {
       try {
-        this.stateManager = window.SilentStacks?.core?.stateManager ?? null;
-        this.eventBus = window.SilentStacks?.core?.eventBus ?? null;
+        // FIXED: Safe access to SilentStacks namespace
+        const SS = window.SilentStacks || {};
+        this.stateManager = SS.core?.stateManager || null;
+        this.eventBus = SS.core?.eventBus || null;
+
+        // Get config safely
+        const cfg = SS.config?.storage || {};
+        this.ns = cfg.namespace || 'ss2';
+        this.maxBackups = cfg.maxBackupEntries || 10;
 
         await this._ensureKey();
         await this._open();
-
-        // Expose quick helpers for other modules (optional)
-        window.SilentStacks = window.SilentStacks || {};
-        window.SilentStacks.modules = window.SilentStacks.modules || {};
-        window.SilentStacks.modules.StorageAdapter = this;
 
         this.initialized = true;
         this.lastActivity = new Date().toISOString();
@@ -64,138 +65,200 @@
 
     // ===== Required API =====
     async store(key, data) {
-      const payload = await this._encrypt(JSON.stringify(data ?? null));
-      await this._tx(this.STORE, 'readwrite', (store) => store.put(payload, this._k(key)));
-      this.lastActivity = new Date().toISOString();
-      return true;
+      try {
+        const payload = await this._encrypt(JSON.stringify(data ?? null));
+        await this._tx(this.STORE, 'readwrite', async (store) => {
+          await this._request(store.put(payload, `${this.ns}:${key}`));
+        });
+        this.lastActivity = new Date().toISOString();
+      } catch (e) {
+        this.recordError('Store failed', e);
+        throw e;
+      }
     }
 
     async retrieve(key) {
-      const payload = await this._tx(this.STORE, 'readonly', (store) => store.get(this._k(key)));
-      if (!payload) return null;
       try {
-        const json = await this._decrypt(payload);
-        return JSON.parse(json);
+        let result = null;
+        await this._tx(this.STORE, 'readonly', async (store) => {
+          const data = await this._request(store.get(`${this.ns}:${key}`));
+          if (data) {
+            const decrypted = await this._decrypt(data);
+            result = JSON.parse(decrypted);
+          }
+        });
+        this.lastActivity = new Date().toISOString();
+        return result;
       } catch (e) {
-        this.recordError('Decrypt/parse failed', e);
+        this.recordError('Retrieve failed', e);
         return null;
       }
     }
 
     async remove(key) {
-      await this._tx(this.STORE, 'readwrite', (store) => store.delete(this._k(key)));
-      this.lastActivity = new Date().toISOString();
-      return true;
-    }
-
-    async backup() {
-      const snapshot = {};
-      await this._tx(this.STORE, 'readonly', async (store) => {
-        const req = store.getAllKeys();
-        const keys = await this._request(req);
-        for (const k of keys) {
-          const v = await this._request(store.get(k));
-          try {
-            const json = await this._decrypt(v);
-            snapshot[k] = JSON.parse(json);
-          } catch {}
-        }
-      });
-
-      const entry = {
-        id: `${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        data: snapshot
-      };
-
-      await this._tx(this.BACKUPS, 'readwrite', (store) => store.put(entry, entry.id));
-      // Trim old backups
-      await this._trimBackups();
-      return entry.id;
-    }
-
-    async restore(backupIdOrData) {
-      let data = backupIdOrData;
-      if (typeof data === 'string') {
-        data = await this._tx(this.BACKUPS, 'readonly', (store) => store.get(data));
-        data = data?.data;
-      } else {
-        data = data?.data ?? data;
-      }
-      if (!data || typeof data !== 'object') throw new Error('Invalid backup');
-
-      // Clear main store then write entries
-      await this._tx(this.STORE, 'readwrite', async (store) => {
-        // clear
-        const keys = await this._request(store.getAllKeys());
-        for (const k of keys) await this._request(store.delete(k));
-        // write
-        for (const [k, v] of Object.entries(data)) {
-          const enc = await this._encrypt(JSON.stringify(v));
-          await this._request(store.put(enc, k));
-        }
-      });
-      this.lastActivity = new Date().toISOString();
-      return true;
-    }
-
-    async checkIntegrity() {
-      // Try decrypting a small sample of entries
       try {
-        let ok = true;
-        await this._tx(this.STORE, 'readonly', async (store) => {
+        await this._tx(this.STORE, 'readwrite', async (store) => {
+          await this._request(store.delete(`${this.ns}:${key}`));
+        });
+        this.lastActivity = new Date().toISOString();
+      } catch (e) {
+        this.recordError('Remove failed', e);
+        throw e;
+      }
+    }
+
+    async clear() {
+      try {
+        await this._tx(this.STORE, 'readwrite', async (store) => {
           const keys = await this._request(store.getAllKeys());
-          const sample = keys.slice(0, Math.min(keys.length, 5));
-          for (const k of sample) {
-            const v = await this._request(store.get(k));
-            await this._decrypt(v); // throw if bad
+          const nsKeys = keys.filter(k => k.startsWith(`${this.ns}:`));
+          for (const k of nsKeys) {
+            await this._request(store.delete(k));
           }
         });
-        return ok;
+        this.lastActivity = new Date().toISOString();
       } catch (e) {
-        this.recordError('Integrity check failed', e);
-        return false;
+        this.recordError('Clear failed', e);
+        throw e;
       }
     }
 
-    async getStorageStats() {
-      const stats = { keys: 0, backups: 0, approxBytes: 0 };
-      await this._tx(this.STORE, 'readonly', async (store) => {
-        const keys = await this._request(store.getAllKeys());
-        stats.keys = keys.length;
-        for (const k of keys) {
-          const v = await this._request(store.get(k));
-          stats.approxBytes += (v?.cipher?.length || 0) + (v?.nonce?.length || 0);
-        }
-      });
-      await this._tx(this.BACKUPS, 'readonly', async (store) => {
-        const keys = await this._request(store.getAllKeys());
-        stats.backups = keys.length;
-      });
-      return stats;
+    async keys() {
+      try {
+        let result = [];
+        await this._tx(this.STORE, 'readonly', async (store) => {
+          const keys = await this._request(store.getAllKeys());
+          result = keys
+            .filter(k => k.startsWith(`${this.ns}:`))
+            .map(k => k.slice(this.ns.length + 1));
+        });
+        return result;
+      } catch (e) {
+        this.recordError('Keys failed', e);
+        return [];
+      }
     }
 
-    // ===== Internals: DB/Crypto =====
-    async _open() {
-      this.db = await new Promise((resolve, reject) => {
-        const req = indexedDB.open(this.DB_NAME, this.DB_VERSION);
-        req.onupgradeneeded = () => {
-          const db = req.result;
-          if (!db.objectStoreNames.contains(this.STORE)) db.createObjectStore(this.STORE);
-          if (!db.objectStoreNames.contains(this.BACKUPS)) db.createObjectStore(this.BACKUPS);
+    // ===== Backup API =====
+    async createBackup(label = null) {
+      try {
+        const timestamp = new Date().toISOString();
+        const backupKey = `backup_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        
+        let allData = {};
+        await this._tx(this.STORE, 'readonly', async (store) => {
+          const keys = await this._request(store.getAllKeys());
+          const nsKeys = keys.filter(k => k.startsWith(`${this.ns}:`));
+          
+          for (const k of nsKeys) {
+            const rawData = await this._request(store.get(k));
+            if (rawData) {
+              try {
+                const decrypted = await this._decrypt(rawData);
+                allData[k.slice(this.ns.length + 1)] = JSON.parse(decrypted);
+              } catch (e) {
+                this.recordError(`Backup decrypt failed for ${k}`, e);
+              }
+            }
+          }
+        });
+
+        const backup = {
+          label: label || `Backup ${timestamp}`,
+          timestamp,
+          data: allData,
+          version: this.DB_VERSION
         };
-        req.onsuccess = () => resolve(req.result);
+
+        await this._tx(this.BACKUPS, 'readwrite', async (store) => {
+          await this._request(store.put(backup, backupKey));
+        });
+
+        await this._trimBackups();
+        return backupKey;
+      } catch (e) {
+        this.recordError('Create backup failed', e);
+        throw e;
+      }
+    }
+
+    async listBackups() {
+      try {
+        let backups = [];
+        await this._tx(this.BACKUPS, 'readonly', async (store) => {
+          const keys = await this._request(store.getAllKeys());
+          for (const k of keys) {
+            const backup = await this._request(store.get(k));
+            if (backup) {
+              backups.push({
+                key: k,
+                label: backup.label,
+                timestamp: backup.timestamp,
+                size: Object.keys(backup.data || {}).length
+              });
+            }
+          }
+        });
+        return backups.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      } catch (e) {
+        this.recordError('List backups failed', e);
+        return [];
+      }
+    }
+
+    async restoreBackup(backupKey) {
+      try {
+        let backup = null;
+        await this._tx(this.BACKUPS, 'readonly', async (store) => {
+          backup = await this._request(store.get(backupKey));
+        });
+
+        if (!backup) throw new Error('Backup not found');
+
+        // Clear current data
+        await this.clear();
+
+        // Restore data
+        for (const [key, value] of Object.entries(backup.data || {})) {
+          await this.store(key, value);
+        }
+
+        return { restored: Object.keys(backup.data || {}).length };
+      } catch (e) {
+        this.recordError('Restore backup failed', e);
+        throw e;
+      }
+    }
+
+    // ===== IndexedDB internals =====
+    async _open() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+        
         req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          this._db = req.result;
+          resolve();
+        };
+        
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(this.STORE)) {
+            db.createObjectStore(this.STORE);
+          }
+          if (!db.objectStoreNames.contains(this.BACKUPS)) {
+            db.createObjectStore(this.BACKUPS);
+          }
+        };
       });
     }
 
-    _tx(storeName, mode, fn) {
+    async _tx(storeName, mode, fn) {
+      const tx = this._db.transaction([storeName], mode);
+      const store = tx.objectStore(storeName);
+      await fn(store);
       return new Promise((resolve, reject) => {
-        const tx = this.db.transaction(storeName, mode);
-        const store = tx.objectStore(storeName);
-        Promise.resolve(fn(store))
-          .then((res) => tx.oncomplete = () => resolve(res))
-          .catch((e) => reject(e));
+        tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       });
     }
@@ -207,8 +270,7 @@
       });
     }
 
-    _k(key) { return `${this.ns}:${key}`; }
-
+    // ===== Crypto internals =====
     async _ensureKey() {
       try {
         let b64 = sessionStorage.getItem(this._keyMetaKey);
@@ -247,23 +309,32 @@
         const excess = keys.length - this.maxBackups;
         if (excess > 0) {
           const toRemove = keys.sort().slice(0, excess);
-          for (const k of toRemove) await this._request(store.delete(k));
+          for (const k of toRemove) {
+            await this._request(store.delete(k));
+          }
         }
       });
     }
 
     _bufToB64(buf) {
       const b = buf instanceof ArrayBuffer ? new Uint8Array(buf) : buf;
-      let s = ''; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+      let s = '';
+      for (let i = 0; i < b.length; i++) {
+        s += String.fromCharCode(b[i]);
+      }
       return btoa(s);
     }
+
     _b64ToBuf(b64) {
-      const s = atob(b64); const b = new Uint8Array(s.length);
-      for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+      const s = atob(b64);
+      const b = new Uint8Array(s.length);
+      for (let i = 0; i < s.length; i++) {
+        b[i] = s.charCodeAt(i);
+      }
       return b.buffer;
     }
 
-    // Boilerplate
+    // ===== Health and diagnostics =====
     getHealthStatus() {
       return {
         name: 'StorageAdapter',
@@ -274,16 +345,51 @@
         performance: {}
       };
     }
+
     recordError(message, error) {
-      const rec = { message, error: error?.message || String(error), stack: window.SilentStacks?.config?.debug ? error?.stack : undefined, timestamp: new Date().toISOString() };
-      this.errors.push(rec); if (this.errors.length > 100) this.errors = this.errors.slice(-100);
-      window.SilentStacks?.core?.diagnostics?.recordIssue?.({ type: 'error', module: 'StorageAdapter', message, error: rec.error });
+      const rec = {
+        message,
+        error: error?.message || String(error),
+        stack: window.SilentStacks?.config?.debug ? error?.stack : undefined,
+        timestamp: new Date().toISOString()
+      };
+      this.errors.push(rec);
+      if (this.errors.length > 100) {
+        this.errors = this.errors.slice(-100);
+      }
+      
+      // FIXED: Safe diagnostic access
+      const SS = window.SilentStacks || {};
+      SS.core?.diagnostics?.recordIssue?.({
+        type: 'error',
+        module: 'StorageAdapter',
+        message,
+        error: rec.error
+      });
     }
-    log(msg) { if (window.SilentStacks?.config?.debug) console.log(`[StorageAdapter] ${msg}`); }
+
+    log(msg) {
+      const SS = window.SilentStacks || {};
+      if (SS.config?.debug) {
+        console.log(`[StorageAdapter] ${msg}`);
+      }
+    }
   }
 
+  // ===== FIXED: Safe module registration =====
   const moduleInstance = new StorageAdapter();
-  if (window.SilentStacks?.registerModule) window.SilentStacks.registerModule('StorageAdapter', moduleInstance);
-  else { window.SilentStacks = window.SilentStacks || { modules: {} }; window.SilentStacks.modules.StorageAdapter = moduleInstance; }
+  
+  // Ensure SilentStacks namespace exists
+  window.SilentStacks = window.SilentStacks || { modules: {} };
+  
+  // Register using the official method if available
+  if (window.SilentStacks.registerModule) {
+    window.SilentStacks.registerModule('StorageAdapter', moduleInstance);
+  } else {
+    // Fallback registration
+    window.SilentStacks.modules = window.SilentStacks.modules || {};
+    window.SilentStacks.modules.StorageAdapter = moduleInstance;
+  }
+  
   console.log('📦 StorageAdapter loaded');
 })();
