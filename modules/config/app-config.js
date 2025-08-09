@@ -1,17 +1,12 @@
-// modules/data/api-client.js
+// modules/config/app-config.js - FIXED
 (() => {
   'use strict';
 
   /**
-   * Central API client with:
-   * - Global rate limit (default 2 RPS)
-   * - Timeout (30s)
-   * - Retries (exponential backoff)
-   * - Request signing (HMAC-lite with session salt)
-   * - Sanitization of inputs/outputs
-   * - PubMed / CrossRef / ClinicalTrials.gov helpers
+   * AppConfig - Central configuration management
+   * Provides environment-aware configuration with safe defaults
    */
-  class APIClient {
+  class AppConfig {
     static dependencies = [];
     static required = true;
 
@@ -19,296 +14,263 @@
       this.initialized = false;
       this.lastActivity = new Date().toISOString();
       this.errors = [];
-
-      // Core references
-      this.stateManager = null;
-      this.eventBus = null;
-
-      // Config
-      this.rateLimitRPS = 2; // Default: 2 requests / second (NCBI-friendly)
-      this.timeoutMs = 30000;
-      this.maxRetries = 3;
-      this.backoffBase = 400; // ms
-
-      // Endpoints
-      this.endpoints = {
-        pubmed: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils',
-        crossref: 'https://api.crossref.org',
-        clinical: 'https://clinicaltrials.gov/api/v2'
+      
+      // Default configuration
+      this.config = {
+        app: {
+          name: 'SilentStacks',
+          version: '2.0.0',
+          environment: this._detectEnvironment(),
+          debug: this._shouldEnableDebug()
+        },
+        api: {
+          pubmed: {
+            baseUrl: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils',
+            rateLimit: 3, // requests per second
+            timeout: 10000
+          },
+          crossref: {
+            baseUrl: 'https://api.crossref.org',
+            rateLimit: 50, // requests per second
+            timeout: 8000
+          },
+          clinicalTrials: {
+            baseUrl: 'https://clinicaltrials.gov/api',
+            rateLimit: 10, // requests per second
+            timeout: 12000
+          }
+        },
+        storage: {
+          namespace: 'ss2',
+          maxBackupEntries: 10,
+          encryptionEnabled: true,
+          quotaWarningMB: 100
+        },
+        ui: {
+          theme: 'auto', // auto, light, dark
+          animations: true,
+          compactMode: false,
+          autoSave: true,
+          autoSaveInterval: 30000 // 30 seconds
+        },
+        performance: {
+          moduleLoadDelay: 0,
+          batchSize: 25,
+          requestTimeout: 30000,
+          retryAttempts: 3,
+          retryDelay: 1000
+        },
+        features: {
+          offlineMode: true,
+          bulkOperations: true,
+          exportFeatures: true,
+          advancedSearch: true,
+          diagnostics: true
+        }
       };
-
-      // Queue + Rate limiting
-      this._queue = [];
-      this._inflight = 0;
-      this._lastTick = 0;
-      this._ticker = null;
-
-      // Security
-      this.sanitizer = null;
-      this._signingSalt = (Math.random().toString(36).slice(2) + Date.now().toString(36));
     }
 
     async initialize() {
       try {
-        // Core
-        this.stateManager = window.SilentStacks?.core?.stateManager ?? null;
-        this.eventBus = window.SilentStacks?.core?.eventBus ?? null;
-
-        // Config overrides
-        const cfg = window.SilentStacks?.config?.api || {};
-        if (cfg.endpoints) this.endpoints = { ...this.endpoints, ...cfg.endpoints };
-        if (typeof cfg.rateLimitRPS === 'number') this.rateLimitRPS = Math.max(1, cfg.rateLimitRPS);
-        if (typeof cfg.timeoutMs === 'number') this.timeoutMs = Math.max(5000, cfg.timeoutMs);
-
-        // Security
-        this.sanitizer = window.SilentStacks?.security?.sanitizer || null;
-
-        await this.setupModule();
-
+        // Load any stored configuration overrides
+        await this._loadStoredConfig();
+        
+        // Apply environment-specific settings
+        this._applyEnvironmentConfig();
+        
+        // Expose configuration globally
+        window.SilentStacks = window.SilentStacks || {};
+        window.SilentStacks.config = this.config;
+        
         this.initialized = true;
         this.lastActivity = new Date().toISOString();
-        return { status: 'success', module: 'APIClient' };
-      } catch (error) {
-        this.recordError('Initialization failed', error);
-        throw error;
+        this.log('Initialized AppConfig');
+        
+        return { status: 'success', module: 'AppConfig' };
+      } catch (e) {
+        this.recordError('Initialization failed', e);
+        throw e;
       }
     }
 
-    async setupModule() {
-      // Start the rate-limit ticker
-      const interval = Math.max(250, Math.floor(1000 / this.rateLimitRPS));
-      this._ticker = setInterval(() => this._drainQueue(), interval);
-      this.log(`Rate limiter started at ~${this.rateLimitRPS} req/sec`);
+    async setupModule() {}
+
+    // ===== Public API =====
+    get(path) {
+      return this._getNestedValue(this.config, path);
     }
 
-    // ====== Public API helpers ======
-
-    async fetchPubMedData(pmid) {
-      const id = this._sanitizeId(String(pmid || ''));
-      if (!/^\d+$/.test(id)) throw new Error('Invalid PMID');
-      const url = await this.buildSecureURL(this.endpoints.pubmed, '/esummary.fcgi', {
-        db: 'pubmed',
-        id,
-        retmode: 'json'
-      });
-      const res = await this._queueFetch(url, { method: 'GET' });
-      const data = await res.json().catch(() => ({}));
-      return this.sanitizeAPIResponse(data);
+    set(path, value) {
+      this._setNestedValue(this.config, path, value);
+      this._saveConfig();
+      this.lastActivity = new Date().toISOString();
     }
 
-    async fetchCrossRefData(doi) {
-      const clean = this._sanitizeQuery(String(doi || ''));
-      if (!clean || !/[./]/.test(clean)) throw new Error('Invalid DOI');
-      const url = await this.buildSecureURL(this.endpoints.crossref, `/works/${encodeURIComponent(clean)}`, {});
-      const res = await this._queueFetch(url, { method: 'GET' });
-      const data = await res.json().catch(() => ({}));
-      return this.sanitizeAPIResponse(data);
+    getAll() {
+      return JSON.parse(JSON.stringify(this.config));
     }
 
-    async fetchClinicalTrialsData(nctId) {
-      const clean = this._sanitizeQuery(String(nctId || ''));
-      if (!/^NCT\d{8}$/i.test(clean)) throw new Error('Invalid NCT ID');
-      // Using v2 studies endpoint
-      const url = await this.buildSecureURL(this.endpoints.clinical, `/studies/${encodeURIComponent(clean.toUpperCase())}`, {});
-      const res = await this._queueFetch(url, { method: 'GET' });
-      const data = await res.json().catch(() => ({}));
-      return this.sanitizeAPIResponse(data);
+    reset() {
+      // Reset to defaults
+      this.constructor();
+      this._saveConfig();
     }
 
-    async buildSecureURL(baseURL, endpoint, params) {
-      const base = String(baseURL || '').replace(/\/+$/, '');
-      const path = String(endpoint || '').startsWith('/') ? endpoint : `/${endpoint}`;
-      const qp = new URLSearchParams();
-
-      Object.entries(params || {}).forEach(([k, v]) => {
-        if (v == null) return;
-        qp.set(this._sanitizeKey(k), this._sanitizeQuery(String(v)));
-      });
-
-      // Attach polite pool id for NCBI / CrossRef if configured
-      const polite = window.SilentStacks?.config?.api?.headers || {};
-      if (base.includes('eutils.ncbi.nlm.nih.gov') && window.SilentStacks?.config?.api?.ncbiTool) {
-        qp.set('tool', this._sanitizeQuery(window.SilentStacks.config.api.ncbiTool));
+    // ===== Environment Detection =====
+    _detectEnvironment() {
+      if (typeof window === 'undefined') return 'node';
+      
+      const hostname = window.location?.hostname || '';
+      
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('local')) {
+        return 'development';
       }
-      if (base.includes('eutils.ncbi.nlm.nih.gov') && window.SilentStacks?.config?.api?.ncbiEmail) {
-        qp.set('email', this._sanitizeQuery(window.SilentStacks.config.api.ncbiEmail));
+      
+      if (hostname.includes('github.io') || hostname.includes('netlify') || hostname.includes('vercel')) {
+        return 'production';
       }
-
-      // Request signing (query param sig + ts)
-      const ts = Date.now().toString();
-      const sig = await this._sign(`${base}${path}?${qp.toString()}&ts=${ts}`);
-      qp.set('ts', ts);
-      qp.set('sig', sig);
-
-      return `${base}${path}?${qp.toString()}`;
+      
+      if (hostname.includes('staging') || hostname.includes('test')) {
+        return 'staging';
+      }
+      
+      return 'production';
     }
 
-    sanitizeAPIResponse(data) {
-      // Basic deep-sanitize: strip dangerous chars from strings
-      const clean = (val) => {
-        if (val == null) return val;
-        if (typeof val === 'string') {
-          const s = this.sanitizer?.sanitize ? this.sanitizer.sanitize(val) : val.replace(/[<>"'&]/g, '');
-          return s.length > 100000 ? s.slice(0, 100000) : s; // prevent absurd payloads
-        }
-        if (Array.isArray(val)) return val.map(clean);
-        if (typeof val === 'object') {
-          const out = {};
-          Object.keys(val).forEach(k => { out[this._sanitizeKey(k)] = clean(val[k]); });
-          return out;
-        }
-        return val;
-      };
-      return clean(data);
-    }
-
-    getRequestQueue() {
-      return {
-        pending: this._queue.length,
-        inflight: this._inflight,
-        rateLimitRPS: this.rateLimitRPS
-      };
-    }
-
-    // ====== Internal: Rate-limited fetch with retry/timeout ======
-
-    _queueFetch(url, options = {}) {
-      return new Promise((resolve, reject) => {
-        const task = async () => {
-          try {
-            const resp = await this._fetchWithRetry(url, options);
-            resolve(resp);
-          } catch (e) {
-            reject(e);
-          }
-        };
-        this._queue.push(task);
-        this._drainQueue();
-      });
-    }
-
-    async _fetchWithRetry(url, options) {
-      const attempt = async (n) => {
-        try {
-          const controller = new AbortController();
-          const to = setTimeout(() => controller.abort(), this.timeoutMs);
-
-          // Emit network started
-          this.eventBus?.emit?.('net:started', { url });
-
-          const resp = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
-          clearTimeout(to);
-
-          // Emit completed
-          this.eventBus?.emit?.('net:completed', { url, status: resp.status });
-
-          if (!resp.ok) {
-            if (resp.status >= 500 && n < this.maxRetries) {
-              const wait = this._backoff(n);
-              await this._sleep(wait);
-              return attempt(n + 1);
-            }
-            // 4xx or exhausted
-            throw new Error(`HTTP ${resp.status}`);
-          }
-          return resp;
-        } catch (err) {
-          this.eventBus?.emit?.('net:failed', { url, error: err?.message || String(err) });
-          if (n < this.maxRetries) {
-            const wait = this._backoff(n);
-            await this._sleep(wait);
-            return attempt(n + 1);
-          }
-          this.recordError('Fetch failed', err);
-          throw err;
-        }
-      };
-      return attempt(0);
-    }
-
-    _drainQueue() {
-      const now = Date.now();
-      if (now - this._lastTick < 1000 / this.rateLimitRPS) return;
-      if (this._inflight > 0) return; // simple conservative limiter: 1 at a time paced to RPS
-      const task = this._queue.shift();
-      if (!task) return;
-      this._inflight++;
-      this._lastTick = now;
-      Promise.resolve()
-        .then(task)
-        .catch((e) => this.recordError('Task error', e))
-        .finally(() => { this._inflight = 0; });
-    }
-
-    _backoff(n) {
-      // exponential with jitter
-      const base = this.backoffBase * Math.pow(2, n);
-      return base + Math.floor(Math.random() * 200);
-    }
-    _sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-    // ====== Security helpers ======
-    async _sign(text) {
-      // Lightweight HMAC-like using subtle crypto if available (fall back to hash-like)
+    _shouldEnableDebug() {
+      const env = this._detectEnvironment();
+      
+      // Enable debug in development
+      if (env === 'development') return true;
+      
+      // Check for debug query parameter
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location?.search || '');
+        if (urlParams.has('debug')) return true;
+      }
+      
+      // Check localStorage override
       try {
-        const enc = new TextEncoder();
-        const key = await crypto.subtle.importKey(
-          'raw', enc.encode(this._signingSalt), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-        );
-        const sig = await crypto.subtle.sign('HMAC', key, enc.encode(text));
-        return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+        return localStorage.getItem('ss-debug') === 'true';
       } catch {
-        let h = 0; const s = `${this._signingSalt}|${text}`;
-        for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-        return h.toString(16);
+        return false;
       }
     }
 
-    _sanitizeKey(key) {
-      return String(key || '').replace(/[^\w\-.:]/g, '');
-    }
-    _sanitizeQuery(val) {
-      if (this.sanitizer?.sanitize) return this.sanitizer.sanitize(val);
-      return String(val).replace(/[<>"'&]/g, '');
+    _applyEnvironmentConfig() {
+      const env = this.config.app.environment;
+      
+      if (env === 'development') {
+        this.config.api.pubmed.rateLimit = 1; // Slower in dev
+        this.config.performance.moduleLoadDelay = 10;
+      } else if (env === 'production') {
+        this.config.app.debug = false; // Force off in production unless explicitly enabled
+        this.config.features.diagnostics = false;
+      }
     }
 
-    // ====== Health / Logging ======
+    // ===== Configuration Persistence =====
+    async _loadStoredConfig() {
+      try {
+        const stored = localStorage.getItem('ss-config');
+        if (stored) {
+          const parsedConfig = JSON.parse(stored);
+          this.config = this._mergeDeep(this.config, parsedConfig);
+        }
+      } catch (e) {
+        this.recordError('Failed to load stored config', e);
+      }
+    }
+
+    _saveConfig() {
+      try {
+        localStorage.setItem('ss-config', JSON.stringify(this.config));
+      } catch (e) {
+        this.recordError('Failed to save config', e);
+      }
+    }
+
+    // ===== Utilities =====
+    _getNestedValue(obj, path) {
+      return path.split('.').reduce((current, key) => current?.[key], obj);
+    }
+
+    _setNestedValue(obj, path, value) {
+      const keys = path.split('.');
+      const lastKey = keys.pop();
+      const target = keys.reduce((current, key) => {
+        current[key] = current[key] || {};
+        return current[key];
+      }, obj);
+      target[lastKey] = value;
+    }
+
+    _mergeDeep(target, source) {
+      const result = { ...target };
+      
+      for (const key in source) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          result[key] = this._mergeDeep(result[key] || {}, source[key]);
+        } else {
+          result[key] = source[key];
+        }
+      }
+      
+      return result;
+    }
+
+    // ===== Health and diagnostics =====
     getHealthStatus() {
       return {
-        name: 'APIClient',
+        name: 'AppConfig',
         status: this.initialized ? 'healthy' : 'not-initialized',
         initialized: this.initialized,
         lastActivity: this.lastActivity,
         errors: this.errors.slice(-5),
-        performance: { queue: this.getRequestQueue() }
+        environment: this.config.app.environment,
+        debug: this.config.app.debug
       };
     }
 
     recordError(message, error) {
-      const errorRecord = {
+      const rec = {
         message,
         error: error?.message || String(error),
-        stack: error?.stack,
+        stack: this.config?.app?.debug ? error?.stack : undefined,
         timestamp: new Date().toISOString()
       };
-      this.errors.push(errorRecord);
-      if (this.errors.length > 100) this.errors = this.errors.slice(-100);
-      window.SilentStacks?.core?.diagnostics?.recordIssue?.({
-        type: 'error', module: 'APIClient', message, error
+      this.errors.push(rec);
+      if (this.errors.length > 100) {
+        this.errors = this.errors.slice(-100);
+      }
+      
+      const SS = window.SilentStacks || {};
+      SS.core?.diagnostics?.recordIssue?.({
+        type: 'error',
+        module: 'AppConfig',
+        message,
+        error: rec.error
       });
     }
 
-    log(message) {
-      if (window.SilentStacks?.config?.debug) console.log(`[APIClient] ${message}`);
+    log(msg) {
+      if (this.config?.app?.debug) {
+        console.log(`[AppConfig] ${msg}`);
+      }
     }
   }
 
-  const moduleInstance = new APIClient();
-  if (window.SilentStacks?.registerModule) {
-    window.SilentStacks.registerModule('APIClient', moduleInstance);
+  // ===== Safe module registration =====
+  const moduleInstance = new AppConfig();
+  
+  window.SilentStacks = window.SilentStacks || { modules: {} };
+  
+  if (window.SilentStacks.registerModule) {
+    window.SilentStacks.registerModule('AppConfig', moduleInstance);
   } else {
-    window.SilentStacks = window.SilentStacks || { modules: {} };
-    window.SilentStacks.modules.APIClient = moduleInstance;
+    window.SilentStacks.modules = window.SilentStacks.modules || {};
+    window.SilentStacks.modules.AppConfig = moduleInstance;
   }
-  console.log('📦 APIClient loaded');
+  
+  console.log('📦 AppConfig loaded');
 })();
