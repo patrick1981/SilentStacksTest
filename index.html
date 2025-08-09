@@ -14,7 +14,6 @@
     font-src 'self' data:;
     connect-src 'self' https://eutils.ncbi.nlm.nih.gov https://api.crossref.org https://clinicaltrials.gov;
   ">
-
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="DENY">
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
@@ -23,96 +22,222 @@
   <link rel="preload" href="assets/fonts/reddit-sans/RedditSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/fonts/reddit-sans/reddit-sans.css">
   <link rel="stylesheet" href="assets/css/style.css">
+  <!-- AAA Accessibility layer -->
+  <link rel="stylesheet" href="assets/css/a11y.css">
 
-  <meta name="theme-color" content="#667eea">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#0a5f38">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' role='img' aria-label='SilentStacks icon' viewBox='0 0 100 100'%3E%3Ctitle%3ESilentStacks%3C/title%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
 </head>
 
 <body>
+  <!-- Skip link -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <!-- Live regions -->
+  <div id="sr-live-polite" class="sr-only" role="status" aria-live="polite"></div>
+  <div id="sr-live-assertive" class="sr-only" role="alert" aria-live="assertive"></div>
+
   <!-- Lightweight loading screen -->
-  <div id="loading-screen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;z-index:9999">
+  <div id="loading-screen" role="status" aria-live="polite" aria-atomic="true"
+       style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;z-index:9999">
     <div style="text-align:center">
-      <div style="font-size:48px;margin-bottom:8px">📚</div>
-      <div style="font-size:18px" id="loading-status">Starting SilentStacks…</div>
+      <div aria-hidden="true" style="font-size:48px;margin-bottom:8px">📚</div>
+      <p id="loading-status">Starting SilentStacks…</p>
     </div>
   </div>
 
-  <!-- App container (your modules populate this) -->
+  <!-- App container -->
   <div id="app-container" style="display:none;">
-    <!-- Keep the same IDs your modules expect -->
-    <nav class="main-nav">
-      <button class="nav-tab active" data-section="dashboard">📊 Dashboard</button>
-      <button class="nav-tab" data-section="add-request">➕ Add Request</button>
-      <button class="nav-tab" data-section="all-requests">📋 All Requests</button>
-      <button class="nav-tab" data-section="workflows">🏥 ILL Workflow</button>
-      <button class="nav-tab" data-section="settings">⚙️ Settings</button>
-      <span id="system-status" class="system-status"><span class="status-indicator">🟢</span></span>
+    <!-- Primary navigation -->
+    <nav class="main-nav" role="navigation" aria-label="Primary">
+      <div class="nav-container">
+        <div class="nav-brand" aria-label="Application title">
+          <h1>
+            <span class="brand-icon" aria-hidden="true">📚</span>
+            <span>SilentStacks <span class="sr-only">version</span><span class="version-badge">v2.0</span></span>
+          </h1>
+        </div>
+
+        <div class="nav-tabs" role="tablist" aria-label="Main sections">
+          <button id="tab-dashboard" class="nav-tab active" role="tab" aria-selected="true"
+                  aria-controls="dashboard" tabindex="0">
+            📊 <span class="sr-only">Open </span>Dashboard
+          </button>
+          <button id="tab-add-request" class="nav-tab" role="tab" aria-selected="false"
+                  aria-controls="add-request" tabindex="-1">
+            ➕ <span class="sr-only">Open </span>Add Request
+          </button>
+          <button id="tab-all-requests" class="nav-tab" role="tab" aria-selected="false"
+                  aria-controls="all-requests" tabindex="-1">
+            📋 <span class="sr-only">Open </span>All Requests
+          </button>
+          <button id="tab-workflows" class="nav-tab" role="tab" aria-selected="false"
+                  aria-controls="workflows" tabindex="-1">
+            🏥 <span class="sr-only">Open </span>ILL Workflow
+          </button>
+          <button id="tab-settings" class="nav-tab" role="tab" aria-selected="false"
+                  aria-controls="settings" tabindex="-1">
+            ⚙️ <span class="sr-only">Open </span>Settings
+          </button>
+        </div>
+
+        <!-- System Status -->
+        <div class="system-status" id="system-status" role="status" aria-live="polite">
+          <span class="status-indicator" title="System Status" aria-label="System status: healthy">🟢</span>
+        </div>
+      </div>
     </nav>
 
-    <main id="main-content">
-      <section id="dashboard" class="section active" role="tabpanel">
-        <h2>Dashboard</h2>
-        <div class="dashboard-grid">
-          <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-content"><h3>Total</h3><div id="total-requests">0</div></div></div>
-          <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-content"><h3>Pending</h3><div id="pending-requests">0</div></div></div>
-          <div class="stat-card"><div class="stat-icon">🚨</div><div class="stat-content"><h3>Urgent</h3><div id="urgent-requests">0</div></div></div>
-          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-content"><h3>Completed</h3><div id="completed-requests">0</div></div></div>
-          <div class="stat-card"><div class="stat-icon">🔧</div><div class="stat-content"><h3>System Health</h3><div id="health-status">Checking…</div></div></div>
+    <!-- Main content -->
+    <main id="main-content" role="main" tabindex="-1">
+      <!-- Dashboard -->
+      <section id="dashboard" class="section active" role="tabpanel" aria-labelledby="tab-dashboard">
+        <header class="section-header">
+          <h2>Dashboard</h2>
+          <p class="section-description">Overview of your requests and system health</p>
+        </header>
+
+        <div class="dashboard-grid" role="region" aria-label="Key statistics">
+          <div class="stat-card" role="group" aria-label="Total requests">
+            <div class="stat-icon" aria-hidden="true">📚</div>
+            <div class="stat-content">
+              <h3 id="stat-total-label">Total Requests</h3>
+              <div class="stat-number" id="total-requests" role="status" aria-live="polite" aria-labelledby="stat-total-label">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card" role="group" aria-label="Pending requests">
+            <div class="stat-icon" aria-hidden="true">⏳</div>
+            <div class="stat-content">
+              <h3 id="stat-pending-label">Pending</h3>
+              <div class="stat-number" id="pending-requests" role="status" aria-live="polite" aria-labelledby="stat-pending-label">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card" role="group" aria-label="Urgent requests">
+            <div class="stat-icon" aria-hidden="true">🚨</div>
+            <div class="stat-content">
+              <h3 id="stat-urgent-label">Urgent</h3>
+              <div class="stat-number" id="urgent-requests" role="status" aria-live="polite" aria-labelledby="stat-urgent-label">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card" role="group" aria-label="Completed requests">
+            <div class="stat-icon" aria-hidden="true">✅</div>
+            <div class="stat-content">
+              <h3 id="stat-completed-label">Completed</h3>
+              <div class="stat-number" id="completed-requests" role="status" aria-live="polite" aria-labelledby="stat-completed-label">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card system-health-card" role="group" aria-label="System health">
+            <div class="stat-icon" aria-hidden="true">🔧</div>
+            <div class="stat-content">
+              <h3 id="system-health-label">System Health</h3>
+              <div class="health-status" id="health-status" role="status" aria-live="polite" aria-labelledby="system-health-label">Checking…</div>
+            </div>
+            <button class="health-details-btn btn btn-outline" aria-label="Show diagnostics"
+                    onclick="window.SilentStacks?.debug?.showDiagnostics()">Details</button>
+          </div>
         </div>
-        <div class="recent-requests-section"><h3>Recent</h3><div id="recent-requests"></div></div>
+
+        <section class="recent-requests-section" aria-labelledby="recent-requests-label">
+          <h3 id="recent-requests-label">Recent Requests</h3>
+          <div id="recent-requests" class="recent-requests-list" role="list" aria-describedby="recent-requests-help"></div>
+          <p id="recent-requests-help" class="sr-only">This list shows the latest items you added or updated.</p>
+        </section>
       </section>
 
-      <section id="add-request" class="section" role="tabpanel">
-        <h2>Add New Request</h2>
-        <form id="request-form" novalidate>
-          <fieldset class="form-section">
+      <!-- Add Request -->
+      <section id="add-request" class="section" role="tabpanel" aria-labelledby="tab-add-request">
+        <header class="section-header">
+          <h2>Add New Request</h2>
+          <p class="section-description">Create a new literature request with automatic metadata fetching</p>
+        </header>
+
+        <form id="request-form" class="request-form" novalidate aria-describedby="form-error-summary">
+          <div id="form-error-summary" class="sr-only" role="alert" aria-live="assertive"></div>
+
+          <!-- Identifiers -->
+          <fieldset class="form-section" aria-describedby="identifiers-help">
             <legend>📋 Identifiers</legend>
+            <p id="identifiers-help" class="sr-only">Enter a PMID and optionally a DOI to fetch metadata.</p>
+
             <div class="form-row">
               <div class="form-group">
                 <label for="pmid">PMID</label>
                 <div class="input-group">
-                  <input id="pmid" name="pmid" data-type="pmid" placeholder="e.g., 16979104">
-                  <button type="button" id="fetch-pmid" class="btn btn-secondary">Fetch Data</button>
+                  <input type="text" id="pmid" name="pmid" data-type="pmid"
+                         inputmode="numeric" pattern="\\d*" autocomplete="off"
+                         placeholder="e.g., 16979104" aria-describedby="pmid-help">
+                  <button type="button" id="fetch-pmid" class="btn btn-secondary"
+                          aria-label="Fetch metadata from PubMed">Fetch Data</button>
                 </div>
+                <small id="pmid-help" class="form-help">PubMed ID for the article</small>
               </div>
+
               <div class="form-group">
                 <label for="doi">DOI</label>
-                <input id="doi" name="doi" data-type="doi" placeholder="10.xxxx/xxxxx">
+                <input type="text" id="doi" name="doi" data-type="doi"
+                       placeholder="10.xxxx/xxxxx" aria-describedby="doi-help" autocomplete="off">
+                <small id="doi-help" class="form-help">Digital Object Identifier (optional)</small>
               </div>
             </div>
           </fieldset>
 
-          <fieldset class="form-section">
-            <legend>📖 Citation</legend>
+          <!-- Citation -->
+          <fieldset class="form-section" aria-describedby="citation-help">
+            <legend>📖 Citation Details</legend>
+            <p id="citation-help" class="sr-only">Provide citation fields. Title is required.</p>
+
             <div class="form-group">
-              <label for="title">Title <span class="required">*</span></label>
-              <input id="title" name="title" required>
+              <label for="title">Title <span aria-hidden="true" class="required">*</span></label>
+              <input type="text" id="title" name="title" required aria-required="true" aria-describedby="title-help">
+              <small id="title-help" class="form-help">Full title of the publication</small>
             </div>
+
             <div class="form-group">
               <label for="authors">Authors</label>
-              <input id="authors" name="authors" placeholder="Last, First; Last, First">
+              <input type="text" id="authors" name="authors" placeholder="Last, First; Last, First" aria-describedby="authors-help">
+              <small id="authors-help" class="form-help">Separate multiple authors with semicolons</small>
             </div>
+
             <div class="form-row">
-              <div class="form-group"><label for="journal">Journal</label><input id="journal" name="journal"></div>
-              <div class="form-group"><label for="year">Year</label><input id="year" name="year" type="number" min="1800" max="2099"></div>
-              <div class="form-group"><label for="pages">Pages</label><input id="pages" name="pages"></div>
+              <div class="form-group">
+                <label for="journal">Journal</label>
+                <input type="text" id="journal" name="journal">
+              </div>
+
+              <div class="form-group">
+                <label for="year">Year</label>
+                <input type="number" id="year" name="year" min="1800" max="2099" inputmode="numeric" pattern="\\d{4}">
+              </div>
+
+              <div class="form-group">
+                <label for="pages">Pages</label>
+                <input type="text" id="pages" name="pages" placeholder="123-130">
+              </div>
             </div>
           </fieldset>
 
-          <fieldset class="form-section">
-            <legend>🎯 Request</legend>
+          <!-- Request -->
+          <fieldset class="form-section" aria-describedby="request-details-help">
+            <legend>🎯 Request Details</legend>
+            <p id="request-details-help" class="sr-only">Set priority, status, and notes for this request.</p>
+
             <div class="form-row">
               <div class="form-group">
                 <label for="priority">Priority</label>
-                <select id="priority" name="priority">
+                <select id="priority" name="priority" aria-label="Priority">
                   <option value="normal">Normal</option>
                   <option value="high">High</option>
                   <option value="urgent">Urgent</option>
                 </select>
               </div>
+
               <div class="form-group">
                 <label for="status">Status</label>
-                <select id="status" name="status">
+                <select id="status" name="status" aria-label="Status">
                   <option value="pending">Pending</option>
                   <option value="in-progress">In Progress</option>
                   <option value="completed">Completed</option>
@@ -120,40 +245,54 @@
                 </select>
               </div>
             </div>
+
             <div class="form-group">
               <label for="notes">Notes</label>
-              <textarea id="notes" name="notes" rows="3"></textarea>
+              <textarea id="notes" name="notes" rows="3" aria-label="Additional notes"></textarea>
             </div>
           </fieldset>
 
-          <fieldset id="mesh-section" class="form-section" style="display:none">
+          <!-- MeSH -->
+          <fieldset id="mesh-section" class="form-section" style="display:none" aria-describedby="mesh-help">
             <legend>🏷️ MeSH Headings</legend>
-            <div id="mesh-headings"></div>
+            <p id="mesh-help" class="sr-only">Medical Subject Headings associated with this request.</p>
+            <div id="mesh-headings" class="mesh-headings-container" role="list"></div>
           </fieldset>
 
-          <fieldset id="trials-section" class="form-section" style="display:none">
-            <legend>🧪 Clinical Trials</legend>
-            <div id="clinical-trials"></div>
+          <!-- Clinical Trials -->
+          <fieldset id="trials-section" class="form-section" style="display:none" aria-describedby="trials-help">
+            <legend>🧪 Associated Clinical Trials</legend>
+            <p id="trials-help" class="sr-only">Clinical trial information linked to this item.</p>
+            <div id="clinical-trials" class="clinical-trials-container" role="list"></div>
           </fieldset>
 
-          <div class="form-actions">
-            <button type="submit" id="submit-request" class="btn btn-primary">Add Request</button>
-            <button type="button" id="clear-form" class="btn btn-secondary">Clear</button>
-            <button type="button" id="save-draft" class="btn btn-outline">Save Draft</button>
+          <div class="form-actions" role="group" aria-label="Form actions">
+            <button type="submit" id="submit-request" class="btn btn-primary" aria-label="Add request">Add Request</button>
+            <button type="button" id="clear-form" class="btn btn-secondary" aria-label="Clear form">Clear</button>
+            <button type="button" id="save-draft" class="btn btn-outline" aria-label="Save draft">Save Draft</button>
           </div>
         </form>
-        <div id="form-status" class="status-message" role="status" aria-live="polite"></div>
+
+        <div id="form-status" class="status-message" role="status" aria-live="polite" aria-atomic="true"></div>
       </section>
 
-      <section id="all-requests" class="section" role="tabpanel">
-        <h2>All Requests</h2>
-        <div class="controls-bar">
+      <!-- All Requests -->
+      <section id="all-requests" class="section" role="tabpanel" aria-labelledby="tab-all-requests">
+        <header class="section-header">
+          <h2>All Requests</h2>
+          <p class="section-description">Search, filter, sort, and manage all your requests</p>
+        </header>
+
+        <div class="controls-bar" role="group" aria-label="Search and filter controls">
           <div class="search-controls">
-            <div class="search-group">
-              <input id="search-input" type="search" placeholder="Search requests…">
-              <button id="clear-search" class="btn btn-ghost">✕</button>
+            <div class="search-group" role="search">
+              <label for="search-input" class="sr-only">Search requests</label>
+              <input type="search" id="search-input" placeholder="Search requests…" aria-controls="request-list">
+              <button id="clear-search" class="btn btn-ghost" aria-label="Clear search">✕</button>
             </div>
-            <div class="filter-controls">
+
+            <div class="filter-controls" role="group" aria-label="Filters">
+              <label for="filter-status" class="sr-only">Filter by status</label>
               <select id="filter-status">
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -161,6 +300,8 @@
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
+
+              <label for="filter-priority" class="sr-only">Filter by priority</label>
               <select id="filter-priority">
                 <option value="all">All Priority</option>
                 <option value="normal">Normal</option>
@@ -169,112 +310,254 @@
               </select>
             </div>
           </div>
-          <div class="action-controls">
-            <button id="bulk-actions-btn" class="btn btn-secondary" disabled>Bulk Actions</button>
-            <button id="export-btn" class="btn btn-outline">📤 Export</button>
-            <button id="import-btn" class="btn btn-outline">📥 Import</button>
+
+          <div class="action-controls" role="group" aria-label="Bulk and export actions">
+            <button id="bulk-actions-btn" class="btn btn-secondary" disabled aria-disabled="true" aria-label="Bulk actions">
+              Bulk Actions
+            </button>
+            <button id="export-btn" class="btn btn-outline" aria-label="Export data">📤 Export</button>
+            <button id="import-btn" class="btn btn-outline" aria-label="Import data">📥 Import</button>
           </div>
         </div>
 
-        <!-- Bulk Upload (matching your modules’ IDs) -->
-        <div id="bulk-upload-panel" class="bulk-upload-panel" style="display:none">
-          <h3>Bulk Upload</h3>
-          <div class="upload-tabs">
-            <button class="upload-tab active" data-tab="pmid">PMID List</button>
-            <button class="upload-tab" data-tab="csv">CSV File</button>
-            <button class="upload-tab" data-tab="docline">PMID+DOCLINE</button>
-          </div>
-          <div class="upload-content">
-            <div id="pmid-upload" class="upload-section active">
-              <textarea id="bulk-paste-textarea" rows="6" placeholder="Paste PMIDs…"></textarea>
-            </div>
-            <div id="csv-upload" class="upload-section">
-              <input id="csv-file-input" type="file" accept=".csv" />
-              <div id="csv-drop-zone" class="file-drop-zone"><p>Drag & drop CSV here</p></div>
-            </div>
-            <div id="docline-upload" class="upload-section">
-              <textarea id="docline-textarea" rows="6" placeholder="PMID,DOCLINE…"></textarea>
-            </div>
-          </div>
-          <div class="upload-actions">
-            <button id="process-bulk-btn" class="btn btn-primary">Process Upload</button>
-            <button id="cancel-bulk-btn" class="btn btn-secondary">Cancel</button>
-          </div>
-          <div id="bulk-status" class="status-message" role="status" aria-live="polite"></div>
-        </div>
+        <!-- Bulk Upload -->
+        <section class="bulk-upload-panel" id="bulk-upload-panel" style="display:none" aria-labelledby="bulk-upload-title">
+          <h3 id="bulk-upload-title">Bulk Upload</h3>
+          <p id="bulk-upload-desc">Upload PMIDs, CSV data, or PMID+DOCLINE pairs.</p>
 
-        <div class="requests-container">
-          <div id="request-list" class="request-list"></div>
-          <div class="list-footer">
-            <div id="results-count" class="results-count">0 requests</div>
-            <div id="pagination" class="pagination"></div>
+          <div class="upload-tabs" role="tablist" aria-label="Bulk upload modes">
+            <button class="upload-tab active" id="tab-bulk-pmid" role="tab" aria-selected="true"
+                    aria-controls="pmid-upload" tabindex="0">PMID List</button>
+            <button class="upload-tab" id="tab-bulk-csv" role="tab" aria-selected="false"
+                    aria-controls="csv-upload" tabindex="-1">CSV File</button>
+            <button class="upload-tab" id="tab-bulk-docline" role="tab" aria-selected="false"
+                    aria-controls="docline-upload" tabindex="-1">PMID+DOCLINE</button>
           </div>
+
+          <div class="upload-content" role="region" aria-labelledby="bulk-upload-title" aria-describedby="bulk-upload-desc">
+            <div id="pmid-upload" class="upload-section active" role="tabpanel" aria-labelledby="tab-bulk-pmid">
+              <label for="bulk-paste-textarea" class="sr-only">Paste PMIDs</label>
+              <textarea id="bulk-paste-textarea" rows="6" placeholder="Paste PMIDs (one per line or comma-separated)…"></textarea>
+            </div>
+
+            <div id="csv-upload" class="upload-section" role="tabpanel" aria-labelledby="tab-bulk-csv">
+              <label for="csv-file-input" class="sr-only">Choose CSV file</label>
+              <input type="file" id="csv-file-input" accept=".csv" />
+              <div class="file-drop-zone" id="csv-drop-zone" role="button" tabindex="0"
+                   aria-label="Drop CSV file here or press Enter to open file picker">
+                <p>Drag and drop CSV file here or click to select</p>
+              </div>
+            </div>
+
+            <div id="docline-upload" class="upload-section" role="tabpanel" aria-labelledby="tab-bulk-docline">
+              <label for="docline-textarea" class="sr-only">Enter PMID,DOCLINE pairs</label>
+              <textarea id="docline-textarea" rows="6" placeholder="PMID,DOCLINE pairs (e.g., 12345678,DOC123456)…"></textarea>
+            </div>
+          </div>
+
+          <div class="upload-actions" role="group" aria-label="Bulk upload actions">
+            <button id="process-bulk-btn" class="btn btn-primary" aria-label="Process bulk upload">Process Upload</button>
+            <button id="cancel-bulk-btn" class="btn btn-secondary" aria-label="Cancel bulk upload">Cancel</button>
+          </div>
+
+          <div id="bulk-status" class="status-message" role="status" aria-live="polite" aria-atomic="true"></div>
+        </section>
+
+        <section class="requests-container" aria-label="Results">
+          <div id="request-list" class="request-list" role="list" aria-live="polite" aria-busy="false"></div>
+          <div class="list-footer" role="group" aria-label="Result information and pagination">
+            <div id="results-count" class="results-count" role="status" aria-live="polite">0 requests</div>
+            <nav id="pagination" class="pagination" role="navigation" aria-label="Pagination"></nav>
+          </div>
+        </section>
+      </section>
+
+      <!-- ILL Workflow -->
+      <section id="workflows" class="section" role="tabpanel" aria-labelledby="tab-workflows">
+        <header class="section-header">
+          <h2>ILL Workflow</h2>
+          <p class="section-description">Manage interlibrary loan workflows and track progress</p>
+        </header>
+
+        <section role="region" aria-label="Active workflows">
+          <div id="active-workflows" class="workflow-list" role="list"></div>
+        </section>
+
+        <div class="workflow-actions" role="group" aria-label="Workflow actions">
+          <button class="btn btn-primary" aria-label="Start new ILL workflow" onclick="console.log('Start workflow')">🏥 Start</button>
+          <button class="btn btn-secondary" aria-label="Manage follow-ups" onclick="console.log('Follow-ups')">⏰ Follow-ups</button>
+          <button class="btn btn-outline" aria-label="Export workflow data" onclick="console.log('Export workflow')">📊 Export</button>
         </div>
       </section>
 
-      <section id="workflows" class="section" role="tabpanel">
-        <h2>ILL Workflow</h2>
-        <div id="active-workflows" class="workflow-list"></div>
-        <div class="workflow-actions">
-          <button class="btn btn-primary" onclick="console.log('Start workflow')">🏥 Start</button>
-          <button class="btn btn-secondary" onclick="console.log('Follow-ups')">⏰ Follow-ups</button>
-          <button class="btn btn-outline" onclick="console.log('Export workflow')">📊 Export</button>
-        </div>
-      </section>
+      <!-- Settings -->
+      <section id="settings" class="section" role="tabpanel" aria-labelledby="tab-settings">
+        <header class="section-header">
+          <h2>Settings</h2>
+          <p class="section-description">Configure your SilentStacks experience</p>
+        </header>
 
-      <section id="settings" class="section" role="tabpanel">
-        <h2>Settings</h2>
-        <div class="setting-group">
-          <label>Theme:
-            <select id="theme-select">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="high-contrast">High Contrast</option>
-              <option value="auto">Auto</option>
-            </select>
-          </label>
-        </div>
-        <div class="setting-group">
-          <label>API Rate Limit (rps):
-            <input id="api-rate-limit" type="number" min="1" max="10" value="2">
-          </label>
-        </div>
-        <div class="setting-group">
-          <button id="backup-data" class="btn btn-primary">💾 Create Backup</button>
-          <button id="restore-data" class="btn btn-secondary">📥 Restore Backup</button>
-          <input id="restore-file" type="file" accept=".json" style="display:none">
-        </div>
-        <div class="setting-group">
-          <button id="show-diagnostics" class="btn btn-outline">🔧 Diagnostics</button>
-          <button id="restart-system" class="btn btn-warning">🔄 Restart</button>
-        </div>
+        <form class="settings-container" aria-describedby="settings-help">
+          <p id="settings-help" class="sr-only">Adjust appearance, system, and data preferences.</p>
+
+          <fieldset class="setting-group" aria-labelledby="appearance-title">
+            <legend id="appearance-title">🎨 Appearance</legend>
+            <div class="setting-item">
+              <label for="theme-select">Theme</label>
+              <select id="theme-select" aria-label="Theme selection">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="high-contrast">High Contrast</option>
+                <option value="auto">Auto (System)</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label>
+                <input type="checkbox" id="performance-mode" aria-label="Enable performance mode">
+                Performance Mode (reduces animations)
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>
+                <input type="checkbox" id="compact-view" aria-label="Enable compact view">
+                Compact View (dense layout)
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="setting-group" aria-labelledby="system-title">
+            <legend id="system-title">⚙️ System</legend>
+            <div class="setting-item">
+              <label for="api-rate-limit">API Rate Limit (requests per second)</label>
+              <input type="number" id="api-rate-limit" min="1" max="10" value="2" aria-describedby="api-rate-help">
+              <small id="api-rate-help" class="form-help">NCBI recommends 2 requests/second</small>
+            </div>
+            <div class="setting-item">
+              <label for="search-debounce">Search Debounce (milliseconds)</label>
+              <input type="number" id="search-debounce" min="100" max="1000" step="50" value="300">
+            </div>
+            <div class="setting-item">
+              <label><input type="checkbox" id="auto-save" aria-label="Enable auto-save"> Auto-save changes</label>
+            </div>
+            <div class="setting-item">
+              <label><input type="checkbox" id="debug-mode" aria-label="Enable debug mode"> Debug Mode (detailed logging)</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="setting-group" aria-labelledby="security-title">
+            <legend id="security-title">🔒 Security & Privacy</legend>
+            <div class="security-status" role="group" aria-label="Security indicators">
+              <div class="security-item">
+                <span class="security-label">Input Sanitization:</span>
+                <span id="sanitization-status" class="security-status-indicator" role="status" aria-live="polite">🔒 Active</span>
+              </div>
+              <div class="security-item">
+                <span class="security-label">Rate Limiting:</span>
+                <span id="rate-limit-status" class="security-status-indicator" role="status" aria-live="polite">🔒 Active</span>
+              </div>
+              <div class="security-item">
+                <span class="security-label">XSS Protection:</span>
+                <span id="xss-protection-status" class="security-status-indicator" role="status" aria-live="polite">🔒 Active</span>
+              </div>
+              <div class="security-item">
+                <span class="security-label">Data Encryption:</span>
+                <span id="encryption-status" class="security-status-indicator" role="status" aria-live="polite">🔒 Local Storage</span>
+              </div>
+            </div>
+
+            <button id="security-test" class="btn btn-outline" aria-label="Run security test">🧪 Run Security Test</button>
+            <button id="clear-data" class="btn btn-danger" aria-label="Clear all data">🗑️ Clear All Data</button>
+          </fieldset>
+
+          <fieldset class="setting-group" aria-labelledby="data-title">
+            <legend id="data-title">💾 Data Management</legend>
+            <div class="data-stats" role="group" aria-label="Data statistics">
+              <div class="data-stat">
+                <span class="data-label">Requests:</span>
+                <span id="data-requests-count" role="status" aria-live="polite">0</span>
+              </div>
+              <div class="data-stat">
+                <span class="data-label">Storage Used:</span>
+                <span id="data-storage-used" role="status" aria-live="polite">0 KB</span>
+              </div>
+              <div class="data-stat">
+                <span class="data-label">Last Backup:</span>
+                <span id="data-last-backup" role="status" aria-live="polite">Never</span>
+              </div>
+            </div>
+            <div class="data-actions" role="group" aria-label="Data actions">
+              <button id="backup-data" class="btn btn-primary" aria-label="Create backup">💾 Create Backup</button>
+              <button id="restore-data" class="btn btn-secondary" aria-label="Restore from backup">📥 Restore Backup</button>
+              <button id="export-all" class="btn btn-outline" aria-label="Export all data">📤 Export All Data</button>
+            </div>
+            <input type="file" id="restore-file" accept=".json" style="display:none" aria-hidden="true">
+          </fieldset>
+
+          <fieldset class="setting-group" aria-labelledby="system-info-title">
+            <legend id="system-info-title">ℹ️ System Information</legend>
+            <div class="system-info" role="group" aria-label="System information">
+              <div class="info-item">
+                <span class="info-label">Version:</span>
+                <span class="info-value">SilentStacks v2.0</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Modules Loaded:</span>
+                <span id="modules-loaded" class="info-value">0/0</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">System Status:</span>
+                <span id="system-health" class="info-value">Checking…</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Last Updated:</span>
+                <span class="info-value">August 2025</span>
+              </div>
+            </div>
+            <div class="system-actions" role="group" aria-label="System actions">
+              <button id="show-diagnostics" class="btn btn-outline" aria-label="Show diagnostics">🔧 Show Diagnostics</button>
+              <button id="restart-system" class="btn btn-warning" aria-label="Restart application">🔄 Restart System</button>
+              <button id="check-updates" class="btn btn-ghost" aria-label="Check for updates">🔍 Check for Updates</button>
+            </div>
+          </fieldset>
+        </form>
       </section>
     </main>
   </div>
 
-  <div id="notifications" class="notifications-container" role="region" aria-label="Notifications"></div>
-  <div id="modal-container" class="modal-container"></div>
+  <!-- Notifications -->
+  <div class="notifications-container" id="notifications" role="region" aria-label="Notifications"></div>
+
+  <!-- Modal Container (dialogs should set role='dialog' and aria-modal='true') -->
+  <div id="modal-container" class="modal-container" aria-live="polite"></div>
 
   <script>
     // Simple helpers for the loader
     function updateLoadingStatus(msg){var n=document.getElementById('loading-status'); if(n) n.textContent=msg;}
     function hideLoading(){document.getElementById('loading-screen').style.display='none'; document.getElementById('app-container').style.display='block';}
 
-    // Basic tab switching for minimal UI
+    // Keyboard tab switching (click handler kept for mouse users)
     document.addEventListener('click', (e) => {
-      const tab = e.target.closest('.nav-tab');
+      const tab = e.target.closest('.nav-tab[role="tab"]');
       if (!tab) return;
-      const target = tab.getAttribute('data-section');
+      const target = tab.getAttribute('aria-controls');
       if (!target) return;
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+      document.querySelectorAll('.nav-tab[role="tab"]').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+        t.setAttribute('tabindex', '-1');
+      });
+      document.querySelectorAll('.section[role="tabpanel"]').forEach(s => s.classList.remove('active'));
+
       tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      tab.setAttribute('tabindex', '0');
       const sec = document.getElementById(target);
-      if (sec) sec.classList.add('active');
+      if (sec) { sec.classList.add('active'); sec.setAttribute('tabindex', '-1'); sec.focus(); }
     });
   </script>
 
-  <!-- Core (must come first) -->
+  <!-- Core -->
   <script>updateLoadingStatus('Loading core…');</script>
   <script src="core/state-manager.js"></script>
   <script src="core/event-bus.js"></script>
@@ -282,12 +565,15 @@
   <script src="core/module-loder.js"></script>
   <script src="core/bootstrap.js"></script>
 
-  <!-- Utils & Config (in modules/) -->
+  <!-- Utils & Config -->
   <script>updateLoadingStatus('Loading utilities & config…');</script>
   <script src="modules/utils/dom-utils.js"></script>
   <script src="modules/utils/validators.js"></script>
   <script src="modules/utils/formatters.js"></script>
   <script src="modules/utils/debug-utils.js"></script>
+  <!-- AAA helpers (script registers as A11yHelpers module) -->
+  <script src="modules/utils/a11y-helpers.js"></script>
+
   <script src="modules/config/app-config.js"></script>
   <script src="modules/config/api-endpoints.js"></script>
   <script src="modules/config/feature-flags.js"></script>
@@ -296,7 +582,7 @@
   <script src="assets/js/fuse.min.js"></script>
   <script src="assets/js/papaparse.min.js"></script>
 
-  <!-- Security & Offline helpers (present in your repo) -->
+  <!-- Security & Offline -->
   <script src="modules/security/input-sanitizer.js"></script>
   <script src="modules/security/security-patches.js"></script>
   <script src="modules/offline/offline-manager.js"></script>
@@ -328,30 +614,26 @@
   <script src="modules/integrations/clinical-trials.js"></script>
   <script src="modules/integrations/mesh-integration.js"></script>
 
-  <!-- Service worker registration -->
+  <!-- Service worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
       });
     }
-  </script>
 
-  <!-- Finalize -->
-  <script>
-    // Bootstrap may set window.SilentStacks.initialized; show app when ready
+    // Wait for bootstrap readiness and reveal UI
     const start = Date.now();
-    const tick = () => {
+    (function tick(){
       if (window.SilentStacks?.initialized) {
         updateLoadingStatus('Ready!');
-        setTimeout(hideLoading, 200);
+        setTimeout(hideLoading, 150);
       } else if (Date.now() - start > 30000) {
         document.getElementById('loading-status').textContent = 'Initialization timed out — refresh to retry.';
       } else {
         setTimeout(tick, 100);
       }
-    };
-    tick();
+    })();
   </script>
 </body>
 </html>
