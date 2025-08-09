@@ -147,7 +147,7 @@
           formData[fid] = input?.value?.trim() ?? '';
         }
 
-        await this.requestManager.addRequest(formData);
+        await this.requestManager.createRequest(formData);
 
         this.clearForm(formId);
         this.stateManager?.setState(`form:${formId}`, null);

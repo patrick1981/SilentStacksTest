@@ -26,12 +26,12 @@
         {
           id: 'add-request',
           title: 'Add a Request',
-          body: 'Go to “Add Request”, enter a PMID or DOI. Click “Fetch Data” to auto-fill. Then click “Add Request”.'
+          body: 'Go to "Add Request", enter a PMID or DOI. Click "Fetch Data" to auto-fill. Then click "Add Request".'
         },
         {
           id: 'bulk-upload',
           title: 'Bulk Upload (PMIDs or CSV)',
-          body: 'Open “All Requests” → “Bulk Upload”. Paste PMIDs (one per line) or upload CSV. The app fetches metadata automatically, even offline (it will queue).'
+          body: 'Open "All Requests" → "Bulk Upload". Paste PMIDs (one per line) or upload CSV. The app fetches metadata automatically, even offline (it will queue).'
         },
         {
           id: 'search',
@@ -46,7 +46,7 @@
         {
           id: 'trials',
           title: 'Clinical Trials',
-          body: 'When a PMID is added, the app tries to find NCT IDs in the abstract, then fetches trial details. You’ll see trial cards on the request.'
+          body: 'When a PMID is added, the app tries to find NCT IDs in the abstract, then fetches trial details. You'll see trial cards on the request.'
         },
         {
           id: 'export',
@@ -56,7 +56,7 @@
         {
           id: 'offline',
           title: 'Working Offline',
-          body: 'Everything works offline. Requests save locally. API calls are queued and sync when online. You don’t have to do anything.'
+          body: 'Everything works offline. Requests save locally. API calls are queued and sync when online. You don't have to do anything.'
         }
       ];
     }

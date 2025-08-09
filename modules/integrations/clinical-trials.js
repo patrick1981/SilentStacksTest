@@ -167,7 +167,7 @@
     _normalizeTrial(apiResponse, fallbackId) {
       try {
         // ClinicalTrials.gov v2-ish JSON wrapper: figure out a few common shapes
-        // We’ll search for the first good-looking study node.
+        // We'll search for the first good-looking study node.
         const obj = apiResponse || {};
         const study =
           obj?.FullStudiesResponse?.FullStudies?.[0]?.Study ||
