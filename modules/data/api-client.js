@@ -306,8 +306,8 @@
         }, task.headers || {});
 
         // Add signature header for integrity (best-effort)
-        const signature = await this._sign(`${task.method}:${task.url}:${task.body ? JSON.stringify(task.body) : ''}`);
-        if (signature) headers['X-SS-Signature'] = signature;
+        //const signature = await this._sign(`${task.method}:${task.url}:${task.body ? JSON.stringify(task.body) : ''}`);
+        //if (signature) headers['X-SS-Signature'] = signature;
 
         const init = {
           method: task.method,
