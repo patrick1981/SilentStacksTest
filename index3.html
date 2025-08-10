@@ -522,6 +522,110 @@
             outline-offset: 2px !important;
         }
 
+        /* Clinical Trials Styles */
+        .clinical-trials-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .clinical-trials-container {
+            display: grid;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .clinical-trial-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .clinical-trial-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .trial-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .trial-nct {
+            color: #17a2b8;
+            font-weight: 500;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .trial-nct:hover {
+            text-decoration: underline;
+        }
+
+        .trial-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .trial-detail {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .trial-phase {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .trial-status {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .trial-status.recruiting {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .trial-status.completed {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .trial-status.active {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .trial-sponsor {
+            color: #666;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .clinical-trials-controls {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+
         /* Utility Classes */
         .sr-only {
             position: absolute;
@@ -680,6 +784,19 @@
                             <button id="lookupDoiBtn" class="btn btn-primary">Lookup</button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Clinical Trials Section -->
+            <div id="clinical-trials-section" class="clinical-trials-section" style="display: none;">
+                <h4>🧪 Related Clinical Trials</h4>
+                <div id="clinical-trials-list" class="clinical-trials-container"></div>
+                <div class="clinical-trials-controls">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="auto-add-trials" checked>
+                        <span class="checkmark"></span>
+                        Auto-add trial phases as tags
+                    </label>
                 </div>
             </div>
 
@@ -1100,6 +1217,181 @@
                 } catch (error) {
                     console.error('DOI lookup failed:', error);
                     throw new Error(`DOI lookup failed: ${error.message}`);
+                }
+            }
+
+            // Clinical Trials API Integration
+            async fetchClinicalTrials(pmid, title) {
+                try {
+                    this.showToast('🧪 Searching for related clinical trials...', 'info');
+                    
+                    // Strategy 1: Search by PMID in references
+                    let trials = [];
+                    if (pmid) {
+                        trials = await this.searchTrialsByPMID(pmid);
+                    }
+                    
+                    // Strategy 2: Search by title keywords if no PMID results
+                    if (trials.length === 0 && title) {
+                        trials = await this.searchTrialsByTitle(title);
+                    }
+                    
+                    if (trials.length > 0) {
+                        this.displayClinicalTrials(trials);
+                        this.showToast(`Found ${trials.length} related clinical trial(s)`, 'success');
+                    } else {
+                        this.showToast('No related clinical trials found', 'info');
+                    }
+                    
+                    return trials;
+                } catch (error) {
+                    console.error('Clinical trials fetch error:', error);
+                    this.showToast('Unable to fetch clinical trials data', 'error');
+                    return [];
+                }
+            }
+
+            async searchTrialsByPMID(pmid) {
+                const searchUrl = `https://clinicaltrials.gov/api/query/study_fields?expr=PMID+${pmid}&fields=NCTId,BriefTitle,Phase,OverallStatus,LeadSponsorName,Condition,InterventionName,StartDate,CompletionDate&fmt=json`;
+                
+                try {
+                    const response = await this.apiRequest(searchUrl);
+                    
+                    if (response.StudyFieldsResponse?.StudyFields) {
+                        return response.StudyFieldsResponse.StudyFields.map(this.formatTrialData);
+                    }
+                    return [];
+                } catch (error) {
+                    console.error('PMID clinical trials search error:', error);
+                    return [];
+                }
+            }
+
+            async searchTrialsByTitle(title) {
+                // Extract key medical terms from title
+                const keywords = this.extractMedicalKeywords(title);
+                if (keywords.length === 0) return [];
+                
+                const searchTerm = keywords.slice(0, 3).join('+AND+'); // Use top 3 keywords
+                const searchUrl = `https://clinicaltrials.gov/api/query/study_fields?expr=${encodeURIComponent(searchTerm)}&fields=NCTId,BriefTitle,Phase,OverallStatus,LeadSponsorName,Condition,InterventionName,StartDate,CompletionDate&fmt=json&max_rnk=5`;
+                
+                try {
+                    const response = await this.apiRequest(searchUrl);
+                    
+                    if (response.StudyFieldsResponse?.StudyFields) {
+                        return response.StudyFieldsResponse.StudyFields.map(this.formatTrialData);
+                    }
+                    return [];
+                } catch (error) {
+                    console.error('Title clinical trials search error:', error);
+                    return [];
+                }
+            }
+
+            extractMedicalKeywords(title) {
+                const medicalTerms = [
+                    'cancer', 'tumor', 'carcinoma', 'oncology', 'chemotherapy', 'radiation',
+                    'diabetes', 'insulin', 'glucose', 'cardiovascular', 'cardiac', 'heart',
+                    'hypertension', 'stroke', 'myocardial', 'coronary', 'artery',
+                    'alzheimer', 'dementia', 'parkinson', 'neurological', 'brain',
+                    'depression', 'anxiety', 'psychiatric', 'mental', 'therapy',
+                    'infection', 'antibiotic', 'vaccine', 'immune', 'inflammatory',
+                    'arthritis', 'rheumatoid', 'osteoporosis', 'bone', 'joint',
+                    'asthma', 'copd', 'respiratory', 'lung', 'pulmonary',
+                    'kidney', 'renal', 'dialysis', 'transplant', 'liver', 'hepatic'
+                ];
+                
+                const words = title.toLowerCase().split(/\W+/);
+                return words.filter(word => 
+                    word.length > 4 && 
+                    (medicalTerms.includes(word) || /^[a-z]{6,}$/.test(word))
+                ).slice(0, 5);
+            }
+
+            formatTrialData(trial) {
+                return {
+                    nctId: trial.NCTId?.[0] || 'Unknown',
+                    title: trial.BriefTitle?.[0] || 'No title available',
+                    phase: trial.Phase?.[0] || 'Not specified',
+                    status: trial.OverallStatus?.[0] || 'Unknown',
+                    sponsor: trial.LeadSponsorName?.[0] || 'Not specified',
+                    condition: trial.Condition?.[0] || 'Not specified',
+                    intervention: trial.InterventionName?.[0] || 'Not specified',
+                    startDate: trial.StartDate?.[0] || 'Not specified',
+                    completionDate: trial.CompletionDate?.[0] || 'Not specified'
+                };
+            }
+
+            displayClinicalTrials(trials) {
+                const container = document.getElementById('clinical-trials-list');
+                const section = document.getElementById('clinical-trials-section');
+                
+                if (!container || !section) return;
+                
+                container.innerHTML = '';
+                
+                trials.forEach(trial => {
+                    const trialCard = document.createElement('div');
+                    trialCard.className = 'clinical-trial-card';
+                    
+                    const statusClass = trial.status.toLowerCase().replace(/\s+/g, '-');
+                    
+                    trialCard.innerHTML = `
+                        <div class="trial-title">${this.escapeHtml(trial.title)}</div>
+                        <a href="https://clinicaltrials.gov/ct2/show/${trial.nctId}" 
+                           target="_blank" class="trial-nct">${trial.nctId}</a>
+                        
+                        <div class="trial-details">
+                            <div class="trial-detail">
+                                <span>📊 Phase:</span>
+                                <span class="trial-phase">${this.escapeHtml(trial.phase)}</span>
+                            </div>
+                            <div class="trial-detail">
+                                <span>🎯 Status:</span>
+                                <span class="trial-status ${statusClass}">${this.escapeHtml(trial.status)}</span>
+                            </div>
+                            <div class="trial-detail">
+                                <span>🏥 Condition:</span>
+                                <span>${this.escapeHtml(trial.condition)}</span>
+                            </div>
+                            <div class="trial-detail">
+                                <span>💊 Intervention:</span>
+                                <span>${this.escapeHtml(trial.intervention)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="trial-sponsor">
+                            <strong>Sponsor:</strong> ${this.escapeHtml(trial.sponsor)}
+                        </div>
+                    `;
+                    
+                    container.appendChild(trialCard);
+                });
+                
+                section.style.display = 'block';
+                
+                // Auto-add trial phases as tags if enabled
+                if (document.getElementById('auto-add-trials')?.checked) {
+                    const phases = [...new Set(trials.map(t => t.phase).filter(p => p !== 'Not specified'))];
+                    phases.forEach(phase => {
+                        this.addTrialPhaseTag(phase);
+                    });
+                }
+            }
+
+            addTrialPhaseTag(phase) {
+                const tagsInput = document.getElementById('tags');
+                if (!tagsInput) return;
+                
+                const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+                const phaseTag = `trial-${phase.toLowerCase().replace(/\s+/g, '-')}`;
+                
+                if (!currentTags.includes(phaseTag)) {
+                    currentTags.push(phaseTag);
+                    tagsInput.value = currentTags.join(', ');
+                    
+                    // Trigger change event
+                    tagsInput.dispatchEvent(new Event('change'));
                 }
             }
 
@@ -1594,7 +1886,11 @@
                     try {
                         const metadata = await this.lookupPubMed(pmid);
                         this.fillForm(metadata);
-                        this.showToast('Metadata retrieved successfully', 'success');
+
+                        // Fetch clinical trials
+                        await this.fetchClinicalTrials(pmid, metadata.title);
+
+                        this.showToast('PMID lookup completed successfully!', 'success');
                     } catch (error) {
                         this.showToast(error.message, 'error');
                     } finally {
@@ -1615,7 +1911,11 @@
                     try {
                         const metadata = await this.lookupDOI(doi);
                         this.fillForm(metadata);
-                        this.showToast('Metadata retrieved successfully', 'success');
+
+                        // Fetch clinical trials
+                        await this.fetchClinicalTrials(null, metadata.title);
+
+                        this.showToast('DOI lookup completed successfully!', 'success');
                     } catch (error) {
                         this.showToast(error.message, 'error');
                     } finally {
