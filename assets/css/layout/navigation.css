@@ -1,4 +1,90 @@
 /* Navigation System */
+
+/* Header Layout */
+.header {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-brand h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.version {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    font-weight: var(--font-weight-normal);
+    margin-left: var(--space-sm);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.theme-selector {
+    position: relative;
+}
+
+.theme-select {
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    min-height: 44px;
+    min-width: 140px;
+}
+
+.theme-select:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+    border-color: var(--primary-color);
+}
+
+.help-button {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    min-height: 44px;
+}
+
+.help-button:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-secondary);
+}
+
+.help-button:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
 .nav-tabs {
     position: sticky;
     top: 0;
