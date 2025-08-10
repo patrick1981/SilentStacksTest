@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SilentStacks</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta name="color-scheme" content="light dark" />
+</head>
+<body>
+  <main id="main" role="main">
+    <!-- Connection Status Indicator -->
+    <div id="connection-status" class="connection-indicator connection-clean">
+      <span id="connection-text">●</span>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="header">
+      <div class="container">
+        <div class="header-brand">
+          <h1>SilentStacks</h1>
+          <span class="version">v2.0 - Security & Performance Ready</span>
+        </div>
+        
+        <!-- Theme and Help Controls -->
+        <div class="header-controls">
+          <div class="theme-selector">
+            <label for="theme-select" class="sr-only">Choose theme</label>
+            <select id="theme-select" class="theme-select" aria-label="Select theme">
+              <option value="light">☀️ Light</option>
+              <option value="dark">🌙 Dark</option>
+              <option value="high-contrast">⚡ High Contrast</option>
+            </select>
+          </div>
+          
+          <button id="help-button" class="help-button" aria-label="Open help guide" title="Press Alt+H for help">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Help
+          </button>
+        </div>
+        
+        <nav class="nav-tabs" role="tablist">
+          <button class="nav-tab active" data-section="dashboard" role="tab" aria-selected="true">
+            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Dashboard
+          </button>
+          <button class="nav-tab" data-section="add-request" role="tab" aria-selected="false">
+            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            Add Request
+          </button>
+          <button class="nav-tab" data-section="all-requests" role="tab" aria-selected="false">
+            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            All Requests
+          </button>
+          <button class="nav-tab" data-section="import-export" role="tab" aria-selected="false">
+            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14,2 14,8 20,8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            Import/Export
+          </button>
+          <button class="nav-tab" data-section="settings" role="tab" aria-selected="false">
+            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="m12 1 1.68 4.02L18 6.7l-1.02 4.98L21 12l-4.02 1.68L15.3 18l-4.98-1.02L12 21l-1.68-4.02L6 15.3l1.02-4.98L3 12l4.02-1.68L8.7 6l4.98 1.02Z"></path>
+            </svg>
+            Settings
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="main-content">
+      <div class="container">
+        
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+          <h2>Dashboard</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Total Requests</h3>
+              <p class="stat-number" id="total-requests">0</p>
+            </div>
+            <div class="stat-card">
+              <h3>Pending</h3>
+              <p class="stat-number" id="pending-requests">0</p>
+            </div>
+            <div class="stat-card">
+              <h3>Completed</h3>
+              <p class="stat-number" id="completed-requests">0</p>
+            </div>
+            <div class="stat-card">
+              <h3>Urgent</h3>
+              <p class="stat-number" id="urgent-requests">0</p>
+            </div>
+          </div>
+
+          <h3>Recent Requests</h3>
+          <div id="recent-requests" class="request-list">
+            <p class="empty-message">No recent requests</p>
+          </div>
+        </section>
+
+        <!-- Add Request Section -->
+        <section id="add-request" class="section">
+          <h2>Add New Request</h2>
+          
+          <!-- Enhanced Lookup Section -->
+          <div class="enhanced-lookup-section">
+            <h3>⚡ Enhanced Research Lookup</h3>
+            <p>Enter a PMID or DOI to automatically fetch complete metadata, MeSH terms, and clinical trials data</p>
+            
+            <div class="form-group">
+              <label for="pmid">PMID (PubMed ID)</label>
+              <div class="input-with-button enhanced">
+                <input type="text" id="pmid" name="pmid" placeholder="e.g., 16979104" data-type="pmid">
+                <button type="button" id="lookup-pmid" class="lookup-btn">
+                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                  </svg>
+                  Lookup
+                </button>
+              </div>
+              <div id="pmid-status" class="lookup-status"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="doi">DOI (Digital Object Identifier)</label>
+              <div class="input-with-button enhanced">
+                <input type="text" id="doi" name="doi" placeholder="e.g., 10.1001/jama.2006.2221" data-type="doi">
+                <button type="button" id="lookup-doi" class="lookup-btn">
+                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                  </svg>
+                  Lookup
+                </button>
+              </div>
+              <div id="doi-status" class="lookup-status"></div>
+            </div>
+
+            <!-- Clinical Trials Lookup Section -->
+            <div class="form-group">
+              <label>Clinical Trials Lookup</label>
+              <button type="button" id="lookup-clinical-trials" class="btn btn-secondary">
+                🧪 Search Clinical Trials
+              </button>
+              <div id="clinical-trials-status" class="lookup-status"></div>
+            </div>
+          </div>
+
+          <form id="request-form" class="request-form">
+            <div class="form-group">
+              <label for="docline">DOCLINE Number</label>
+              <input type="text" id="docline" name="docline" placeholder="e.g., DOC2025001" class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label for="title">Article Title</label>
+              <input type="text" id="title" name="title" placeholder="Enter article title" class="form-control auto-fillable">
+            </div>
+
+            <div class="form-group">
+              <label for="authors">Authors</label>
+              <input type="text" id="authors" name="authors" placeholder="Smith J, Johnson A, Wilson B" class="form-control auto-fillable">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="journal">Journal</label>
+                <input type="text" id="journal" name="journal" placeholder="e.g., Nature Medicine" class="form-control auto-fillable">
+              </div>
+              <div class="form-group">
+                <label for="year">Year</label>
+                <input type="number" id="year" name="year" placeholder="2024" min="1900" max="2025" class="form-control auto-fillable">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="volume">Volume</label>
+                <input type="text" id="volume" name="volume" placeholder="e.g., 30" class="form-control auto-fillable">
+              </div>
+              <div class="form-group">
+                <label for="issue">Issue</label>
+                <input type="text" id="issue" name="issue" placeholder="e.g., 2" class="form-control auto-fillable">
+              </div>
+              <div class="form-group">
+                <label for="pages">Pages</label>
+                <input type="text" id="pages" name="pages" placeholder="e.g., 123-130" class="form-control auto-fillable">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="patron-email">Patron Email</label>
+              <input type="email" id="patron-email" name="patronEmail" placeholder="patron@example.com" class="form-control">
+            </div>
+
+            <div class="form-group">
+              <label for="priority">Priority</label>
+              <select id="priority" name="priority" class="form-control priority-select">
+                <option value="normal">Normal</option>
+                <option value="rush">Rush</option>
+                <option value="urgent">Urgent</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea id="notes" name="notes" rows="3" placeholder="Additional notes" class="form-control"></textarea>
+            </div>
+
+            <!-- MeSH Section (populated by API) -->
+            <div id="mesh-section" class="mesh-section" style="display: none;">
+              <h4>🏷️ MeSH Headings</h4>
+              <div id="mesh-tags" class="mesh-tags-container"></div>
+              <div class="mesh-controls">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="auto-add-mesh" checked>
+                  <span class="checkmark"></span>
+                  Auto-add major topics as tags
+                </label>
+              </div>
+            </div>
+
+            <!-- Clinical Trials Section (populated by API) -->
+            <div id="clinical-trials-section" class="clinical-trials-section" style="display: none;">
+              <h4>🧪 Related Clinical Trials</h4>
+              <div id="clinical-trials-list" class="clinical-trials-container"></div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Add Request</button>
+              <button type="button" id="clear-form" class="btn btn-secondary">Clear Form</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- All Requests Section -->
+        <section id="all-requests" class="section">
+          <h2>All Requests</h2>
+          
+          <!-- Search and Filter Controls -->
+          <div class="search-filter-controls">
+            <div class="search-container">
+              <input type="text" id="search-input" placeholder="Search requests..." class="search-input">
+              <button class="search-clear" id="clear-search">×</button>
+            </div>
+            
+            <div class="filter-controls">
+              <select id="status-filter" class="filter-select">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="fulfilled">Fulfilled</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="on-hold">On Hold</option>
+              </select>
+              
+              <select id="priority-filter" class="filter-select">
+                <option value="">All Priority</option>
+                <option value="urgent">Urgent</option>
+                <option value="rush">Rush</option>
+                <option value="normal">Normal</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sort and Bulk Controls -->
+          <div class="table-controls">
+            <div class="sort-controls">
+              <span>Sort by:</span>
+              <button class="sort-btn sort-desc" data-field="createdAt">📅 Date</button>
+              <button class="sort-btn" data-field="priority">🚨 Priority</button>
+              <button class="sort-btn" data-field="title">📄 Title</button>
+              <button class="sort-btn" data-field="journal">📚 Journal</button>
+              <button class="sort-btn" data-field="status">📊 Status</button>
+            </div>
+            <div class="results-info">
+              <span id="results-count">0 requests</span>
+              <label class="select-all-label">
+                <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)"> Select All
+              </label>
+              <button onclick="deleteSelectedRequests()" class="btn btn-danger btn-small" id="delete-selected-btn" style="display: none;">
+                🗑️ Delete Selected
+              </button>
+            </div>
+          </div>
+
+          <!-- Request List -->
+          <div id="request-list" class="request-list">
+            <p class="empty-message">No requests found</p>
+          </div>
+
+          <!-- Bulk Operations Section -->
+          <div class="bulk-operations-section">
+            <h3>📊 Bulk Operations</h3>
+            
+            <!-- Bulk Paste Upload -->
+            <div class="bulk-paste-section">
+              <h4>📥 Bulk Paste & Upload</h4>
+              <p>Paste PMIDs (one per line) or upload CSV files. Automatic metadata enrichment with clinical trials data.</p>
+              
+              <div class="form-group">
+                <label for="bulk-paste-textarea">Enter PMIDs or CSV Data</label>
+                <textarea id="bulk-paste-textarea" class="form-control" rows="8" 
+                  placeholder="Enter PMIDs (one per line):
+16979104
+32658653
+33248227
+
+Or CSV format:
+PMID,DOCLINE,Status,Priority
+16979104,DOC2025001,pending,normal
+32658653,DOC2025002,in-progress,rush"></textarea>
+              </div>
+              
+              <div class="bulk-paste-options">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="bulk-paste-auto-fetch" checked>
+                  <span class="checkmark"></span>
+                  Auto-fetch PubMed metadata
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="bulk-paste-fetch-trials" checked>
+                  <span class="checkmark"></span>
+                  Include clinical trials data
+                </label>
+              </div>
+              
+              <button id="bulk-paste-btn" class="btn btn-primary">
+                🚀 Process Bulk Data
+              </button>
+              
+              <div id="bulk-paste-status" class="bulk-upload-status"></div>
+            </div>
+
+            <!-- CSV File Upload -->
+            <div class="csv-upload-section">
+              <h4>📁 CSV File Upload</h4>
+              <input type="file" id="csv-file-input" accept=".csv" class="file-input">
+              <button id="upload-csv-btn" class="btn btn-primary">Upload CSV</button>
+              <div id="csv-upload-status" class="bulk-upload-status"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Import/Export Section -->
+        <section id="import-export" class="section">
+          <h2>Import/Export</h2>
+          
+          <div class="import-export-grid">
+            <!-- Import Card -->
+            <div class="import-export-card">
+              <h3>
+                <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                Import Data
+              </h3>
+              
+              <div class="button-group">
+                <button class="btn btn-primary" id="import-csv">Import CSV</button>
+                <button class="btn btn-primary" id="import-json">Import JSON</button>
+              </div>
+              
+              <input type="file" id="import-file" accept=".csv,.json" class="file-input" style="display: none;">
+              
+              <div id="import-status" class="import-status"></div>
+            </div>
+
+            <!-- Export Card -->
+            <div class="import-export-card">
+              <h3>
+                <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                  <line x1="12" y1="15" x2="8" y2="11"></line>
+                  <line x1="12" y1="15" x2="16" y2="11"></line>
+                </svg>
+                Export Data
+              </h3>
+              
+              <div class="button-group">
+                <button class="btn btn-success" id="export-csv">Export CSV</button>
+                <button class="btn btn-success" id="export-json">Export JSON</button>
+                <button class="btn btn-success" id="export-nlm">Export NLM</button>
+              </div>
+              
+              <div class="export-info">
+                <p>Export formats include complete metadata, MeSH terms, and clinical trial information.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="section">
+          <h2>Settings</h2>
+          
+          <div class="settings-form">
+            <div class="form-group">
+              <label for="theme-select">Theme</label>
+              <select id="theme-select">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="high-contrast">High Contrast</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="ncbi-api-key">NCBI API Key (Optional)</label>
+              <input type="password" id="ncbi-api-key" placeholder="Enter API key for higher rate limits">
+              <small class="form-help">Without API key: 3 requests/second. With API key: 10 requests/second.</small>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" id="save-settings" class="btn btn-primary">Save Settings</button>
+              <button type="button" id="reset-settings" class="btn btn-secondary">Reset to Defaults</button>
+              <button type="button" id="clear-all-data" class="btn btn-danger">Clear All Data</button>
+            </div>
+          </div>
+
+          <!-- Performance Section -->
+          <div class="performance-stats">
+            <h4>Performance Statistics</h4>
+            <div id="performance-metrics">
+              <div class="storage-info">
+
+            <div class="settings-group">
+              <h3>Help & Support</h3>
+              <div class="setting-item">
+                <button id="show-help" class="btn btn-secondary">📖 Show Help</button>
+                <button id="show-diagnostics" class="btn btn-secondary">🔍 System Diagnostics</button>
+                <small>Access integrated help and system health information.</small>
+              </div>
+            </div>
+                <h4>Storage Usage</h4>
+                <div id="storage-breakdown"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagnostics Section -->
+          <div class="form-actions">
+            <button type="button" id="show-diagnostics" class="btn btn-secondary">Show Diagnostics</button>
+            <button type="button" id="export-diagnostics" class="btn btn-secondary">Export Health Report</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="modal-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p id="loading-message">Loading...</p>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal-container" style="display: none;">
+      <div class="modal-overlay">
+        <div class="modal-panel">
+          <div class="modal-header">
+            <h3>📖 SilentStacks Help</h3>
+            <button class="modal-close" onclick="closeHelpModal()">×</button>
+          </div>
+          <div class="modal-content">
+            <div class="help-search">
+              <input type="text" id="help-search-input" placeholder="Search help topics..." class="form-control">
+            </div>
+            <div class="help-topics">
+              <div class="help-topic">
+                <h4>Adding Requests</h4>
+                <p>Enter a PMID or DOI and click "Lookup" to automatically fetch metadata, MeSH terms, and clinical trials data.</p>
+              </div>
+              <div class="help-topic">
+                <h4>Bulk Upload</h4>
+                <p>Go to "All Requests" and use the bulk operations section to paste PMIDs or upload CSV files with automatic enrichment.</p>
+              </div>
+              <div class="help-topic">
+                <h4>Clinical Trials</h4>
+                <p>The system automatically searches for related clinical trials and displays trial phases, status, and enrollment data.</p>
+              </div>
+              <div class="help-topic">
+                <h4>MeSH Headings</h4>
+                <p>Medical Subject Headings are automatically extracted from PubMed and can be clicked to add as tags.</p>
+              </div>
+              <div class="help-topic">
+                <h4>Search & Filter</h4>
+                <p>Use the search box for fuzzy text search. Filter by status, priority, or click MeSH tags to filter by medical topics.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- External Dependencies -->
+  <script src="assets/js/fuse.min.js"></script>
+  <script src="assets/js/papaparse.min.js"></script>
+
+  <!-- Core Infrastructure (load first) -->
+  <script src="core/diagnostics.js"></script>
+  <script src="core/event-bus.js"></script>
+  <script src="core/state-manager.js"></script>
+
+  <!-- Security Layer (load early) -->
+  <script src="modules/security/input-sanitizer.js"></script>
+  <script src="modules/security/security-patches.js"></script>
+
+  <!-- Utility Modules -->
+  <script src="modules/utils/dom-utils.js"></script>
+  <script src="modules/utils/validators.js"></script>
+  <script src="modules/utils/formatters.js"></script>
+  <script src="modules/utils/debug-utils.js"></script>
+
+  <!-- Core bootstrap (modules are dynamically loaded by bootstrap) -->
+  <script src="core/bootstrap.js" defer></script>
+
+  <!-- Register service worker with correct GitHub Pages scope -->
+  <script>
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+    // e.g. /SilentStacksTest
+    const base = location.pathname.split('/').slice(0, 2).join('/') || '';
+    navigator.serviceWorker.register(`${base}/service-worker.js`, { scope: `${base}/` })
+      .catch(console.error);
+  })();
+  </script>
+
+  <!-- Initialize Application -->
+  <script>
+    // Global state initialization
+    window.SilentStacks = window.SilentStacks || {};
+    window.SilentStacks.state = window.SilentStacks.state || {
+      selectedRequests: new Set(),
+      currentTheme: 'light',
+      isOnline: navigator.onLine
+    };
+
+    // Connection monitoring
+    function updateConnectionStatus() {
+      const isOnline = navigator.onLine;
+      window.SilentStacks.state.isOnline = isOnline;
+      
+      const indicator = document.getElementById('connection-status');
+      const text = document.getElementById('connection-text');
+      
+      if (indicator && text) {
+        if (isOnline) {
+          indicator.className = 'connection-indicator connection-clean';
+          text.textContent = '●';
+        } else {
+          indicator.className = 'connection-indicator offline';
+          text.textContent = '⚠ Offline';
+        }
+      }
+      
+      window.SilentStacks?.core?.eventBus?.emit('connection:changed', { isOnline });
+    }
+
+    // Set up connection monitoring
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    updateConnectionStatus();
+
+    // Performance monitoring
+    function monitorPerformance() {
+      if (performance.memory) {
+        const usedMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+        
+        // Warn at 400MB
+        if (usedMB > 400) {
+          console.warn(`⚠️ High memory usage: ${usedMB}MB`);
+          window.SilentStacks?.core?.eventBus?.emit('performance:warning', { memoryMB: usedMB });
+        }
+        
+        // Critical at 600MB
+        if (usedMB > 600) {
+          console.error(`🚨 Critical memory usage: ${usedMB}MB`);
+          window.SilentStacks?.core?.eventBus?.emit('performance:critical', { memoryMB: usedMB });
+        }
+      }
+    }
+
+    // Monitor every 30 seconds
+    setInterval(monitorPerformance, 30000);
+
+    console.log('🚀 SilentStacks v2.0 - Security & Performance Ready');
+  </script>
+</body>
+</html>
