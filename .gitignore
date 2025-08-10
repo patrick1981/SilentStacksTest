@@ -1,2 +1,19 @@
+# builds & bundles
+dist/
+*.zip
+
+# node stuff (even if you’re not using it yet)
+node_modules/
+npm-debug.log*
+
+# coverage / test outputs
+coverage/
+reports/
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
 node_modules/
 .env
