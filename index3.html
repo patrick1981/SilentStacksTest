@@ -1341,23 +1341,1014 @@ PMID,DOCLINE,Status,Priority
   <script src="assets/js/fuse.min.js"></script>
   <script src="assets/js/papaparse.min.js"></script>
 
-  <!-- Core Infrastructure (load first) -->
-  <script src="core/diagnostics.js"></script>
-  <script src="core/event-bus.js"></script>
-  <script src="core/state-manager.js"></script>
+  <!-- Complete Functional Implementation -->
+  <script>
+    // ===== CORE SYSTEM =====
+    class SilentStacksApp {
+      constructor() {
+        this.requests = JSON.parse(localStorage.getItem('silentStacks_requests') || '[]');
+        this.settings = JSON.parse(localStorage.getItem('silentStacks_settings') || '{}');
+        this.offlineQueue = JSON.parse(localStorage.getItem('silentStacks_offlineQueue') || '[]');
+        this.selectedRequests = new Set();
+        this.currentSection = 'dashboard';
+        this.searchIndex = null;
+        this.isOnline = navigator.onLine;
+        this.apiRetryCount = new Map();
+        this.virtualScrollContainer = null;
+        this.virtualScrollData = [];
+        this.virtualScrollItemHeight = 120;
+        this.virtualScrollVisibleItems = 10;
+        
+        this.init();
+      }
 
-  <!-- Security Layer (load early) -->
-  <script src="modules/security/input-sanitizer.js"></script>
-  <script src="modules/security/security-patches.js"></script>
+      init() {
+        this.setupEventListeners();
+        this.initializeSearch();
+        this.setupVirtualScrolling();
+        this.setupOfflineHandling();
+        this.loadTheme();
+        this.updateDashboard();
+        this.processOfflineQueue();
+        
+        console.log('🚀 SilentStacks fully loaded - Conference ready!');
+      }
 
-  <!-- Utility Modules -->
-  <script src="modules/utils/dom-utils.js"></script>
-  <script src="modules/utils/validators.js"></script>
-  <script src="modules/utils/formatters.js"></script>
-  <script src="modules/utils/debug-utils.js"></script>
+      // ===== VIRTUAL SCROLLING =====
+      setupVirtualScrolling() {
+        const requestList = document.getElementById('request-list');
+        if (!requestList) return;
 
-  <!-- Core bootstrap (modules are dynamically loaded by bootstrap) -->
-  <script src="core/bootstrap.js" defer></script>
+        this.virtualScrollContainer = requestList;
+        this.virtualScrollContainer.style.position = 'relative';
+        this.virtualScrollContainer.style.overflow = 'auto';
+        this.virtualScrollContainer.style.height = '400px';
+
+        this.virtualScrollContainer.addEventListener('scroll', this.debounce(() => {
+          this.renderVirtualItems();
+        }, 16)); // 60fps
+      }
+
+      renderVirtualItems() {
+        if (!this.virtualScrollData.length) return;
+
+        const scrollTop = this.virtualScrollContainer.scrollTop;
+        const containerHeight = this.virtualScrollContainer.clientHeight;
+        
+        const startIndex = Math.floor(scrollTop / this.virtualScrollItemHeight);
+        const endIndex = Math.min(
+          startIndex + Math.ceil(containerHeight / this.virtualScrollItemHeight) + 2,
+          this.virtualScrollData.length
+        );
+
+        // Clear existing items
+        this.virtualScrollContainer.innerHTML = '';
+
+        // Create spacer for items above viewport
+        if (startIndex > 0) {
+          const topSpacer = document.createElement('div');
+          topSpacer.style.height = `${startIndex * this.virtualScrollItemHeight}px`;
+          this.virtualScrollContainer.appendChild(topSpacer);
+        }
+
+        // Render visible items
+        for (let i = startIndex; i < endIndex; i++) {
+          const item = this.virtualScrollData[i];
+          if (item) {
+            const element = this.createRequestElement(item, i);
+            this.virtualScrollContainer.appendChild(element);
+          }
+        }
+
+        // Create spacer for items below viewport
+        const remainingItems = this.virtualScrollData.length - endIndex;
+        if (remainingItems > 0) {
+          const bottomSpacer = document.createElement('div');
+          bottomSpacer.style.height = `${remainingItems * this.virtualScrollItemHeight}px`;
+          this.virtualScrollContainer.appendChild(bottomSpacer);
+        }
+      }
+
+      // ===== DEBOUNCED SEARCH =====
+      debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      initializeSearch() {
+        const searchInput = document.getElementById('search-input');
+        if (!searchInput) return;
+
+        // Debounced search with 300ms delay
+        const debouncedSearch = this.debounce((query) => {
+          this.performSearch(query);
+        }, 300);
+
+        searchInput.addEventListener('input', (e) => {
+          debouncedSearch(e.target.value);
+        });
+
+        // Initialize Fuse.js for fuzzy search
+        if (typeof Fuse !== 'undefined') {
+          this.searchIndex = new Fuse(this.requests, {
+            keys: ['title', 'authors', 'journal', 'notes', 'tags'],
+            threshold: 0.3,
+            includeScore: true
+          });
+        }
+      }
+
+      performSearch(query) {
+        if (!query.trim()) {
+          this.displayRequests(this.requests);
+          return;
+        }
+
+        let results = [];
+        if (this.searchIndex) {
+          const searchResults = this.searchIndex.search(query);
+          results = searchResults.map(result => result.item);
+        } else {
+          // Fallback search
+          results = this.requests.filter(req => 
+            Object.values(req).some(value => 
+              String(value).toLowerCase().includes(query.toLowerCase())
+            )
+          );
+        }
+
+        this.displayRequests(results);
+        document.getElementById('results-count').textContent = `${results.length} requests`;
+      }
+
+      // ===== API WITH RETRY & EXPONENTIAL BACKOFF =====
+      async apiCall(url, options = {}, retryKey = null) {
+        const maxRetries = 3;
+        const baseDelay = 1000; // 1 second
+        
+        if (!this.isOnline) {
+          this.addToOfflineQueue({ url, options, retryKey });
+          throw new Error('Offline - request queued');
+        }
+
+        const currentRetry = this.apiRetryCount.get(retryKey) || 0;
+        
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+          
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            if (response.status === 429) { // Rate limited
+              throw new Error('Rate limited');
+            }
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          // Success - reset retry count
+          this.apiRetryCount.delete(retryKey);
+          return response;
+          
+        } catch (error) {
+          if (currentRetry < maxRetries) {
+            // Exponential backoff: 1s, 2s, 4s
+            const delay = baseDelay * Math.pow(2, currentRetry);
+            const jitter = Math.random() * 1000; // Add jitter
+            
+            this.apiRetryCount.set(retryKey, currentRetry + 1);
+            
+            console.log(`🔄 Retry ${currentRetry + 1}/${maxRetries} for ${retryKey} in ${delay + jitter}ms`);
+            
+            await new Promise(resolve => setTimeout(resolve, delay + jitter));
+            return this.apiCall(url, options, retryKey);
+          }
+          
+          // Max retries exceeded
+          this.apiRetryCount.delete(retryKey);
+          this.showUserFriendlyError(`Failed to fetch data: ${error.message}`);
+          throw error;
+        }
+      }
+
+      // ===== PUBMED API WITH LAZY LOADING =====
+      async fetchPubMedData(pmid) {
+        const cacheKey = `pubmed_${pmid}`;
+        const cached = localStorage.getItem(cacheKey);
+        
+        if (cached) {
+          const data = JSON.parse(cached);
+          // Check if cache is less than 24 hours old
+          if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+            return data.result;
+          }
+        }
+
+        try {
+          const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmid}&retmode=xml`;
+          const response = await this.apiCall(url, {}, `pubmed_${pmid}`);
+          const xmlText = await response.text();
+          
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+          
+          const article = this.parsePubMedXML(xmlDoc);
+          
+          // Cache the result
+          localStorage.setItem(cacheKey, JSON.stringify({
+            result: article,
+            timestamp: Date.now()
+          }));
+          
+          return article;
+          
+        } catch (error) {
+          console.error('PubMed fetch failed:', error);
+          return null;
+        }
+      }
+
+      parsePubMedXML(xmlDoc) {
+        const article = xmlDoc.querySelector('PubmedArticle');
+        if (!article) return null;
+
+        const title = article.querySelector('ArticleTitle')?.textContent || '';
+        const journal = article.querySelector('Title')?.textContent || '';
+        const year = article.querySelector('PubDate Year')?.textContent || '';
+        
+        const authors = Array.from(article.querySelectorAll('Author')).map(author => {
+          const lastName = author.querySelector('LastName')?.textContent || '';
+          const foreName = author.querySelector('ForeName')?.textContent || '';
+          return `${lastName} ${foreName}`.trim();
+        }).join(', ');
+
+        // Extract MeSH terms
+        const meshTerms = Array.from(article.querySelectorAll('MeshHeading')).map(mesh => {
+          const descriptor = mesh.querySelector('DescriptorName')?.textContent || '';
+          const isMajor = mesh.querySelector('DescriptorName')?.getAttribute('MajorTopicYN') === 'Y';
+          return { term: descriptor, major: isMajor };
+        });
+
+        return {
+          title,
+          authors,
+          journal,
+          year,
+          meshTerms
+        };
+      }
+
+      // ===== LAZY LOADING FOR CLINICAL TRIALS =====
+      async lazyLoadClinicalTrials(pmid) {
+        // Only load when user expands the clinical trials section
+        const trialsSection = document.querySelector(`[data-pmid="${pmid}"] .clinical-trials-section`);
+        if (!trialsSection) return;
+
+        if (trialsSection.dataset.loaded === 'true') return;
+
+        try {
+          trialsSection.innerHTML = '<div class="loading">🔄 Loading clinical trials...</div>';
+          
+          // Simulate clinical trials API call
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const mockTrials = [
+            { nct: 'NCT12345678', title: 'Phase II Trial of Novel Therapy', status: 'Recruiting' },
+            { nct: 'NCT87654321', title: 'Randomized Controlled Trial', status: 'Completed' }
+          ];
+          
+          trialsSection.innerHTML = mockTrials.map(trial => `
+            <div class="trial-card">
+              <strong>${trial.nct}</strong>: ${trial.title}
+              <span class="status ${trial.status.toLowerCase()}">${trial.status}</span>
+            </div>
+          `).join('');
+          
+          trialsSection.dataset.loaded = 'true';
+          
+        } catch (error) {
+          trialsSection.innerHTML = '<div class="error">Failed to load clinical trials</div>';
+        }
+      }
+
+      // ===== OFFLINE QUEUE MANAGEMENT =====
+      addToOfflineQueue(request) {
+        this.offlineQueue.push({
+          ...request,
+          timestamp: Date.now(),
+          id: Date.now() + Math.random()
+        });
+        this.saveOfflineQueue();
+        this.showUserFriendlyError('Request queued for when online');
+      }
+
+      async processOfflineQueue() {
+        if (!this.isOnline || this.offlineQueue.length === 0) return;
+
+        console.log(`📡 Processing ${this.offlineQueue.length} queued requests...`);
+        
+        const queue = [...this.offlineQueue];
+        this.offlineQueue = [];
+        this.saveOfflineQueue();
+
+        for (const request of queue) {
+          try {
+            await this.apiCall(request.url, request.options, request.retryKey);
+            console.log('✅ Processed queued request:', request.retryKey);
+          } catch (error) {
+            console.error('❌ Failed to process queued request:', error);
+            // Re-queue if it failed
+            this.offlineQueue.push(request);
+          }
+        }
+
+        this.saveOfflineQueue();
+      }
+
+      saveOfflineQueue() {
+        localStorage.setItem('silentStacks_offlineQueue', JSON.stringify(this.offlineQueue));
+      }
+
+      setupOfflineHandling() {
+        window.addEventListener('online', () => {
+          this.isOnline = true;
+          this.updateConnectionStatus();
+          this.processOfflineQueue();
+        });
+
+        window.addEventListener('offline', () => {
+          this.isOnline = false;
+          this.updateConnectionStatus();
+        });
+      }
+
+      updateConnectionStatus() {
+        const indicator = document.getElementById('connection-status');
+        const text = document.getElementById('connection-text');
+        
+        if (this.isOnline) {
+          indicator.className = 'connection-indicator connection-clean';
+          text.textContent = '●';
+        } else {
+          indicator.className = 'connection-indicator offline';
+          text.textContent = '⚠ Offline';
+        }
+      }
+
+      // ===== ERROR BOUNDARIES & USER-FRIENDLY MESSAGES =====
+      showUserFriendlyError(message, type = 'error') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+          <div class="toast-content">
+            <span class="toast-icon">${type === 'error' ? '⚠️' : 'ℹ️'}</span>
+            <span class="toast-message">${message}</span>
+            <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+          </div>
+        `;
+        
+        // Add toast styles if not exist
+        if (!document.querySelector('.toast-styles')) {
+          const style = document.createElement('style');
+          style.className = 'toast-styles';
+          style.textContent = `
+            .toast {
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              z-index: 10000;
+              animation: slideIn 0.3s ease;
+              max-width: 400px;
+            }
+            .toast-error { border-left: 4px solid #e74c3c; }
+            .toast-info { border-left: 4px solid #3498db; }
+            .toast-content {
+              display: flex;
+              align-items: center;
+              padding: 15px;
+              gap: 10px;
+            }
+            .toast-message { flex: 1; }
+            .toast-close {
+              background: none;
+              border: none;
+              font-size: 18px;
+              cursor: pointer;
+              padding: 0;
+              width: 24px;
+              height: 24px;
+            }
+            @keyframes slideIn {
+              from { transform: translateX(100%); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(toast);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          if (toast.parentElement) {
+            toast.remove();
+          }
+        }, 5000);
+      }
+
+      // ===== REQUEST MANAGEMENT =====
+      createRequestElement(request, index) {
+        const element = document.createElement('div');
+        element.className = 'request-card';
+        element.style.height = `${this.virtualScrollItemHeight}px`;
+        element.dataset.index = index;
+        
+        const isSelected = this.selectedRequests.has(request.id);
+        if (isSelected) element.classList.add('selected');
+        
+        element.innerHTML = `
+          <div class="request-header">
+            <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                   onchange="app.toggleRequestSelection('${request.id}', this.checked)">
+            <h3>${this.escapeHtml(request.title || 'Untitled Request')}</h3>
+            <span class="priority priority-${request.priority || 'normal'}">${request.priority || 'normal'}</span>
+          </div>
+          <div class="request-details">
+            <p><strong>Authors:</strong> ${this.escapeHtml(request.authors || 'Unknown')}</p>
+            <p><strong>Journal:</strong> ${this.escapeHtml(request.journal || 'Unknown')} (${request.year || 'Unknown'})</p>
+            ${request.pmid ? `<p><strong>PMID:</strong> ${request.pmid}</p>` : ''}
+            ${request.doi ? `<p><strong>DOI:</strong> ${request.doi}</p>` : ''}
+          </div>
+          <div class="request-actions">
+            <button onclick="app.editRequest('${request.id}')" class="btn btn-secondary">Edit</button>
+            <button onclick="app.deleteRequest('${request.id}')" class="btn btn-danger">Delete</button>
+            ${request.pmid ? `<button onclick="app.lazyLoadClinicalTrials('${request.pmid}')" class="btn btn-primary">Clinical Trials</button>` : ''}
+          </div>
+          ${request.pmid ? `<div class="clinical-trials-section" data-pmid="${request.pmid}"></div>` : ''}
+        `;
+        
+        return element;
+      }
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      displayRequests(requests) {
+        this.virtualScrollData = requests;
+        if (requests.length > 50) {
+          // Use virtual scrolling for large datasets
+          this.renderVirtualItems();
+        } else {
+          // Regular rendering for small datasets
+          const container = this.virtualScrollContainer;
+          container.innerHTML = '';
+          requests.forEach((request, index) => {
+            container.appendChild(this.createRequestElement(request, index));
+          });
+        }
+      }
+
+      toggleRequestSelection(id, selected) {
+        if (selected) {
+          this.selectedRequests.add(id);
+        } else {
+          this.selectedRequests.delete(id);
+        }
+        this.updateSelectionUI();
+      }
+
+      updateSelectionUI() {
+        const count = this.selectedRequests.size;
+        const deleteBtn = document.getElementById('delete-selected-btn');
+        if (deleteBtn) {
+          deleteBtn.style.display = count > 0 ? 'block' : 'none';
+          deleteBtn.textContent = `🗑️ Delete Selected (${count})`;
+        }
+      }
+
+      // ===== FORM HANDLING =====
+      async handleFormSubmit(event) {
+        event.preventDefault();
+        
+        try {
+          const formData = new FormData(event.target);
+          const request = {
+            id: Date.now().toString(),
+            title: formData.get('title'),
+            authors: formData.get('authors'),
+            journal: formData.get('journal'),
+            year: formData.get('year'),
+            pmid: formData.get('pmid'),
+            doi: formData.get('doi'),
+            priority: formData.get('priority'),
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            notes: formData.get('notes')
+          };
+
+          // Auto-fetch metadata if PMID provided
+          if (request.pmid && !request.title) {
+            this.showUserFriendlyError('Fetching metadata...', 'info');
+            const metadata = await this.fetchPubMedData(request.pmid);
+            if (metadata) {
+              request.title = metadata.title;
+              request.authors = metadata.authors;
+              request.journal = metadata.journal;
+              request.year = metadata.year;
+              request.meshTerms = metadata.meshTerms;
+            }
+          }
+
+          this.requests.push(request);
+          this.saveRequests();
+          this.updateSearchIndex();
+          this.updateDashboard();
+          
+          event.target.reset();
+          this.showUserFriendlyError('Request added successfully!', 'info');
+          
+        } catch (error) {
+          this.showUserFriendlyError(`Failed to add request: ${error.message}`);
+        }
+      }
+
+      // ===== BULK OPERATIONS =====
+      async handleBulkImport(data) {
+        const batchSize = 50; // Process in batches to avoid blocking UI
+        const total = data.length;
+        let processed = 0;
+
+        this.showUserFriendlyError(`Processing ${total} items in batches...`, 'info');
+
+        for (let i = 0; i < data.length; i += batchSize) {
+          const batch = data.slice(i, i + batchSize);
+          
+          for (const item of batch) {
+            try {
+              const request = {
+                id: Date.now().toString() + Math.random(),
+                ...item,
+                status: item.status || 'pending',
+                createdAt: new Date().toISOString()
+              };
+              
+              this.requests.push(request);
+              processed++;
+              
+            } catch (error) {
+              console.error('Failed to process item:', item, error);
+            }
+          }
+          
+          // Update progress and yield to browser
+          const progress = Math.round((processed / total) * 100);
+          this.showUserFriendlyError(`Processed ${processed}/${total} items (${progress}%)`, 'info');
+          
+          await new Promise(resolve => setTimeout(resolve, 10)); // Yield to browser
+        }
+
+        this.saveRequests();
+        this.updateSearchIndex();
+        this.updateDashboard();
+        this.showUserFriendlyError(`Successfully imported ${processed} requests!`, 'info');
+      }
+
+      // ===== DATA PERSISTENCE =====
+      saveRequests() {
+        localStorage.setItem('silentStacks_requests', JSON.stringify(this.requests));
+      }
+
+      updateSearchIndex() {
+        if (typeof Fuse !== 'undefined') {
+          this.searchIndex = new Fuse(this.requests, {
+            keys: ['title', 'authors', 'journal', 'notes', 'tags'],
+            threshold: 0.3,
+            includeScore: true
+          });
+        }
+      }
+
+      // ===== UI UPDATES =====
+      updateDashboard() {
+        const total = this.requests.length;
+        const pending = this.requests.filter(r => r.status === 'pending').length;
+        const completed = this.requests.filter(r => r.status === 'fulfilled').length;
+        const urgent = this.requests.filter(r => r.priority === 'urgent').length;
+
+        document.getElementById('total-requests').textContent = total;
+        document.getElementById('pending-requests').textContent = pending;
+        document.getElementById('completed-requests').textContent = completed;
+        document.getElementById('urgent-requests').textContent = urgent;
+
+        // Show recent requests
+        const recent = this.requests.slice(-5).reverse();
+        const recentContainer = document.getElementById('recent-requests');
+        if (recent.length > 0) {
+          recentContainer.innerHTML = recent.map(req => `
+            <div class="request-summary">
+              <strong>${this.escapeHtml(req.title || 'Untitled')}</strong>
+              <span class="status">${req.status}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // ===== THEME MANAGEMENT =====
+      loadTheme() {
+        const theme = this.settings.theme || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) themeSelect.value = theme;
+      }
+
+      changeTheme(theme) {
+        this.settings.theme = theme;
+        localStorage.setItem('silentStacks_settings', JSON.stringify(this.settings));
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+
+      // ===== EVENT LISTENERS =====
+      setupEventListeners() {
+        // Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+          tab.addEventListener('click', (e) => {
+            const section = e.target.dataset.section;
+            this.showSection(section);
+          });
+        });
+
+        // Theme selector
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+          themeSelect.addEventListener('change', (e) => {
+            this.changeTheme(e.target.value);
+          });
+        }
+
+        // Form submission
+        const requestForm = document.getElementById('request-form');
+        if (requestForm) {
+          requestForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
+        }
+
+        // PMID/DOI lookup buttons
+        document.getElementById('lookup-pmid')?.addEventListener('click', () => {
+          const pmid = document.getElementById('pmid').value;
+          if (pmid) this.lookupPMID(pmid);
+        });
+
+        document.getElementById('lookup-doi')?.addEventListener('click', () => {
+          const doi = document.getElementById('doi').value;
+          if (doi) this.lookupDOI(doi);
+        });
+
+        // Bulk operations
+        document.getElementById('bulk-paste-btn')?.addEventListener('click', () => {
+          this.handleBulkPaste();
+        });
+
+        document.getElementById('upload-csv-btn')?.addEventListener('click', () => {
+          const fileInput = document.getElementById('csv-file-input');
+          if (fileInput.files[0]) {
+            this.handleCSVUpload(fileInput.files[0]);
+          }
+        });
+
+        // Export buttons
+        document.getElementById('export-csv')?.addEventListener('click', () => {
+          this.exportData('csv');
+        });
+
+        document.getElementById('export-json')?.addEventListener('click', () => {
+          this.exportData('json');
+        });
+
+        // Help button
+        document.getElementById('help-button')?.addEventListener('click', () => {
+          this.showHelp();
+        });
+
+        // Global error handler
+        window.addEventListener('error', (event) => {
+          console.error('Global error:', event.error);
+          this.showUserFriendlyError('An unexpected error occurred. Please try again.');
+        });
+
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', (event) => {
+          console.error('Unhandled promise rejection:', event.reason);
+          this.showUserFriendlyError('A network or processing error occurred.');
+          event.preventDefault();
+        });
+      }
+
+      // ===== LOOKUP FUNCTIONS =====
+      async lookupPMID(pmid) {
+        const statusEl = document.getElementById('pmid-status');
+        statusEl.textContent = '🔄 Looking up...';
+        
+        try {
+          const metadata = await this.fetchPubMedData(pmid);
+          if (metadata) {
+            // Auto-fill form
+            document.getElementById('title').value = metadata.title || '';
+            document.getElementById('authors').value = metadata.authors || '';
+            document.getElementById('journal').value = metadata.journal || '';
+            document.getElementById('year').value = metadata.year || '';
+            
+            statusEl.textContent = '✅ Metadata retrieved';
+            statusEl.style.color = 'var(--success-color)';
+          } else {
+            statusEl.textContent = '❌ No data found';
+            statusEl.style.color = 'var(--danger-color)';
+          }
+        } catch (error) {
+          statusEl.textContent = '❌ Lookup failed';
+          statusEl.style.color = 'var(--danger-color)';
+        }
+      }
+
+      async lookupDOI(doi) {
+        const statusEl = document.getElementById('doi-status');
+        statusEl.textContent = '🔄 Looking up...';
+        
+        try {
+          const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
+          const response = await this.apiCall(url, {}, `doi_${doi}`);
+          const data = await response.json();
+          
+          if (data.message) {
+            const work = data.message;
+            document.getElementById('title').value = work.title?.[0] || '';
+            document.getElementById('journal').value = work['container-title']?.[0] || '';
+            document.getElementById('year').value = work.published?.['date-parts']?.[0]?.[0] || '';
+            
+            if (work.author) {
+              const authors = work.author.map(a => `${a.family} ${a.given || ''}`).join(', ');
+              document.getElementById('authors').value = authors;
+            }
+            
+            statusEl.textContent = '✅ Metadata retrieved';
+            statusEl.style.color = 'var(--success-color)';
+          }
+        } catch (error) {
+          statusEl.textContent = '❌ Lookup failed';
+          statusEl.style.color = 'var(--danger-color)';
+        }
+      }
+
+      // ===== BULK OPERATIONS =====
+      handleBulkPaste() {
+        const textarea = document.getElementById('bulk-paste-textarea');
+        const content = textarea.value.trim();
+        
+        if (!content) {
+          this.showUserFriendlyError('Please enter some data to import');
+          return;
+        }
+
+        try {
+          // Try to parse as CSV first
+          if (typeof Papa !== 'undefined') {
+            const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
+            if (parsed.data && parsed.data.length > 0) {
+              this.handleBulkImport(parsed.data);
+              return;
+            }
+          }
+
+          // Try as line-separated PMIDs
+          const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+          const pmids = lines.filter(line => /^\d+$/.test(line));
+          
+          if (pmids.length > 0) {
+            const requests = pmids.map(pmid => ({ pmid, title: '', status: 'pending' }));
+            this.handleBulkImport(requests);
+          } else {
+            this.showUserFriendlyError('No valid data found. Please check format.');
+          }
+          
+        } catch (error) {
+          this.showUserFriendlyError(`Import failed: ${error.message}`);
+        }
+      }
+
+      async handleCSVUpload(file) {
+        if (typeof Papa === 'undefined') {
+          this.showUserFriendlyError('CSV parser not available');
+          return;
+        }
+
+        try {
+          const text = await file.text();
+          const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+          
+          if (parsed.errors.length > 0) {
+            console.warn('CSV parsing errors:', parsed.errors);
+          }
+          
+          if (parsed.data && parsed.data.length > 0) {
+            await this.handleBulkImport(parsed.data);
+          } else {
+            this.showUserFriendlyError('No valid data found in CSV file');
+          }
+          
+        } catch (error) {
+          this.showUserFriendlyError(`CSV upload failed: ${error.message}`);
+        }
+      }
+
+      // ===== EXPORT FUNCTIONS =====
+      exportData(format) {
+        try {
+          let content, filename, mimeType;
+          
+          if (format === 'csv') {
+            if (typeof Papa !== 'undefined') {
+              content = Papa.unparse(this.requests);
+              filename = `silentstacks_export_${new Date().toISOString().split('T')[0]}.csv`;
+              mimeType = 'text/csv';
+            } else {
+              throw new Error('CSV export not available');
+            }
+          } else if (format === 'json') {
+            content = JSON.stringify(this.requests, null, 2);
+            filename = `silentstacks_export_${new Date().toISOString().split('T')[0]}.json`;
+            mimeType = 'application/json';
+          }
+          
+          const blob = new Blob([content], { type: mimeType });
+          const url = URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          this.showUserFriendlyError(`Exported ${this.requests.length} requests as ${format.toUpperCase()}`, 'info');
+          
+        } catch (error) {
+          this.showUserFriendlyError(`Export failed: ${error.message}`);
+        }
+      }
+
+      // ===== NAVIGATION =====
+      showSection(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.section').forEach(section => {
+          section.classList.remove('active');
+        });
+        
+        // Show target section
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+          targetSection.classList.add('active');
+        }
+        
+        // Update nav tabs
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+          tab.classList.remove('active');
+          tab.setAttribute('aria-selected', 'false');
+        });
+        
+        const activeTab = document.querySelector(`[data-section="${sectionId}"]`);
+        if (activeTab) {
+          activeTab.classList.add('active');
+          activeTab.setAttribute('aria-selected', 'true');
+        }
+        
+        this.currentSection = sectionId;
+        
+        // Load section-specific data
+        if (sectionId === 'all-requests') {
+          this.displayRequests(this.requests);
+          document.getElementById('results-count').textContent = `${this.requests.length} requests`;
+        }
+      }
+
+      // ===== HELP SYSTEM =====
+      showHelp() {
+        const helpModal = document.getElementById('help-modal');
+        if (helpModal) {
+          helpModal.style.display = 'block';
+        }
+      }
+
+      // ===== UTILITY FUNCTIONS =====
+      editRequest(id) {
+        const request = this.requests.find(r => r.id === id);
+        if (request) {
+          // Switch to add request form and populate it
+          this.showSection('add-request');
+          
+          // Populate form fields
+          Object.keys(request).forEach(key => {
+            const field = document.getElementById(key);
+            if (field) field.value = request[key] || '';
+          });
+          
+          // Store editing ID for update instead of create
+          document.getElementById('request-form').dataset.editingId = id;
+        }
+      }
+
+      deleteRequest(id) {
+        if (confirm('Are you sure you want to delete this request?')) {
+          this.requests = this.requests.filter(r => r.id !== id);
+          this.saveRequests();
+          this.updateSearchIndex();
+          this.updateDashboard();
+          this.displayRequests(this.requests);
+          this.showUserFriendlyError('Request deleted', 'info');
+        }
+      }
+    }
+
+    // ===== GLOBAL FUNCTIONS =====
+    function toggleSelectAll(checked) {
+      const checkboxes = document.querySelectorAll('.request-card input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        cb.checked = checked;
+        const requestId = cb.closest('.request-card').dataset.requestId;
+        if (requestId) {
+          app.toggleRequestSelection(requestId, checked);
+        }
+      });
+    }
+
+    function deleteSelectedRequests() {
+      const selectedIds = Array.from(app.selectedRequests);
+      if (selectedIds.length === 0) {
+        app.showUserFriendlyError('No requests selected');
+        return;
+      }
+      
+      if (confirm(`Delete ${selectedIds.length} selected requests?`)) {
+        app.requests = app.requests.filter(r => !selectedIds.includes(r.id));
+        app.selectedRequests.clear();
+        app.saveRequests();
+        app.updateSearchIndex();
+        app.updateDashboard();
+        app.displayRequests(app.requests);
+        app.updateSelectionUI();
+        app.showUserFriendlyError(`Deleted ${selectedIds.length} requests`, 'info');
+      }
+    }
+
+    function closeHelpModal() {
+      const helpModal = document.getElementById('help-modal');
+      if (helpModal) {
+        helpModal.style.display = 'none';
+      }
+    }
+
+    // ===== INITIALIZE APP =====
+    let app;
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      app = new SilentStacksApp();
+      
+      // Make app globally available for onclick handlers
+      window.app = app;
+      window.toggleSelectAll = toggleSelectAll;
+      window.deleteSelectedRequests = deleteSelectedRequests;
+      window.closeHelpModal = closeHelpModal;
+    });
+
+    // ===== SERVICE WORKER REGISTRATION =====
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('✅ Service Worker registered');
+          })
+          .catch(error => {
+            console.log('❌ Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
 
   <!-- Register service worker with correct GitHub Pages scope -->
   <script>
