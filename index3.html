@@ -1,2425 +1,1808 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SilentStacks</title>
-  <meta name="color-scheme" content="light dark" />
-  <style>
-    /* Reset and Base Styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --primary-color: #2563eb;
-      --secondary-color: #64748b;
-      --success-color: #059669;
-      --warning-color: #d97706;
-      --danger-color: #dc2626;
-      --background: #ffffff;
-      --surface: #f8fafc;
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
-      --border: #e2e8f0;
-      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-      --radius: 8px;
-      --spacing: 8px;
-    }
-
-    [data-theme="dark"] {
-      --background: #0f172a;
-      --surface: #1e293b;
-      --text-primary: #f1f5f9;
-      --text-secondary: #cbd5e1;
-      --border: #334155;
-    }
-
-    [data-theme="high-contrast"] {
-      --primary-color: #000000;
-      --background: #ffffff;
-      --surface: #ffffff;
-      --text-primary: #000000;
-      --text-secondary: #000000;
-      --border: #000000;
-      --shadow: 0 0 0 3px #000000;
-    }
-
-    body {
-      font-family: 'Reddit Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: var(--background);
-      color: var(--text-primary);
-      line-height: 1.6;
-      font-size: 16px;
-    }
-
-    /* Layout */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 var(--spacing);
-    }
-
-    /* Header */
-    .header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: calc(var(--spacing) * 2) 0;
-    }
-
-    .header .container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: var(--spacing);
-    }
-
-    .header-brand h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--primary-color);
-    }
-
-    .version {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      display: block;
-    }
-
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing);
-    }
-
-    .theme-select, .help-button {
-      padding: calc(var(--spacing) / 2) var(--spacing);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--background);
-      color: var(--text-primary);
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .help-button {
-      display: flex;
-      align-items: center;
-      gap: calc(var(--spacing) / 2);
-      text-decoration: none;
-    }
-
-    .theme-select:hover, .help-button:hover {
-      border-color: var(--primary-color);
-      box-shadow: var(--shadow);
-    }
-
-    /* Navigation */
-    .nav-tabs {
-      display: flex;
-      gap: calc(var(--spacing) / 2);
-      margin-top: var(--spacing);
-      flex-wrap: wrap;
-    }
-
-    .nav-tab {
-      display: flex;
-      align-items: center;
-      gap: calc(var(--spacing) / 2);
-      padding: var(--spacing) calc(var(--spacing) * 1.5);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--background);
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      min-height: 48px;
-    }
-
-    .nav-tab:hover {
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-    }
-
-    .nav-tab.active {
-      background: var(--primary-color);
-      color: white;
-      border-color: var(--primary-color);
-    }
-
-    .nav-icon {
-      width: 16px;
-      height: 16px;
-    }
-
-    /* Main Content */
-    .main-content {
-      padding: calc(var(--spacing) * 3) 0;
-    }
-
-    .section {
-      display: none;
-    }
-
-    .section.active {
-      display: block;
-    }
-
-    .section h2 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: calc(var(--spacing) * 2);
-      color: var(--text-primary);
-    }
-
-    /* Stats Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: var(--spacing);
-      margin-bottom: calc(var(--spacing) * 3);
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: calc(var(--spacing) * 2);
-      text-align: center;
-    }
-
-    .stat-card h3 {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing);
-    }
-
-    .stat-number {
-      font-size: 2rem;
-      font-weight: 600;
-      color: var(--primary-color);
-    }
-
-    /* Forms */
-    .form-group {
-      margin-bottom: calc(var(--spacing) * 2);
-    }
-
-    .form-group label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: calc(var(--spacing) / 2);
-      color: var(--text-primary);
-    }
-
-    .form-control {
-      width: 100%;
-      padding: var(--spacing);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--background);
-      color: var(--text-primary);
-      font-size: 1rem;
-      transition: all 0.2s;
-      min-height: 48px;
-    }
-
-    .form-control:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: var(--spacing);
-    }
-
-    /* Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: calc(var(--spacing) / 2);
-      padding: var(--spacing) calc(var(--spacing) * 2);
-      border: 1px solid transparent;
-      border-radius: var(--radius);
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-      min-height: 48px;
-      justify-content: center;
-    }
-
-    .btn-primary {
-      background: var(--primary-color);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #1d4ed8;
-    }
-
-    .btn-secondary {
-      background: var(--surface);
-      color: var(--text-primary);
-      border-color: var(--border);
-    }
-
-    .btn-secondary:hover {
-      border-color: var(--primary-color);
-    }
-
-    .btn-success {
-      background: var(--success-color);
-      color: white;
-    }
-
-    .btn-danger {
-      background: var(--danger-color);
-      color: white;
-    }
-
-    /* Enhanced Lookup Section */
-    .enhanced-lookup-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: calc(var(--spacing) * 2);
-      margin-bottom: calc(var(--spacing) * 3);
-    }
-
-    .enhanced-lookup-section h3 {
-      margin-bottom: var(--spacing);
-      color: var(--primary-color);
-    }
-
-    .input-with-button {
-      display: flex;
-      gap: calc(var(--spacing) / 2);
-    }
-
-    .input-with-button input {
-      flex: 1;
-    }
-
-    .lookup-btn {
-      white-space: nowrap;
-    }
-
-    .lookup-status {
-      margin-top: calc(var(--spacing) / 2);
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-
-    /* Search and Filter Controls */
-    .search-filter-controls {
-      display: flex;
-      gap: var(--spacing);
-      margin-bottom: calc(var(--spacing) * 2);
-      flex-wrap: wrap;
-    }
-
-    .search-container {
-      position: relative;
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: var(--spacing);
-      padding-right: calc(var(--spacing) * 3);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--background);
-      color: var(--text-primary);
-    }
-
-    .search-clear {
-      position: absolute;
-      right: var(--spacing);
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      font-size: 1.25rem;
-      cursor: pointer;
-      color: var(--text-secondary);
-    }
-
-    .filter-controls {
-      display: flex;
-      gap: calc(var(--spacing) / 2);
-    }
-
-    .filter-select {
-      padding: var(--spacing);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--background);
-      color: var(--text-primary);
-      min-width: 120px;
-    }
-
-    /* Table Controls */
-    .table-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: calc(var(--spacing) * 2);
-      flex-wrap: wrap;
-      gap: var(--spacing);
-    }
-
-    .sort-controls {
-      display: flex;
-      align-items: center;
-      gap: calc(var(--spacing) / 2);
-      flex-wrap: wrap;
-    }
-
-    .sort-btn {
-      padding: calc(var(--spacing) / 2) var(--spacing);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--background);
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .sort-btn:hover, .sort-btn.sort-desc, .sort-btn.sort-asc {
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-    }
-
-    .results-info {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing);
-    }
-
-    .select-all-label {
-      display: flex;
-      align-items: center;
-      gap: calc(var(--spacing) / 2);
-      font-size: 0.875rem;
-      cursor: pointer;
-    }
-
-    /* Request List */
-    .request-list {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      min-height: 200px;
-      padding: calc(var(--spacing) * 2);
-    }
-
-    .empty-message {
-      text-align: center;
-      color: var(--text-secondary);
-      font-style: italic;
-    }
-
-    /* Bulk Operations */
-    .bulk-operations-section {
-      margin-top: calc(var(--spacing) * 3);
-      padding: calc(var(--spacing) * 2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-    }
-
-    .bulk-paste-section, .csv-upload-section {
-      margin-bottom: calc(var(--spacing) * 2);
-    }
-
-    .bulk-paste-options {
-      display: flex;
-      gap: var(--spacing);
-      margin: var(--spacing) 0;
-      flex-wrap: wrap;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: calc(var(--spacing) / 2);
-      font-size: 0.875rem;
-      cursor: pointer;
-    }
-
-    .bulk-upload-status {
-      margin-top: var(--spacing);
-      padding: var(--spacing);
-      border-radius: var(--radius);
-      background: var(--background);
-      border: 1px solid var(--border);
-      font-size: 0.875rem;
-    }
-
-    /* Import/Export Grid */
-    .import-export-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: calc(var(--spacing) * 2);
-    }
-
-    .import-export-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: calc(var(--spacing) * 2);
-    }
-
-    .import-export-card h3 {
-      display: flex;
-      align-items: center;
-      gap: calc(var(--spacing) / 2);
-      margin-bottom: calc(var(--spacing) * 2);
-      color: var(--text-primary);
-    }
-
-    .button-group {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing);
-    }
-
-    .export-info {
-      margin-top: var(--spacing);
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-
-    /* Settings */
-    .settings-form {
-      max-width: 600px;
-    }
-
-    .form-help {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      margin-top: calc(var(--spacing) / 2);
-    }
-
-    .form-actions {
-      display: flex;
-      gap: var(--spacing);
-      margin-top: calc(var(--spacing) * 2);
-      flex-wrap: wrap;
-    }
-
-    .performance-stats {
-      margin-top: calc(var(--spacing) * 3);
-      padding: calc(var(--spacing) * 2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-    }
-
-    /* Connection Status */
-    .connection-indicator {
-      position: fixed;
-      top: var(--spacing);
-      right: var(--spacing);
-      padding: calc(var(--spacing) / 2) var(--spacing);
-      border-radius: var(--radius);
-      font-size: 0.75rem;
-      font-weight: 500;
-      z-index: 1000;
-    }
-
-    .connection-clean {
-      background: var(--success-color);
-      color: white;
-    }
-
-    .offline {
-      background: var(--warning-color);
-      color: white;
-    }
-
-    /* Modal */
-    .modal-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      padding: var(--spacing);
-    }
-
-    .modal-overlay {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-panel {
-      background: var(--background);
-      border-radius: var(--radius);
-      max-width: 800px;
-      width: 100%;
-      max-height: 90vh;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: calc(var(--spacing) * 2);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .modal-header h3 {
-      margin: 0;
-      color: var(--text-primary);
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--text-secondary);
-      padding: calc(var(--spacing) / 2);
-      border-radius: var(--radius);
-      min-width: 48px;
-      min-height: 48px;
-    }
-
-    .modal-close:hover {
-      background: var(--surface);
-    }
-
-    .modal-content {
-      padding: calc(var(--spacing) * 2);
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-
-    /* Loading Overlay */
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 3000;
-    }
-
-    .loading-spinner {
-      text-align: center;
-      color: white;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto calc(var(--spacing) * 2);
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Help Topics */
-    .help-search {
-      margin-bottom: calc(var(--spacing) * 2);
-    }
-
-    .help-topics {
-      display: flex;
-      flex-direction: column;
-      gap: calc(var(--spacing) * 2);
-    }
-
-    .help-topic {
-      padding: calc(var(--spacing) * 2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-    }
-
-    .help-topic h4 {
-      margin-bottom: var(--spacing);
-      color: var(--primary-color);
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      .header .container {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .nav-tabs {
-        justify-content: center;
-      }
-
-      .nav-tab {
-        flex: 1;
-        justify-content: center;
-        min-width: 0;
-      }
-
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .search-filter-controls {
-        flex-direction: column;
-      }
-
-      .table-controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .sort-controls {
-        justify-content: center;
-      }
-
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-
-      .form-actions {
-        flex-direction: column;
-      }
-
-      .import-export-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .nav-tabs {
-        flex-direction: column;
-      }
-
-      .filter-controls {
-        flex-direction: column;
-      }
-
-      .sort-controls {
-        flex-wrap: wrap;
-      }
-    }
-
-    /* Focus and Accessibility */
-    *:focus {
-      outline: 3px solid var(--primary-color);
-      outline-offset: 2px;
-    }
-
-    [data-theme="high-contrast"] *:focus {
-      outline: 4px solid #000000;
-      outline-offset: 2px;
-    }
-
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    /* High Contrast Theme Enhancements */
-    [data-theme="high-contrast"] {
-      --primary-color: #000000;
-      --secondary-color: #000000;
-      --success-color: #000000;
-      --warning-color: #000000;
-      --danger-color: #000000;
-      --background: #ffffff;
-      --surface: #ffffff;
-      --text-primary: #000000;
-      --text-secondary: #000000;
-      --border: #000000;
-      --shadow: 0 0 0 3px #000000;
-    }
-
-    [data-theme="high-contrast"] .btn-primary {
-      background: #000000;
-      color: #ffffff;
-      border: 3px solid #000000;
-    }
-
-    [data-theme="high-contrast"] .btn-secondary {
-      background: #ffffff;
-      color: #000000;
-      border: 3px solid #000000;
-    }
-
-    [data-theme="high-contrast"] .nav-tab.active {
-      background: #000000;
-      color: #ffffff;
-      border: 3px solid #000000;
-    }
-
-    [data-theme="high-contrast"] .form-control {
-      border: 3px solid #000000;
-    }
-
-    [data-theme="high-contrast"] .connection-clean {
-      background: #000000;
-      color: #ffffff;
-      border: 3px solid #000000;
-    }
-
-    /* Reduced Motion */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilentStacks - Medical Library ILL Management</title>
+    <style>
+        /* CSS Variables for Theming */
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --background: #ffffff;
+            --surface: #f8fafc;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --radius: 0.5rem;
+            --font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
+        }
+
+        [data-theme="high-contrast"] {
+            --primary-color: #000000;
+            --primary-hover: #333333;
+            --secondary-color: #666666;
+            --success-color: #000000;
+            --warning-color: #000000;
+            --error-color: #000000;
+            --background: #ffffff;
+            --surface: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #000000;
+            --border: #000000;
+            --shadow: 0 0 0 3px #000000;
+            --shadow-lg: 0 0 0 3px #000000;
+        }
+
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-tab {
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            min-height: 48px;
+        }
+
+        .nav-tab:hover {
+            color: var(--primary-color);
+            background: var(--surface);
+        }
+
+        .nav-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .nav-tab:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            padding: 2rem 0;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--background);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            min-height: 48px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+
+        .form-input:invalid {
+            border-color: var(--error-color);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            min-height: 48px;
+            gap: 0.5rem;
+        }
+
+        .btn:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            min-height: 40px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .request-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .request-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .request-card.selected {
+            border-color: var(--primary-color);
+            background: rgb(37 99 235 / 0.05);
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+
+        /* Search and Filters */
+        .search-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-select {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 48px;
+        }
+
+        /* Progress */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            box-shadow: var(--shadow-lg);
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success-color);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--error-color);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            z-index: 1000;
+        }
+
+        .connection-status.online {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .connection-status.offline {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* Virtual Scrolling */
+        .virtual-scroll-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .virtual-scroll-content {
+            position: relative;
+        }
+
+        .virtual-scroll-item {
+            position: absolute;
+            width: 100%;
+            left: 0;
+        }
+
+        /* Loading States */
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav-tabs {
+                overflow-x: auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .nav-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .search-controls {
+                flex-direction: column;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* High Contrast Theme Enhancements */
+        [data-theme="high-contrast"] .btn {
+            border: 3px solid var(--border);
+        }
+
+        [data-theme="high-contrast"] .form-input {
+            border: 3px solid var(--border);
+        }
+
+        [data-theme="high-contrast"] .card,
+        [data-theme="high-contrast"] .request-card {
+            border: 3px solid var(--border);
+        }
+
+        /* Focus Indicators for High Contrast */
+        [data-theme="high-contrast"] *:focus {
+            outline: 3px solid #000000 !important;
+            outline-offset: 2px !important;
+        }
+
+        /* Utility Classes */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .mb-0 { margin-bottom: 0; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 1.5rem; }
+        .mb-4 { margin-bottom: 2rem; }
+
+        .mt-0 { margin-top: 0; }
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1.5rem; }
+        .mt-4 { margin-top: 2rem; }
+
+        .hidden {
+            display: none;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+    </style>
 </head>
 <body>
-  <main id="main" role="main">
-    <!-- Connection Status Indicator -->
-    <div id="connection-status" class="connection-indicator connection-clean">
-      <span id="connection-text">●</span>
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="connection-status online">
+        <span id="connectionText">Online</span>
     </div>
 
-    <!-- Header & Navigation -->
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Header -->
     <header class="header">
-      <div class="container">
-        <div class="header-brand">
-          <h1>SilentStacks</h1>
-          <span class="version">v2.0 - Security & Performance Ready</span>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">SilentStacks</div>
+                <div class="header-controls">
+                    <select id="themeSelect" class="filter-select" aria-label="Select theme">
+                        <option value="light">☀️ Light</option>
+                        <option value="dark">🌙 Dark</option>
+                        <option value="high-contrast">⚡ High Contrast</option>
+                    </select>
+                    <button id="helpBtn" class="btn btn-secondary" aria-label="Help">
+                        ❓ Help
+                    </button>
+                </div>
+            </div>
         </div>
-        
-        <!-- Theme and Help Controls -->
-        <div class="header-controls">
-          <div class="theme-selector">
-            <label for="theme-select" class="sr-only">Choose theme</label>
-            <select id="theme-select" class="theme-select" aria-label="Select theme">
-              <option value="light">☀️ Light</option>
-              <option value="dark">🌙 Dark</option>
-              <option value="high-contrast">⚡ High Contrast</option>
-            </select>
-          </div>
-          
-          <button id="help-button" class="help-button" aria-label="Open help guide" title="Press Alt+H for help">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-            Help
-          </button>
-        </div>
-        
-        <nav class="nav-tabs" role="tablist">
-          <button class="nav-tab active" data-section="dashboard" role="tab" aria-selected="true">
-            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            Dashboard
-          </button>
-          <button class="nav-tab" data-section="add-request" role="tab" aria-selected="false">
-            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="16"></line>
-              <line x1="8" y1="12" x2="16" y2="12"></line>
-            </svg>
-            Add Request
-          </button>
-          <button class="nav-tab" data-section="all-requests" role="tab" aria-selected="false">
-            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            All Requests
-          </button>
-          <button class="nav-tab" data-section="import-export" role="tab" aria-selected="false">
-            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14,2 14,8 20,8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-            Import/Export
-          </button>
-          <button class="nav-tab" data-section="settings" role="tab" aria-selected="false">
-            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="m12 1 1.68 4.02L18 6.7l-1.02 4.98L21 12l-4.02 1.68L15.3 18l-4.98-1.02L12 21l-1.68-4.02L6 15.3l1.02-4.98L3 12l4.02-1.68L8.7 6l4.98 1.02Z"></path>
-            </svg>
-            Settings
-          </button>
-        </nav>
-      </div>
     </header>
 
-    <!-- Main Content Container -->
-    <div class="main-content">
-      <div class="container">
-        
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Navigation -->
+        <nav class="nav-tabs" role="tablist">
+            <button class="nav-tab active" data-section="dashboard" role="tab" aria-selected="true">
+                📊 Dashboard
+            </button>
+            <button class="nav-tab" data-section="add-request" role="tab" aria-selected="false">
+                ➕ Add Request
+            </button>
+            <button class="nav-tab" data-section="all-requests" role="tab" aria-selected="false">
+                📋 All Requests
+            </button>
+            <button class="nav-tab" data-section="import-export" role="tab" aria-selected="false">
+                📁 Import/Export
+            </button>
+            <button class="nav-tab" data-section="settings" role="tab" aria-selected="false">
+                ⚙️ Settings
+            </button>
+        </nav>
+
         <!-- Dashboard Section -->
         <section id="dashboard" class="section active">
-          <h2>Dashboard</h2>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <h3>Total Requests</h3>
-              <p class="stat-number" id="total-requests">0</p>
+            <h2>Dashboard</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Requests</h3>
+                    <div class="stat-number" id="totalRequests">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Pending</h3>
+                    <div class="stat-number" id="pendingRequests">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Completed</h3>
+                    <div class="stat-number" id="completedRequests">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Urgent</h3>
+                    <div class="stat-number" id="urgentRequests">0</div>
+                </div>
             </div>
-            <div class="stat-card">
-              <h3>Pending</h3>
-              <p class="stat-number" id="pending-requests">0</p>
-            </div>
-            <div class="stat-card">
-              <h3>Completed</h3>
-              <p class="stat-number" id="completed-requests">0</p>
-            </div>
-            <div class="stat-card">
-              <h3>Urgent</h3>
-              <p class="stat-number" id="urgent-requests">0</p>
-            </div>
-          </div>
 
-          <h3>Recent Requests</h3>
-          <div id="recent-requests" class="request-list">
-            <p class="empty-message">No recent requests</p>
-          </div>
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <div id="recentActivity">
+                    <p>No recent activity</p>
+                </div>
+            </div>
         </section>
 
         <!-- Add Request Section -->
         <section id="add-request" class="section">
-          <h2>Add New Request</h2>
-          
-          <!-- Enhanced Lookup Section -->
-          <div class="enhanced-lookup-section">
-            <h3>⚡ Enhanced Research Lookup</h3>
-            <p>Enter a PMID or DOI to automatically fetch complete metadata, MeSH terms, and clinical trials data</p>
+            <h2>Add New Request</h2>
             
-            <div class="form-group">
-              <label for="pmid">PMID (PubMed ID)</label>
-              <div class="input-with-button enhanced">
-                <input type="text" id="pmid" name="pmid" placeholder="e.g., 16979104" data-type="pmid">
-                <button type="button" id="lookup-pmid" class="lookup-btn">
-                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                  </svg>
-                  Lookup
-                </button>
-              </div>
-              <div id="pmid-status" class="lookup-status"></div>
+            <div class="card mb-3">
+                <h3>Quick Lookup</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="pmidInput" class="form-label">PMID</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="pmidInput" class="form-input" placeholder="e.g., 34567890">
+                            <button id="lookupPmidBtn" class="btn btn-primary">Lookup</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="doiInput" class="form-label">DOI</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="doiInput" class="form-input" placeholder="e.g., 10.1000/xyz123">
+                            <button id="lookupDoiBtn" class="btn btn-primary">Lookup</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-              <label for="doi">DOI (Digital Object Identifier)</label>
-              <div class="input-with-button enhanced">
-                <input type="text" id="doi" name="doi" placeholder="e.g., 10.1001/jama.2006.2221" data-type="doi">
-                <button type="button" id="lookup-doi" class="lookup-btn">
-                  <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                  </svg>
-                  Lookup
-                </button>
-              </div>
-              <div id="doi-status" class="lookup-status"></div>
-            </div>
+            <form id="requestForm" class="card">
+                <div class="form-group">
+                    <label for="title" class="form-label">Title *</label>
+                    <input type="text" id="title" class="form-input" required>
+                </div>
 
-            <!-- Clinical Trials Lookup Section -->
-            <div class="form-group">
-              <label>Clinical Trials Lookup</label>
-              <button type="button" id="lookup-clinical-trials" class="btn btn-secondary">
-                🧪 Search Clinical Trials
-              </button>
-              <div id="clinical-trials-status" class="lookup-status"></div>
-            </div>
-          </div>
+                <div class="form-group">
+                    <label for="authors" class="form-label">Authors</label>
+                    <input type="text" id="authors" class="form-input">
+                </div>
 
-          <form id="request-form" class="request-form">
-            <div class="form-group">
-              <label for="docline">DOCLINE Number</label>
-              <input type="text" id="docline" name="docline" placeholder="e.g., DOC2025001" class="form-control">
-            </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="journal" class="form-label">Journal</label>
+                        <input type="text" id="journal" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="year" class="form-label">Year</label>
+                        <input type="number" id="year" class="form-input" min="1900" max="2025">
+                    </div>
+                </div>
 
-            <div class="form-group">
-              <label for="title">Article Title</label>
-              <input type="text" id="title" name="title" placeholder="Enter article title" class="form-control auto-fillable">
-            </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="volume" class="form-label">Volume</label>
+                        <input type="text" id="volume" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="issue" class="form-label">Issue</label>
+                        <input type="text" id="issue" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="pages" class="form-label">Pages</label>
+                        <input type="text" id="pages" class="form-input">
+                    </div>
+                </div>
 
-            <div class="form-group">
-              <label for="authors">Authors</label>
-              <input type="text" id="authors" name="authors" placeholder="Smith J, Johnson A, Wilson B" class="form-control auto-fillable">
-            </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="patronEmail" class="form-label">Patron Email</label>
+                        <input type="email" id="patronEmail" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select id="priority" class="form-input">
+                            <option value="normal">Normal</option>
+                            <option value="rush">Rush</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label for="journal">Journal</label>
-                <input type="text" id="journal" name="journal" placeholder="e.g., Nature Medicine" class="form-control auto-fillable">
-              </div>
-              <div class="form-group">
-                <label for="year">Year</label>
-                <input type="number" id="year" name="year" placeholder="2024" min="1900" max="2025" class="form-control auto-fillable">
-              </div>
-            </div>
+                <div class="form-group">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea id="notes" class="form-input" rows="3"></textarea>
+                </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label for="volume">Volume</label>
-                <input type="text" id="volume" name="volume" placeholder="e.g., 30" class="form-control auto-fillable">
-              </div>
-              <div class="form-group">
-                <label for="issue">Issue</label>
-                <input type="text" id="issue" name="issue" placeholder="e.g., 2" class="form-control auto-fillable">
-              </div>
-              <div class="form-group">
-                <label for="pages">Pages</label>
-                <input type="text" id="pages" name="pages" placeholder="e.g., 123-130" class="form-control auto-fillable">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="patron-email">Patron Email</label>
-              <input type="email" id="patron-email" name="patronEmail" placeholder="patron@example.com" class="form-control">
-            </div>
-
-            <div class="form-group">
-              <label for="priority">Priority</label>
-              <select id="priority" name="priority" class="form-control priority-select">
-                <option value="normal">Normal</option>
-                <option value="rush">Rush</option>
-                <option value="urgent">Urgent</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="notes">Notes</label>
-              <textarea id="notes" name="notes" rows="3" placeholder="Additional notes" class="form-control"></textarea>
-            </div>
-
-            <!-- MeSH Section (populated by API) -->
-            <div id="mesh-section" class="mesh-section" style="display: none;">
-              <h4>🏷️ MeSH Headings</h4>
-              <div id="mesh-tags" class="mesh-tags-container"></div>
-              <div class="mesh-controls">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="auto-add-mesh" checked>
-                  <span class="checkmark"></span>
-                  Auto-add major topics as tags
-                </label>
-              </div>
-            </div>
-
-            <!-- Clinical Trials Section (populated by API) -->
-            <div id="clinical-trials-section" class="clinical-trials-section" style="display: none;">
-              <h4>🧪 Related Clinical Trials</h4>
-              <div id="clinical-trials-list" class="clinical-trials-container"></div>
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary">Add Request</button>
-              <button type="button" id="clear-form" class="btn btn-secondary">Clear Form</button>
-            </div>
-          </form>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">Add Request</button>
+                    <button type="button" id="clearFormBtn" class="btn btn-secondary">Clear Form</button>
+                </div>
+            </form>
         </section>
 
         <!-- All Requests Section -->
         <section id="all-requests" class="section">
-          <h2>All Requests</h2>
-          
-          <!-- Search and Filter Controls -->
-          <div class="search-filter-controls">
-            <div class="search-container">
-              <input type="text" id="search-input" placeholder="Search requests..." class="search-input">
-              <button class="search-clear" id="clear-search">×</button>
-            </div>
+            <h2>All Requests</h2>
             
-            <div class="filter-controls">
-              <select id="status-filter" class="filter-select">
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="in-progress">In Progress</option>
-                <option value="fulfilled">Fulfilled</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="on-hold">On Hold</option>
-              </select>
-              
-              <select id="priority-filter" class="filter-select">
-                <option value="">All Priority</option>
-                <option value="urgent">Urgent</option>
-                <option value="rush">Rush</option>
-                <option value="normal">Normal</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Sort and Bulk Controls -->
-          <div class="table-controls">
-            <div class="sort-controls">
-              <span>Sort by:</span>
-              <button class="sort-btn sort-desc" data-field="createdAt">📅 Date</button>
-              <button class="sort-btn" data-field="priority">🚨 Priority</button>
-              <button class="sort-btn" data-field="title">📄 Title</button>
-              <button class="sort-btn" data-field="journal">📚 Journal</button>
-              <button class="sort-btn" data-field="status">📊 Status</button>
-            </div>
-            <div class="results-info">
-              <span id="results-count">0 requests</span>
-              <label class="select-all-label">
-                <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)"> Select All
-              </label>
-              <button onclick="deleteSelectedRequests()" class="btn btn-danger btn-small" id="delete-selected-btn" style="display: none;">
-                🗑️ Delete Selected
-              </button>
-            </div>
-          </div>
-
-          <!-- Request List -->
-          <div id="request-list" class="request-list">
-            <p class="empty-message">No requests found</p>
-          </div>
-
-          <!-- Bulk Operations Section -->
-          <div class="bulk-operations-section">
-            <h3>📊 Bulk Operations</h3>
-            
-            <!-- Bulk Paste Upload -->
-            <div class="bulk-paste-section">
-              <h4>📥 Bulk Paste & Upload</h4>
-              <p>Paste PMIDs (one per line) or upload CSV files. Automatic metadata enrichment with clinical trials data.</p>
-              
-              <div class="form-group">
-                <label for="bulk-paste-textarea">Enter PMIDs or CSV Data</label>
-                <textarea id="bulk-paste-textarea" class="form-control" rows="8" 
-                  placeholder="Enter PMIDs (one per line):
-16979104
-32658653
-33248227
-
-Or CSV format:
-PMID,DOCLINE,Status,Priority
-16979104,DOC2025001,pending,normal
-32658653,DOC2025002,in-progress,rush"></textarea>
-              </div>
-              
-              <div class="bulk-paste-options">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="bulk-paste-auto-fetch" checked>
-                  <span class="checkmark"></span>
-                  Auto-fetch PubMed metadata
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" id="bulk-paste-fetch-trials" checked>
-                  <span class="checkmark"></span>
-                  Include clinical trials data
-                </label>
-              </div>
-              
-              <button id="bulk-paste-btn" class="btn btn-primary">
-                🚀 Process Bulk Data
-              </button>
-              
-              <div id="bulk-paste-status" class="bulk-upload-status"></div>
+            <div class="search-controls">
+                <input type="text" id="searchInput" class="search-input form-input" placeholder="Search requests...">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <select id="priorityFilter" class="filter-select">
+                    <option value="">All Priority</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="rush">Rush</option>
+                    <option value="normal">Normal</option>
+                </select>
             </div>
 
-            <!-- CSV File Upload -->
-            <div class="csv-upload-section">
-              <h4>📁 CSV File Upload</h4>
-              <input type="file" id="csv-file-input" accept=".csv" class="file-input">
-              <button id="upload-csv-btn" class="btn btn-primary">Upload CSV</button>
-              <div id="csv-upload-status" class="bulk-upload-status"></div>
+            <div class="flex items-center justify-between mb-2">
+                <div>
+                    <label>
+                        <input type="checkbox" id="selectAllCheckbox"> Select All
+                    </label>
+                    <button id="deleteSelectedBtn" class="btn btn-danger btn-small hidden">Delete Selected</button>
+                </div>
+                <div id="requestCount">0 requests</div>
             </div>
-          </div>
+
+            <div id="requestsList" class="virtual-scroll-container">
+                <div id="requestsContent" class="virtual-scroll-content">
+                    <!-- Requests will be rendered here -->
+                </div>
+            </div>
         </section>
 
         <!-- Import/Export Section -->
         <section id="import-export" class="section">
-          <h2>Import/Export</h2>
-          
-          <div class="import-export-grid">
-            <!-- Import Card -->
-            <div class="import-export-card">
-              <h3>
-                <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14,2 14,8 20,8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-                Import Data
-              </h3>
-              
-              <div class="button-group">
-                <button class="btn btn-primary" id="import-csv">Import CSV</button>
-                <button class="btn btn-primary" id="import-json">Import JSON</button>
-              </div>
-              
-              <input type="file" id="import-file" accept=".csv,.json" class="file-input" style="display: none;">
-              
-              <div id="import-status" class="import-status"></div>
-            </div>
+            <h2>Import/Export</h2>
+            
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>Import Data</h3>
+                    <div class="form-group">
+                        <label for="importFile" class="form-label">Choose File</label>
+                        <input type="file" id="importFile" class="form-input" accept=".csv,.json">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkPmids" class="form-label">Or paste PMIDs (one per line)</label>
+                        <textarea id="bulkPmids" class="form-input" rows="5" placeholder="34567890&#10;34567891&#10;34567892"></textarea>
+                    </div>
+                    <div class="progress-bar hidden" id="importProgress">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <button id="importBtn" class="btn btn-primary">Import</button>
+                </div>
 
-            <!-- Export Card -->
-            <div class="import-export-card">
-              <h3>
-                <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14,2 14,8 20,8"></polyline>
-                  <line x1="12" y1="15" x2="8" y2="11"></line>
-                  <line x1="12" y1="15" x2="16" y2="11"></line>
-                </svg>
-                Export Data
-              </h3>
-              
-              <div class="button-group">
-                <button class="btn btn-success" id="export-csv">Export CSV</button>
-                <button class="btn btn-success" id="export-json">Export JSON</button>
-                <button class="btn btn-success" id="export-nlm">Export NLM</button>
-              </div>
-              
-              <div class="export-info">
-                <p>Export formats include complete metadata, MeSH terms, and clinical trial information.</p>
-              </div>
+                <div class="card">
+                    <h3>Export Data</h3>
+                    <p>Export all your requests to CSV or JSON format.</p>
+                    <div class="flex gap-2 mt-2">
+                        <button id="exportCsvBtn" class="btn btn-success">Export CSV</button>
+                        <button id="exportJsonBtn" class="btn btn-success">Export JSON</button>
+                    </div>
+                </div>
             </div>
-          </div>
         </section>
 
         <!-- Settings Section -->
         <section id="settings" class="section">
-          <h2>Settings</h2>
-          
-          <div class="settings-form">
-            <div class="form-group">
-              <label for="theme-select">Theme</label>
-              <select id="theme-select">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="high-contrast">High Contrast</option>
-              </select>
-            </div>
+            <h2>Settings</h2>
             
-            <div class="form-group">
-              <label for="ncbi-api-key">NCBI API Key (Optional)</label>
-              <input type="password" id="ncbi-api-key" placeholder="Enter API key for higher rate limits">
-              <small class="form-help">Without API key: 3 requests/second. With API key: 10 requests/second.</small>
+            <div class="card">
+                <h3>API Configuration</h3>
+                <div class="form-group">
+                    <label for="pubmedApiKey" class="form-label">PubMed API Key (Optional)</label>
+                    <input type="password" id="pubmedApiKey" class="form-input" placeholder="Enter API key for higher rate limits">
+                    <small>Without API key: 3 requests/second. With API key: 10 requests/second.</small>
+                </div>
+                <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
             </div>
-            
-            <div class="form-actions">
-              <button type="button" id="save-settings" class="btn btn-primary">Save Settings</button>
-              <button type="button" id="reset-settings" class="btn btn-secondary">Reset to Defaults</button>
-              <button type="button" id="clear-all-data" class="btn btn-danger">Clear All Data</button>
-            </div>
-          </div>
 
-          <!-- Performance Section -->
-          <div class="performance-stats">
-            <h4>Performance Statistics</h4>
-            <div id="performance-metrics">
-              <div class="storage-info">
-
-            <div class="settings-group">
-              <h3>Help & Support</h3>
-              <div class="setting-item">
-                <button id="show-help" class="btn btn-secondary">📖 Show Help</button>
-                <button id="show-diagnostics" class="btn btn-secondary">🔍 System Diagnostics</button>
-                <small>Access integrated help and system health information.</small>
-              </div>
+            <div class="card mt-3">
+                <h3>Data Management</h3>
+                <div class="flex gap-2">
+                    <button id="clearDataBtn" class="btn btn-danger">Clear All Data</button>
+                    <button id="exportBackupBtn" class="btn btn-secondary">Export Backup</button>
+                </div>
             </div>
-                <h4>Storage Usage</h4>
-                <div id="storage-breakdown"></div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Diagnostics Section -->
-          <div class="form-actions">
-            <button type="button" id="show-diagnostics" class="btn btn-secondary">Show Diagnostics</button>
-            <button type="button" id="export-diagnostics" class="btn btn-secondary">Export Health Report</button>
-          </div>
+            <div class="card mt-3">
+                <h3>System Information</h3>
+                <div id="systemInfo">
+                    <p><strong>Version:</strong> SilentStacks v2.0</p>
+                    <p><strong>Storage Used:</strong> <span id="storageUsed">0 KB</span></p>
+                    <p><strong>Total Requests:</strong> <span id="totalRequestsInfo">0</span></p>
+                    <p><strong>Last Backup:</strong> <span id="lastBackup">Never</span></p>
+                </div>
+            </div>
         </section>
+    </main>
 
-      </div>
-    </div>
+    <script>
+        // Global Application State
+        class SilentStacksApp {
+            constructor() {
+                this.requests = [];
+                this.filteredRequests = [];
+                this.selectedRequests = new Set();
+                this.currentSection = 'dashboard';
+                this.theme = 'light';
+                this.isOnline = navigator.onLine;
+                this.offlineQueue = [];
+                this.apiCache = new Map();
+                this.settings = {
+                    pubmedApiKey: '',
+                    autoSave: true,
+                    notifications: true
+                };
+                
+                // Virtual scrolling
+                this.virtualScroll = {
+                    itemHeight: 120,
+                    containerHeight: 400,
+                    scrollTop: 0,
+                    visibleStart: 0,
+                    visibleEnd: 0
+                };
 
-    <!-- Modal Container -->
-    <div id="modal-container" class="modal-container"></div>
-
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay" style="display: none;">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p id="loading-message">Loading...</p>
-      </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div id="help-modal" class="modal-container" style="display: none;">
-      <div class="modal-overlay">
-        <div class="modal-panel">
-          <div class="modal-header">
-            <h3>📖 SilentStacks Help</h3>
-            <button class="modal-close" onclick="closeHelpModal()">×</button>
-          </div>
-          <div class="modal-content">
-            <div class="help-search">
-              <input type="text" id="help-search-input" placeholder="Search help topics..." class="form-control">
-            </div>
-            <div class="help-topics">
-              <div class="help-topic">
-                <h4>Adding Requests</h4>
-                <p>Enter a PMID or DOI and click "Lookup" to automatically fetch metadata, MeSH terms, and clinical trials data.</p>
-              </div>
-              <div class="help-topic">
-                <h4>Bulk Upload</h4>
-                <p>Go to "All Requests" and use the bulk operations section to paste PMIDs or upload CSV files with automatic enrichment.</p>
-              </div>
-              <div class="help-topic">
-                <h4>Clinical Trials</h4>
-                <p>The system automatically searches for related clinical trials and displays trial phases, status, and enrollment data.</p>
-              </div>
-              <div class="help-topic">
-                <h4>MeSH Headings</h4>
-                <p>Medical Subject Headings are automatically extracted from PubMed and can be clicked to add as tags.</p>
-              </div>
-              <div class="help-topic">
-                <h4>Search & Filter</h4>
-                <p>Use the search box for fuzzy text search. Filter by status, priority, or click MeSH tags to filter by medical topics.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- External Dependencies -->
-  <script src="assets/js/fuse.min.js"></script>
-  <script src="assets/js/papaparse.min.js"></script>
-
-  <!-- Complete Functional Implementation -->
-  <script>
-    // ===== CORE SYSTEM =====
-    class SilentStacksApp {
-      constructor() {
-        this.requests = JSON.parse(localStorage.getItem('silentStacks_requests') || '[]');
-        this.settings = JSON.parse(localStorage.getItem('silentStacks_settings') || '{}');
-        this.offlineQueue = JSON.parse(localStorage.getItem('silentStacks_offlineQueue') || '[]');
-        this.selectedRequests = new Set();
-        this.currentSection = 'dashboard';
-        this.searchIndex = null;
-        this.isOnline = navigator.onLine;
-        this.apiRetryCount = new Map();
-        this.virtualScrollContainer = null;
-        this.virtualScrollData = [];
-        this.virtualScrollItemHeight = 120;
-        this.virtualScrollVisibleItems = 10;
-        
-        this.init();
-      }
-
-      init() {
-        this.setupEventListeners();
-        this.initializeSearch();
-        this.setupVirtualScrolling();
-        this.setupOfflineHandling();
-        this.loadTheme();
-        this.updateDashboard();
-        this.processOfflineQueue();
-        
-        console.log('🚀 SilentStacks fully loaded - Conference ready!');
-      }
-
-      // ===== VIRTUAL SCROLLING =====
-      setupVirtualScrolling() {
-        const requestList = document.getElementById('request-list');
-        if (!requestList) return;
-
-        this.virtualScrollContainer = requestList;
-        this.virtualScrollContainer.style.position = 'relative';
-        this.virtualScrollContainer.style.overflow = 'auto';
-        this.virtualScrollContainer.style.height = '400px';
-
-        this.virtualScrollContainer.addEventListener('scroll', this.debounce(() => {
-          this.renderVirtualItems();
-        }, 16)); // 60fps
-      }
-
-      renderVirtualItems() {
-        if (!this.virtualScrollData.length) return;
-
-        const scrollTop = this.virtualScrollContainer.scrollTop;
-        const containerHeight = this.virtualScrollContainer.clientHeight;
-        
-        const startIndex = Math.floor(scrollTop / this.virtualScrollItemHeight);
-        const endIndex = Math.min(
-          startIndex + Math.ceil(containerHeight / this.virtualScrollItemHeight) + 2,
-          this.virtualScrollData.length
-        );
-
-        // Clear existing items
-        this.virtualScrollContainer.innerHTML = '';
-
-        // Create spacer for items above viewport
-        if (startIndex > 0) {
-          const topSpacer = document.createElement('div');
-          topSpacer.style.height = `${startIndex * this.virtualScrollItemHeight}px`;
-          this.virtualScrollContainer.appendChild(topSpacer);
-        }
-
-        // Render visible items
-        for (let i = startIndex; i < endIndex; i++) {
-          const item = this.virtualScrollData[i];
-          if (item) {
-            const element = this.createRequestElement(item, i);
-            this.virtualScrollContainer.appendChild(element);
-          }
-        }
-
-        // Create spacer for items below viewport
-        const remainingItems = this.virtualScrollData.length - endIndex;
-        if (remainingItems > 0) {
-          const bottomSpacer = document.createElement('div');
-          bottomSpacer.style.height = `${remainingItems * this.virtualScrollItemHeight}px`;
-          this.virtualScrollContainer.appendChild(bottomSpacer);
-        }
-      }
-
-      // ===== DEBOUNCED SEARCH =====
-      debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-          const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-          };
-          clearTimeout(timeout);
-          timeout = setTimeout(later, wait);
-        };
-      }
-
-      initializeSearch() {
-        const searchInput = document.getElementById('search-input');
-        if (!searchInput) return;
-
-        // Debounced search with 300ms delay
-        const debouncedSearch = this.debounce((query) => {
-          this.performSearch(query);
-        }, 300);
-
-        searchInput.addEventListener('input', (e) => {
-          debouncedSearch(e.target.value);
-        });
-
-        // Initialize Fuse.js for fuzzy search
-        if (typeof Fuse !== 'undefined') {
-          this.searchIndex = new Fuse(this.requests, {
-            keys: ['title', 'authors', 'journal', 'notes', 'tags'],
-            threshold: 0.3,
-            includeScore: true
-          });
-        }
-      }
-
-      performSearch(query) {
-        if (!query.trim()) {
-          this.displayRequests(this.requests);
-          return;
-        }
-
-        let results = [];
-        if (this.searchIndex) {
-          const searchResults = this.searchIndex.search(query);
-          results = searchResults.map(result => result.item);
-        } else {
-          // Fallback search
-          results = this.requests.filter(req => 
-            Object.values(req).some(value => 
-              String(value).toLowerCase().includes(query.toLowerCase())
-            )
-          );
-        }
-
-        this.displayRequests(results);
-        document.getElementById('results-count').textContent = `${results.length} requests`;
-      }
-
-      // ===== API WITH RETRY & EXPONENTIAL BACKOFF =====
-      async apiCall(url, options = {}, retryKey = null) {
-        const maxRetries = 3;
-        const baseDelay = 1000; // 1 second
-        
-        if (!this.isOnline) {
-          this.addToOfflineQueue({ url, options, retryKey });
-          throw new Error('Offline - request queued');
-        }
-
-        const currentRetry = this.apiRetryCount.get(retryKey) || 0;
-        
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-          
-          const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-          
-          if (!response.ok) {
-            if (response.status === 429) { // Rate limited
-              throw new Error('Rate limited');
+                this.init();
             }
-            throw new Error(`HTTP ${response.status}`);
-          }
-          
-          // Success - reset retry count
-          this.apiRetryCount.delete(retryKey);
-          return response;
-          
-        } catch (error) {
-          if (currentRetry < maxRetries) {
-            // Exponential backoff: 1s, 2s, 4s
-            const delay = baseDelay * Math.pow(2, currentRetry);
-            const jitter = Math.random() * 1000; // Add jitter
-            
-            this.apiRetryCount.set(retryKey, currentRetry + 1);
-            
-            console.log(`🔄 Retry ${currentRetry + 1}/${maxRetries} for ${retryKey} in ${delay + jitter}ms`);
-            
-            await new Promise(resolve => setTimeout(resolve, delay + jitter));
-            return this.apiCall(url, options, retryKey);
-          }
-          
-          // Max retries exceeded
-          this.apiRetryCount.delete(retryKey);
-          this.showUserFriendlyError(`Failed to fetch data: ${error.message}`);
-          throw error;
+
+            async init() {
+                this.loadData();
+                this.setupEventListeners();
+                this.setupNetworkMonitoring();
+                this.updateStats();
+                this.renderRequests();
+                this.processOfflineQueue();
+                
+                // Setup debounced search
+                this.debouncedSearch = this.debounce(this.performSearch.bind(this), 300);
+                
+                console.log('✅ SilentStacks initialized successfully');
+                this.showToast('SilentStacks loaded successfully', 'success');
+            }
+
+            // Data Management
+            loadData() {
+                try {
+                    const stored = localStorage.getItem('silentstacks-data');
+                    if (stored) {
+                        const data = JSON.parse(stored);
+                        this.requests = data.requests || [];
+                        this.settings = { ...this.settings, ...data.settings };
+                        this.offlineQueue = data.offlineQueue || [];
+                    }
+                    
+                    // Load theme
+                    const theme = localStorage.getItem('silentstacks-theme') || 'light';
+                    this.setTheme(theme);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    this.showToast('Error loading saved data', 'error');
+                }
+            }
+
+            saveData() {
+                try {
+                    const data = {
+                        requests: this.requests,
+                        settings: this.settings,
+                        offlineQueue: this.offlineQueue,
+                        lastSaved: new Date().toISOString()
+                    };
+                    localStorage.setItem('silentstacks-data', JSON.stringify(data));
+                    localStorage.setItem('silentstacks-theme', this.theme);
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                    this.showToast('Error saving data', 'error');
+                }
+            }
+
+            // Network Monitoring
+            setupNetworkMonitoring() {
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    this.updateConnectionStatus();
+                    this.processOfflineQueue();
+                    this.showToast('Connection restored', 'success');
+                });
+
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                    this.updateConnectionStatus();
+                    this.showToast('Working offline', 'warning');
+                });
+
+                this.updateConnectionStatus();
+            }
+
+            updateConnectionStatus() {
+                const statusEl = document.getElementById('connectionStatus');
+                const textEl = document.getElementById('connectionText');
+                
+                if (this.isOnline) {
+                    statusEl.className = 'connection-status online';
+                    textEl.textContent = 'Online';
+                } else {
+                    statusEl.className = 'connection-status offline';
+                    textEl.textContent = 'Offline';
+                }
+            }
+
+            // API Integration with Retry Logic
+            async apiRequest(url, options = {}) {
+                const maxRetries = 3;
+                const baseDelay = 1000;
+
+                for (let attempt = 0; attempt < maxRetries; attempt++) {
+                    try {
+                        // Check cache first
+                        const cacheKey = `${url}${JSON.stringify(options)}`;
+                        if (this.apiCache.has(cacheKey)) {
+                            const cached = this.apiCache.get(cacheKey);
+                            if (Date.now() - cached.timestamp < 24 * 60 * 60 * 1000) { // 24 hours
+                                return cached.data;
+                            }
+                        }
+
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                        const response = await fetch(url, {
+                            ...options,
+                            signal: controller.signal
+                        });
+
+                        clearTimeout(timeoutId);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+                        
+                        // Cache successful response
+                        this.apiCache.set(cacheKey, {
+                            data,
+                            timestamp: Date.now()
+                        });
+
+                        return data;
+
+                    } catch (error) {
+                        console.warn(`API attempt ${attempt + 1} failed:`, error.message);
+                        
+                        if (attempt === maxRetries - 1) {
+                            if (!this.isOnline) {
+                                // Queue for later
+                                this.offlineQueue.push({ url, options, timestamp: Date.now() });
+                                this.saveData();
+                                throw new Error('Request queued for when online');
+                            }
+                            throw error;
+                        }
+
+                        // Exponential backoff
+                        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+
+            async processOfflineQueue() {
+                if (!this.isOnline || this.offlineQueue.length === 0) return;
+
+                console.log(`Processing ${this.offlineQueue.length} queued requests...`);
+                const queue = [...this.offlineQueue];
+                this.offlineQueue = [];
+
+                for (const item of queue) {
+                    try {
+                        await this.apiRequest(item.url, item.options);
+                        await new Promise(resolve => setTimeout(resolve, 334)); // Rate limiting
+                    } catch (error) {
+                        console.error('Failed to process queued request:', error);
+                        this.offlineQueue.push(item); // Re-queue failed items
+                    }
+                }
+
+                if (this.offlineQueue.length === 0) {
+                    this.showToast('All queued requests processed', 'success');
+                } else {
+                    this.showToast(`${queue.length - this.offlineQueue.length} requests processed`, 'warning');
+                }
+
+                this.saveData();
+            }
+
+            // PubMed API Integration
+            async lookupPubMed(pmid) {
+                try {
+                    const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${pmid}&retmode=json`;
+                    const data = await this.apiRequest(url);
+                    
+                    if (data.result && data.result[pmid]) {
+                        const article = data.result[pmid];
+                        return {
+                            title: article.title || '',
+                            authors: article.authors?.map(a => a.name).join(', ') || '',
+                            journal: article.fulljournalname || article.source || '',
+                            year: article.pubdate ? new Date(article.pubdate).getFullYear() : '',
+                            volume: article.volume || '',
+                            issue: article.issue || '',
+                            pages: article.pages || '',
+                            pmid: pmid,
+                            doi: article.elocationid || ''
+                        };
+                    }
+                    throw new Error('Article not found');
+                } catch (error) {
+                    console.error('PubMed lookup failed:', error);
+                    throw new Error(`PubMed lookup failed: ${error.message}`);
+                }
+            }
+
+            // DOI Lookup via CrossRef
+            async lookupDOI(doi) {
+                try {
+                    const cleanDoi = doi.replace(/^https?:\/\/(dx\.)?doi\.org\//, '');
+                    const url = `https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`;
+                    const data = await this.apiRequest(url);
+                    
+                    if (data.message) {
+                        const work = data.message;
+                        return {
+                            title: work.title?.[0] || '',
+                            authors: work.author?.map(a => `${a.given || ''} ${a.family || ''}`).join(', ') || '',
+                            journal: work['container-title']?.[0] || '',
+                            year: work.published?.['date-parts']?.[0]?.[0] || '',
+                            volume: work.volume || '',
+                            issue: work.issue || '',
+                            pages: work.page || '',
+                            doi: work.DOI || doi
+                        };
+                    }
+                    throw new Error('DOI not found');
+                } catch (error) {
+                    console.error('DOI lookup failed:', error);
+                    throw new Error(`DOI lookup failed: ${error.message}`);
+                }
+            }
+
+            // Request Management
+            addRequest(requestData) {
+                const request = {
+                    id: Date.now().toString(),
+                    ...requestData,
+                    status: 'pending',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                this.requests.unshift(request);
+                this.saveData();
+                this.updateStats();
+                this.renderRequests();
+                this.showToast('Request added successfully', 'success');
+                
+                return request;
+            }
+
+            updateRequest(id, updates) {
+                const index = this.requests.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    this.requests[index] = {
+                        ...this.requests[index],
+                        ...updates,
+                        updatedAt: new Date().toISOString()
+                    };
+                    this.saveData();
+                    this.updateStats();
+                    this.renderRequests();
+                    this.showToast('Request updated', 'success');
+                }
+            }
+
+            deleteRequest(id) {
+                const index = this.requests.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    this.requests.splice(index, 1);
+                    this.selectedRequests.delete(id);
+                    this.saveData();
+                    this.updateStats();
+                    this.renderRequests();
+                    this.showToast('Request deleted', 'success');
+                }
+            }
+
+            deleteSelectedRequests() {
+                if (this.selectedRequests.size === 0) return;
+
+                const count = this.selectedRequests.size;
+                this.requests = this.requests.filter(r => !this.selectedRequests.has(r.id));
+                this.selectedRequests.clear();
+                
+                this.saveData();
+                this.updateStats();
+                this.renderRequests();
+                this.showToast(`${count} requests deleted`, 'success');
+                
+                document.getElementById('selectAllCheckbox').checked = false;
+                document.getElementById('deleteSelectedBtn').classList.add('hidden');
+            }
+
+            // Search and Filtering with Debouncing
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            performSearch() {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const statusFilter = document.getElementById('statusFilter').value;
+                const priorityFilter = document.getElementById('priorityFilter').value;
+
+                this.filteredRequests = this.requests.filter(request => {
+                    const matchesSearch = !searchTerm || 
+                        request.title?.toLowerCase().includes(searchTerm) ||
+                        request.authors?.toLowerCase().includes(searchTerm) ||
+                        request.journal?.toLowerCase().includes(searchTerm) ||
+                        request.notes?.toLowerCase().includes(searchTerm);
+
+                    const matchesStatus = !statusFilter || request.status === statusFilter;
+                    const matchesPriority = !priorityFilter || request.priority === priorityFilter;
+
+                    return matchesSearch && matchesStatus && matchesPriority;
+                });
+
+                this.renderRequests();
+                document.getElementById('requestCount').textContent = `${this.filteredRequests.length} requests`;
+            }
+
+            // Virtual Scrolling Implementation
+            setupVirtualScrolling() {
+                const container = document.getElementById('requestsList');
+                const content = document.getElementById('requestsContent');
+
+                container.addEventListener('scroll', () => {
+                    this.virtualScroll.scrollTop = container.scrollTop;
+                    this.updateVisibleRange();
+                    this.renderVisibleRequests();
+                });
+
+                this.updateVisibleRange();
+            }
+
+            updateVisibleRange() {
+                const { itemHeight, containerHeight, scrollTop } = this.virtualScroll;
+                const buffer = 5; // Render extra items for smooth scrolling
+
+                this.virtualScroll.visibleStart = Math.max(0, Math.floor(scrollTop / itemHeight) - buffer);
+                this.virtualScroll.visibleEnd = Math.min(
+                    this.filteredRequests.length,
+                    Math.ceil((scrollTop + containerHeight) / itemHeight) + buffer
+                );
+            }
+
+            renderVisibleRequests() {
+                const content = document.getElementById('requestsContent');
+                const { visibleStart, visibleEnd, itemHeight } = this.virtualScroll;
+
+                // Set total height
+                content.style.height = `${this.filteredRequests.length * itemHeight}px`;
+
+                // Clear existing items
+                content.innerHTML = '';
+
+                // Render visible items
+                for (let i = visibleStart; i < visibleEnd; i++) {
+                    const request = this.filteredRequests[i];
+                    if (!request) continue;
+
+                    const element = this.createRequestElement(request, i);
+                    element.style.position = 'absolute';
+                    element.style.top = `${i * itemHeight}px`;
+                    element.style.width = '100%';
+                    element.style.height = `${itemHeight - 10}px`; // 10px margin
+
+                    content.appendChild(element);
+                }
+            }
+
+            createRequestElement(request, index) {
+                const div = document.createElement('div');
+                div.className = `request-card ${this.selectedRequests.has(request.id) ? 'selected' : ''}`;
+                div.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" ${this.selectedRequests.has(request.id) ? 'checked' : ''} 
+                                   onchange="app.toggleRequestSelection('${request.id}')">
+                            <div>
+                                <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">
+                                    ${this.escapeHtml(request.title || 'Untitled')}
+                                </h4>
+                                <p style="margin: 0.25rem 0; color: var(--text-secondary); font-size: 0.875rem;">
+                                    ${this.escapeHtml(request.authors || 'Unknown authors')} • 
+                                    ${this.escapeHtml(request.journal || 'Unknown journal')} • 
+                                    ${request.year || 'Unknown year'}
+                                </p>
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                    <span class="badge badge-${request.status}">${request.status}</span>
+                                    <span class="badge badge-${request.priority}">${request.priority}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-small btn-secondary" onclick="app.editRequest('${request.id}')">
+                                Edit
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="app.deleteRequest('${request.id}')">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return div;
+            }
+
+            // Rendering
+            renderRequests() {
+                this.filteredRequests = this.filteredRequests.length > 0 ? this.filteredRequests : this.requests;
+                
+                if (this.filteredRequests.length > 100) {
+                    // Use virtual scrolling for large datasets
+                    this.renderVisibleRequests();
+                } else {
+                    // Regular rendering for small datasets
+                    this.renderAllRequests();
+                }
+            }
+
+            renderAllRequests() {
+                const container = document.getElementById('requestsContent');
+                container.style.height = 'auto';
+                container.innerHTML = '';
+
+                if (this.filteredRequests.length === 0) {
+                    container.innerHTML = '<div class="text-center" style="padding: 2rem;">No requests found</div>';
+                    return;
+                }
+
+                this.filteredRequests.forEach((request, index) => {
+                    const element = this.createRequestElement(request, index);
+                    container.appendChild(element);
+                });
+            }
+
+            // Bulk Operations
+            async importData(data, type = 'json') {
+                const progressBar = document.getElementById('importProgress');
+                const progressFill = progressBar.querySelector('.progress-fill');
+                
+                progressBar.classList.remove('hidden');
+                
+                try {
+                    let items = [];
+                    
+                    if (type === 'csv') {
+                        // Simple CSV parsing
+                        const lines = data.split('\n').filter(line => line.trim());
+                        const headers = lines[0].split(',').map(h => h.trim());
+                        
+                        for (let i = 1; i < lines.length; i++) {
+                            const values = lines[i].split(',').map(v => v.trim());
+                            const item = {};
+                            headers.forEach((header, index) => {
+                                item[header.toLowerCase()] = values[index] || '';
+                            });
+                            items.push(item);
+                        }
+                    } else if (type === 'json') {
+                        items = JSON.parse(data);
+                    } else if (type === 'pmids') {
+                        const pmids = data.split('\n').filter(line => line.trim());
+                        items = pmids.map(pmid => ({ pmid: pmid.trim() }));
+                    }
+
+                    // Process items in batches
+                    const batchSize = 10;
+                    let processed = 0;
+
+                    for (let i = 0; i < items.length; i += batchSize) {
+                        const batch = items.slice(i, i + batchSize);
+                        
+                        await Promise.all(batch.map(async (item) => {
+                            try {
+                                // Try to fetch metadata if PMID is provided
+                                if (item.pmid && !item.title) {
+                                    const metadata = await this.lookupPubMed(item.pmid);
+                                    Object.assign(item, metadata);
+                                }
+                                
+                                this.addRequest(item);
+                                processed++;
+                                
+                                // Update progress
+                                const progress = (processed / items.length) * 100;
+                                progressFill.style.width = `${progress}%`;
+                                
+                            } catch (error) {
+                                console.warn(`Failed to process item:`, item, error);
+                            }
+                        }));
+
+                        // Rate limiting delay
+                        if (i + batchSize < items.length) {
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
+                    }
+
+                    this.showToast(`Imported ${processed} requests`, 'success');
+                    
+                } catch (error) {
+                    console.error('Import failed:', error);
+                    this.showToast(`Import failed: ${error.message}`, 'error');
+                } finally {
+                    progressBar.classList.add('hidden');
+                    progressFill.style.width = '0%';
+                }
+            }
+
+            exportData(format = 'json') {
+                try {
+                    let data, filename, mimeType;
+
+                    if (format === 'csv') {
+                        const headers = ['title', 'authors', 'journal', 'year', 'volume', 'issue', 'pages', 'pmid', 'doi', 'status', 'priority', 'notes'];
+                        const csvRows = [headers.join(',')];
+                        
+                        this.requests.forEach(request => {
+                            const row = headers.map(header => {
+                                const value = request[header] || '';
+                                return `"${value.toString().replace(/"/g, '""')}"`;
+                            });
+                            csvRows.push(row.join(','));
+                        });
+                        
+                        data = csvRows.join('\n');
+                        filename = 'silentstacks-export.csv';
+                        mimeType = 'text/csv';
+                    } else {
+                        data = JSON.stringify(this.requests, null, 2);
+                        filename = 'silentstacks-export.json';
+                        mimeType = 'application/json';
+                    }
+
+                    const blob = new Blob([data], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+
+                    this.showToast(`Data exported as ${format.toUpperCase()}`, 'success');
+                } catch (error) {
+                    console.error('Export failed:', error);
+                    this.showToast(`Export failed: ${error.message}`, 'error');
+                }
+            }
+
+            // UI Management
+            showSection(sectionId) {
+                // Hide all sections
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+
+                // Show target section
+                document.getElementById(sectionId).classList.add('active');
+
+                // Update nav tabs
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                    tab.setAttribute('aria-selected', 'false');
+                });
+
+                const activeTab = document.querySelector(`[data-section="${sectionId}"]`);
+                if (activeTab) {
+                    activeTab.classList.add('active');
+                    activeTab.setAttribute('aria-selected', 'true');
+                }
+
+                this.currentSection = sectionId;
+
+                // Update data when switching to certain sections
+                if (sectionId === 'dashboard') {
+                    this.updateStats();
+                } else if (sectionId === 'all-requests') {
+                    this.performSearch();
+                }
+            }
+
+            setTheme(theme) {
+                this.theme = theme;
+                document.documentElement.setAttribute('data-theme', theme);
+                document.getElementById('themeSelect').value = theme;
+                localStorage.setItem('silentstacks-theme', theme);
+            }
+
+            updateStats() {
+                const total = this.requests.length;
+                const pending = this.requests.filter(r => r.status === 'pending').length;
+                const completed = this.requests.filter(r => r.status === 'completed').length;
+                const urgent = this.requests.filter(r => r.priority === 'urgent').length;
+
+                document.getElementById('totalRequests').textContent = total;
+                document.getElementById('pendingRequests').textContent = pending;
+                document.getElementById('completedRequests').textContent = completed;
+                document.getElementById('urgentRequests').textContent = urgent;
+                document.getElementById('totalRequestsInfo').textContent = total;
+
+                // Update storage info
+                const storageUsed = new Blob([localStorage.getItem('silentstacks-data') || '']).size;
+                document.getElementById('storageUsed').textContent = `${Math.round(storageUsed / 1024)} KB`;
+            }
+
+            toggleRequestSelection(id) {
+                if (this.selectedRequests.has(id)) {
+                    this.selectedRequests.delete(id);
+                } else {
+                    this.selectedRequests.add(id);
+                }
+
+                const deleteBtn = document.getElementById('deleteSelectedBtn');
+                if (this.selectedRequests.size > 0) {
+                    deleteBtn.classList.remove('hidden');
+                } else {
+                    deleteBtn.classList.add('hidden');
+                }
+
+                this.renderRequests();
+            }
+
+            toggleSelectAll() {
+                const checkbox = document.getElementById('selectAllCheckbox');
+                
+                if (checkbox.checked) {
+                    this.filteredRequests.forEach(request => {
+                        this.selectedRequests.add(request.id);
+                    });
+                } else {
+                    this.selectedRequests.clear();
+                }
+
+                const deleteBtn = document.getElementById('deleteSelectedBtn');
+                if (this.selectedRequests.size > 0) {
+                    deleteBtn.classList.remove('hidden');
+                } else {
+                    deleteBtn.classList.add('hidden');
+                }
+
+                this.renderRequests();
+            }
+
+            // Toast Notifications
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>${this.escapeHtml(message)}</span>
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">×</button>
+                    </div>
+                `;
+
+                container.appendChild(toast);
+
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 5000);
+            }
+
+            // Utility Functions
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Event Listeners Setup
+            setupEventListeners() {
+                // Navigation
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        this.showSection(tab.dataset.section);
+                    });
+                });
+
+                // Theme selector
+                document.getElementById('themeSelect').addEventListener('change', (e) => {
+                    this.setTheme(e.target.value);
+                });
+
+                // Form submission
+                document.getElementById('requestForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const requestData = Object.fromEntries(formData.entries());
+                    this.addRequest(requestData);
+                    e.target.reset();
+                    this.showToast('Request added successfully', 'success');
+                });
+
+                // Clear form
+                document.getElementById('clearFormBtn').addEventListener('click', () => {
+                    document.getElementById('requestForm').reset();
+                });
+
+                // API lookups
+                document.getElementById('lookupPmidBtn').addEventListener('click', async () => {
+                    const pmid = document.getElementById('pmidInput').value.trim();
+                    if (!pmid) return;
+
+                    const btn = document.getElementById('lookupPmidBtn');
+                    const originalText = btn.textContent;
+                    btn.innerHTML = '<span class="loading"><span class="spinner"></span> Looking up...</span>';
+                    btn.disabled = true;
+
+                    try {
+                        const metadata = await this.lookupPubMed(pmid);
+                        this.fillForm(metadata);
+                        this.showToast('Metadata retrieved successfully', 'success');
+                    } catch (error) {
+                        this.showToast(error.message, 'error');
+                    } finally {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }
+                });
+
+                document.getElementById('lookupDoiBtn').addEventListener('click', async () => {
+                    const doi = document.getElementById('doiInput').value.trim();
+                    if (!doi) return;
+
+                    const btn = document.getElementById('lookupDoiBtn');
+                    const originalText = btn.textContent;
+                    btn.innerHTML = '<span class="loading"><span class="spinner"></span> Looking up...</span>';
+                    btn.disabled = true;
+
+                    try {
+                        const metadata = await this.lookupDOI(doi);
+                        this.fillForm(metadata);
+                        this.showToast('Metadata retrieved successfully', 'success');
+                    } catch (error) {
+                        this.showToast(error.message, 'error');
+                    } finally {
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                    }
+                });
+
+                // Search and filters
+                document.getElementById('searchInput').addEventListener('input', this.debouncedSearch);
+                document.getElementById('statusFilter').addEventListener('change', this.debouncedSearch);
+                document.getElementById('priorityFilter').addEventListener('change', this.debouncedSearch);
+
+                // Select all checkbox
+                document.getElementById('selectAllCheckbox').addEventListener('change', () => {
+                    this.toggleSelectAll();
+                });
+
+                // Delete selected
+                document.getElementById('deleteSelectedBtn').addEventListener('click', () => {
+                    if (confirm(`Delete ${this.selectedRequests.size} selected requests?`)) {
+                        this.deleteSelectedRequests();
+                    }
+                });
+
+                // Import/Export
+                document.getElementById('importBtn').addEventListener('click', async () => {
+                    const fileInput = document.getElementById('importFile');
+                    const bulkPmids = document.getElementById('bulkPmids').value.trim();
+
+                    if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const text = await file.text();
+                        const type = file.name.endsWith('.csv') ? 'csv' : 'json';
+                        await this.importData(text, type);
+                    } else if (bulkPmids) {
+                        await this.importData(bulkPmids, 'pmids');
+                        document.getElementById('bulkPmids').value = '';
+                    } else {
+                        this.showToast('Please select a file or enter PMIDs', 'warning');
+                    }
+                });
+
+                document.getElementById('exportCsvBtn').addEventListener('click', () => {
+                    this.exportData('csv');
+                });
+
+                document.getElementById('exportJsonBtn').addEventListener('click', () => {
+                    this.exportData('json');
+                });
+
+                // Settings
+                document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+                    this.settings.pubmedApiKey = document.getElementById('pubmedApiKey').value;
+                    this.saveData();
+                    this.showToast('Settings saved', 'success');
+                });
+
+                document.getElementById('clearDataBtn').addEventListener('click', () => {
+                    if (confirm('This will delete all your data. Are you sure?')) {
+                        this.requests = [];
+                        this.selectedRequests.clear();
+                        this.saveData();
+                        this.updateStats();
+                        this.renderRequests();
+                        this.showToast('All data cleared', 'success');
+                    }
+                });
+
+                document.getElementById('exportBackupBtn').addEventListener('click', () => {
+                    const backup = {
+                        requests: this.requests,
+                        settings: this.settings,
+                        exportDate: new Date().toISOString(),
+                        version: '2.0'
+                    };
+                    
+                    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `silentstacks-backup-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+
+                // Help button
+                document.getElementById('helpBtn').addEventListener('click', () => {
+                    this.showHelp();
+                });
+
+                // Virtual scrolling setup
+                this.setupVirtualScrolling();
+            }
+
+            fillForm(metadata) {
+                Object.keys(metadata).forEach(key => {
+                    const input = document.getElementById(key);
+                    if (input && metadata[key]) {
+                        input.value = metadata[key];
+                    }
+                });
+            }
+
+            editRequest(id) {
+                const request = this.requests.find(r => r.id === id);
+                if (request) {
+                    this.showSection('add-request');
+                    this.fillForm(request);
+                    
+                    // Change form to edit mode
+                    const form = document.getElementById('requestForm');
+                    form.dataset.editId = id;
+                    
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    submitBtn.textContent = 'Update Request';
+                }
+            }
+
+            showHelp() {
+                const helpContent = `
+                    <h3>SilentStacks Help</h3>
+                    <h4>Getting Started</h4>
+                    <ul>
+                        <li><strong>Add Request:</strong> Use the "Add Request" tab to create new ILL requests</li>
+                        <li><strong>Quick Lookup:</strong> Enter a PMID or DOI to automatically fetch metadata</li>
+                        <li><strong>Search:</strong> Use the search box in "All Requests" to find specific items</li>
+                        <li><strong>Bulk Import:</strong> Import multiple requests via CSV, JSON, or PMID list</li>
+                    </ul>
+                    
+                    <h4>Features</h4>
+                    <ul>
+                        <li><strong>Offline Support:</strong> Works without internet, queues API requests</li>
+                        <li><strong>Virtual Scrolling:</strong> Handles large datasets efficiently</li>
+                        <li><strong>Smart Caching:</strong> Reduces API calls with 24-hour cache</li>
+                        <li><strong>Error Recovery:</strong> Automatic retry with exponential backoff</li>
+                        <li><strong>Accessibility:</strong> Full keyboard navigation and screen reader support</li>
+                    </ul>
+                    
+                    <h4>Keyboard Shortcuts</h4>
+                    <ul>
+                        <li><strong>Tab:</strong> Navigate between elements</li>
+                        <li><strong>Enter:</strong> Activate buttons and submit forms</li>
+                        <li><strong>Escape:</strong> Close dialogs and clear selections</li>
+                    </ul>
+                `;
+                
+                this.showToast(helpContent, 'info');
+            }
         }
-      }
 
-      // ===== PUBMED API WITH LAZY LOADING =====
-      async fetchPubMedData(pmid) {
-        const cacheKey = `pubmed_${pmid}`;
-        const cached = localStorage.getItem(cacheKey);
-        
-        if (cached) {
-          const data = JSON.parse(cached);
-          // Check if cache is less than 24 hours old
-          if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
-            return data.result;
-          }
-        }
-
-        try {
-          const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmid}&retmode=xml`;
-          const response = await this.apiCall(url, {}, `pubmed_${pmid}`);
-          const xmlText = await response.text();
-          
-          const parser = new DOMParser();
-          const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-          
-          const article = this.parsePubMedXML(xmlDoc);
-          
-          // Cache the result
-          localStorage.setItem(cacheKey, JSON.stringify({
-            result: article,
-            timestamp: Date.now()
-          }));
-          
-          return article;
-          
-        } catch (error) {
-          console.error('PubMed fetch failed:', error);
-          return null;
-        }
-      }
-
-      parsePubMedXML(xmlDoc) {
-        const article = xmlDoc.querySelector('PubmedArticle');
-        if (!article) return null;
-
-        const title = article.querySelector('ArticleTitle')?.textContent || '';
-        const journal = article.querySelector('Title')?.textContent || '';
-        const year = article.querySelector('PubDate Year')?.textContent || '';
-        
-        const authors = Array.from(article.querySelectorAll('Author')).map(author => {
-          const lastName = author.querySelector('LastName')?.textContent || '';
-          const foreName = author.querySelector('ForeName')?.textContent || '';
-          return `${lastName} ${foreName}`.trim();
-        }).join(', ');
-
-        // Extract MeSH terms
-        const meshTerms = Array.from(article.querySelectorAll('MeshHeading')).map(mesh => {
-          const descriptor = mesh.querySelector('DescriptorName')?.textContent || '';
-          const isMajor = mesh.querySelector('DescriptorName')?.getAttribute('MajorTopicYN') === 'Y';
-          return { term: descriptor, major: isMajor };
+        // Initialize the application
+        let app;
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new SilentStacksApp();
         });
 
-        return {
-          title,
-          authors,
-          journal,
-          year,
-          meshTerms
-        };
-      }
-
-      // ===== LAZY LOADING FOR CLINICAL TRIALS =====
-      async lazyLoadClinicalTrials(pmid) {
-        // Only load when user expands the clinical trials section
-        const trialsSection = document.querySelector(`[data-pmid="${pmid}"] .clinical-trials-section`);
-        if (!trialsSection) return;
-
-        if (trialsSection.dataset.loaded === 'true') return;
-
-        try {
-          trialsSection.innerHTML = '<div class="loading">🔄 Loading clinical trials...</div>';
-          
-          // Simulate clinical trials API call
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const mockTrials = [
-            { nct: 'NCT12345678', title: 'Phase II Trial of Novel Therapy', status: 'Recruiting' },
-            { nct: 'NCT87654321', title: 'Randomized Controlled Trial', status: 'Completed' }
-          ];
-          
-          trialsSection.innerHTML = mockTrials.map(trial => `
-            <div class="trial-card">
-              <strong>${trial.nct}</strong>: ${trial.title}
-              <span class="status ${trial.status.toLowerCase()}">${trial.status}</span>
-            </div>
-          `).join('');
-          
-          trialsSection.dataset.loaded = 'true';
-          
-        } catch (error) {
-          trialsSection.innerHTML = '<div class="error">Failed to load clinical trials</div>';
-        }
-      }
-
-      // ===== OFFLINE QUEUE MANAGEMENT =====
-      addToOfflineQueue(request) {
-        this.offlineQueue.push({
-          ...request,
-          timestamp: Date.now(),
-          id: Date.now() + Math.random()
-        });
-        this.saveOfflineQueue();
-        this.showUserFriendlyError('Request queued for when online');
-      }
-
-      async processOfflineQueue() {
-        if (!this.isOnline || this.offlineQueue.length === 0) return;
-
-        console.log(`📡 Processing ${this.offlineQueue.length} queued requests...`);
-        
-        const queue = [...this.offlineQueue];
-        this.offlineQueue = [];
-        this.saveOfflineQueue();
-
-        for (const request of queue) {
-          try {
-            await this.apiCall(request.url, request.options, request.retryKey);
-            console.log('✅ Processed queued request:', request.retryKey);
-          } catch (error) {
-            console.error('❌ Failed to process queued request:', error);
-            // Re-queue if it failed
-            this.offlineQueue.push(request);
-          }
-        }
-
-        this.saveOfflineQueue();
-      }
-
-      saveOfflineQueue() {
-        localStorage.setItem('silentStacks_offlineQueue', JSON.stringify(this.offlineQueue));
-      }
-
-      setupOfflineHandling() {
-        window.addEventListener('online', () => {
-          this.isOnline = true;
-          this.updateConnectionStatus();
-          this.processOfflineQueue();
-        });
-
-        window.addEventListener('offline', () => {
-          this.isOnline = false;
-          this.updateConnectionStatus();
-        });
-      }
-
-      updateConnectionStatus() {
-        const indicator = document.getElementById('connection-status');
-        const text = document.getElementById('connection-text');
-        
-        if (this.isOnline) {
-          indicator.className = 'connection-indicator connection-clean';
-          text.textContent = '●';
-        } else {
-          indicator.className = 'connection-indicator offline';
-          text.textContent = '⚠ Offline';
-        }
-      }
-
-      // ===== ERROR BOUNDARIES & USER-FRIENDLY MESSAGES =====
-      showUserFriendlyError(message, type = 'error') {
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.innerHTML = `
-          <div class="toast-content">
-            <span class="toast-icon">${type === 'error' ? '⚠️' : 'ℹ️'}</span>
-            <span class="toast-message">${message}</span>
-            <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
-          </div>
+        // Add some CSS for badges and loading states
+        const additionalStyles = `
+            <style>
+                .badge {
+                    display: inline-block;
+                    padding: 0.25rem 0.5rem;
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                    border-radius: 0.25rem;
+                    text-transform: capitalize;
+                }
+                
+                .badge-pending { background: #fef3c7; color: #92400e; }
+                .badge-in-progress { background: #dbeafe; color: #1e40af; }
+                .badge-completed { background: #d1fae5; color: #065f46; }
+                .badge-cancelled { background: #fee2e2; color: #991b1b; }
+                
+                .badge-normal { background: #f3f4f6; color: #374151; }
+                .badge-rush { background: #fed7aa; color: #9a3412; }
+                .badge-urgent { background: #fecaca; color: #991b1b; }
+                
+                .loading {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+            </style>
         `;
         
-        // Add toast styles if not exist
-        if (!document.querySelector('.toast-styles')) {
-          const style = document.createElement('style');
-          style.className = 'toast-styles';
-          style.textContent = `
-            .toast {
-              position: fixed;
-              top: 20px;
-              right: 20px;
-              background: white;
-              border-radius: 8px;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-              z-index: 10000;
-              animation: slideIn 0.3s ease;
-              max-width: 400px;
-            }
-            .toast-error { border-left: 4px solid #e74c3c; }
-            .toast-info { border-left: 4px solid #3498db; }
-            .toast-content {
-              display: flex;
-              align-items: center;
-              padding: 15px;
-              gap: 10px;
-            }
-            .toast-message { flex: 1; }
-            .toast-close {
-              background: none;
-              border: none;
-              font-size: 18px;
-              cursor: pointer;
-              padding: 0;
-              width: 24px;
-              height: 24px;
-            }
-            @keyframes slideIn {
-              from { transform: translateX(100%); opacity: 0; }
-              to { transform: translateX(0); opacity: 1; }
-            }
-          `;
-          document.head.appendChild(style);
-        }
-        
-        document.body.appendChild(toast);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-          if (toast.parentElement) {
-            toast.remove();
-          }
-        }, 5000);
-      }
-
-      // ===== REQUEST MANAGEMENT =====
-      createRequestElement(request, index) {
-        const element = document.createElement('div');
-        element.className = 'request-card';
-        element.style.height = `${this.virtualScrollItemHeight}px`;
-        element.dataset.index = index;
-        
-        const isSelected = this.selectedRequests.has(request.id);
-        if (isSelected) element.classList.add('selected');
-        
-        element.innerHTML = `
-          <div class="request-header">
-            <input type="checkbox" ${isSelected ? 'checked' : ''} 
-                   onchange="app.toggleRequestSelection('${request.id}', this.checked)">
-            <h3>${this.escapeHtml(request.title || 'Untitled Request')}</h3>
-            <span class="priority priority-${request.priority || 'normal'}">${request.priority || 'normal'}</span>
-          </div>
-          <div class="request-details">
-            <p><strong>Authors:</strong> ${this.escapeHtml(request.authors || 'Unknown')}</p>
-            <p><strong>Journal:</strong> ${this.escapeHtml(request.journal || 'Unknown')} (${request.year || 'Unknown'})</p>
-            ${request.pmid ? `<p><strong>PMID:</strong> ${request.pmid}</p>` : ''}
-            ${request.doi ? `<p><strong>DOI:</strong> ${request.doi}</p>` : ''}
-          </div>
-          <div class="request-actions">
-            <button onclick="app.editRequest('${request.id}')" class="btn btn-secondary">Edit</button>
-            <button onclick="app.deleteRequest('${request.id}')" class="btn btn-danger">Delete</button>
-            ${request.pmid ? `<button onclick="app.lazyLoadClinicalTrials('${request.pmid}')" class="btn btn-primary">Clinical Trials</button>` : ''}
-          </div>
-          ${request.pmid ? `<div class="clinical-trials-section" data-pmid="${request.pmid}"></div>` : ''}
-        `;
-        
-        return element;
-      }
-
-      escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      displayRequests(requests) {
-        this.virtualScrollData = requests;
-        if (requests.length > 50) {
-          // Use virtual scrolling for large datasets
-          this.renderVirtualItems();
-        } else {
-          // Regular rendering for small datasets
-          const container = this.virtualScrollContainer;
-          container.innerHTML = '';
-          requests.forEach((request, index) => {
-            container.appendChild(this.createRequestElement(request, index));
-          });
-        }
-      }
-
-      toggleRequestSelection(id, selected) {
-        if (selected) {
-          this.selectedRequests.add(id);
-        } else {
-          this.selectedRequests.delete(id);
-        }
-        this.updateSelectionUI();
-      }
-
-      updateSelectionUI() {
-        const count = this.selectedRequests.size;
-        const deleteBtn = document.getElementById('delete-selected-btn');
-        if (deleteBtn) {
-          deleteBtn.style.display = count > 0 ? 'block' : 'none';
-          deleteBtn.textContent = `🗑️ Delete Selected (${count})`;
-        }
-      }
-
-      // ===== FORM HANDLING =====
-      async handleFormSubmit(event) {
-        event.preventDefault();
-        
-        try {
-          const formData = new FormData(event.target);
-          const request = {
-            id: Date.now().toString(),
-            title: formData.get('title'),
-            authors: formData.get('authors'),
-            journal: formData.get('journal'),
-            year: formData.get('year'),
-            pmid: formData.get('pmid'),
-            doi: formData.get('doi'),
-            priority: formData.get('priority'),
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-            notes: formData.get('notes')
-          };
-
-          // Auto-fetch metadata if PMID provided
-          if (request.pmid && !request.title) {
-            this.showUserFriendlyError('Fetching metadata...', 'info');
-            const metadata = await this.fetchPubMedData(request.pmid);
-            if (metadata) {
-              request.title = metadata.title;
-              request.authors = metadata.authors;
-              request.journal = metadata.journal;
-              request.year = metadata.year;
-              request.meshTerms = metadata.meshTerms;
-            }
-          }
-
-          this.requests.push(request);
-          this.saveRequests();
-          this.updateSearchIndex();
-          this.updateDashboard();
-          
-          event.target.reset();
-          this.showUserFriendlyError('Request added successfully!', 'info');
-          
-        } catch (error) {
-          this.showUserFriendlyError(`Failed to add request: ${error.message}`);
-        }
-      }
-
-      // ===== BULK OPERATIONS =====
-      async handleBulkImport(data) {
-        const batchSize = 50; // Process in batches to avoid blocking UI
-        const total = data.length;
-        let processed = 0;
-
-        this.showUserFriendlyError(`Processing ${total} items in batches...`, 'info');
-
-        for (let i = 0; i < data.length; i += batchSize) {
-          const batch = data.slice(i, i + batchSize);
-          
-          for (const item of batch) {
-            try {
-              const request = {
-                id: Date.now().toString() + Math.random(),
-                ...item,
-                status: item.status || 'pending',
-                createdAt: new Date().toISOString()
-              };
-              
-              this.requests.push(request);
-              processed++;
-              
-            } catch (error) {
-              console.error('Failed to process item:', item, error);
-            }
-          }
-          
-          // Update progress and yield to browser
-          const progress = Math.round((processed / total) * 100);
-          this.showUserFriendlyError(`Processed ${processed}/${total} items (${progress}%)`, 'info');
-          
-          await new Promise(resolve => setTimeout(resolve, 10)); // Yield to browser
-        }
-
-        this.saveRequests();
-        this.updateSearchIndex();
-        this.updateDashboard();
-        this.showUserFriendlyError(`Successfully imported ${processed} requests!`, 'info');
-      }
-
-      // ===== DATA PERSISTENCE =====
-      saveRequests() {
-        localStorage.setItem('silentStacks_requests', JSON.stringify(this.requests));
-      }
-
-      updateSearchIndex() {
-        if (typeof Fuse !== 'undefined') {
-          this.searchIndex = new Fuse(this.requests, {
-            keys: ['title', 'authors', 'journal', 'notes', 'tags'],
-            threshold: 0.3,
-            includeScore: true
-          });
-        }
-      }
-
-      // ===== UI UPDATES =====
-      updateDashboard() {
-        const total = this.requests.length;
-        const pending = this.requests.filter(r => r.status === 'pending').length;
-        const completed = this.requests.filter(r => r.status === 'fulfilled').length;
-        const urgent = this.requests.filter(r => r.priority === 'urgent').length;
-
-        document.getElementById('total-requests').textContent = total;
-        document.getElementById('pending-requests').textContent = pending;
-        document.getElementById('completed-requests').textContent = completed;
-        document.getElementById('urgent-requests').textContent = urgent;
-
-        // Show recent requests
-        const recent = this.requests.slice(-5).reverse();
-        const recentContainer = document.getElementById('recent-requests');
-        if (recent.length > 0) {
-          recentContainer.innerHTML = recent.map(req => `
-            <div class="request-summary">
-              <strong>${this.escapeHtml(req.title || 'Untitled')}</strong>
-              <span class="status">${req.status}</span>
-            </div>
-          `).join('');
-        }
-      }
-
-      // ===== THEME MANAGEMENT =====
-      loadTheme() {
-        const theme = this.settings.theme || 'light';
-        document.documentElement.setAttribute('data-theme', theme);
-        const themeSelect = document.getElementById('theme-select');
-        if (themeSelect) themeSelect.value = theme;
-      }
-
-      changeTheme(theme) {
-        this.settings.theme = theme;
-        localStorage.setItem('silentStacks_settings', JSON.stringify(this.settings));
-        document.documentElement.setAttribute('data-theme', theme);
-      }
-
-      // ===== EVENT LISTENERS =====
-      setupEventListeners() {
-        // Navigation
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-          tab.addEventListener('click', (e) => {
-            const section = e.target.dataset.section;
-            this.showSection(section);
-          });
-        });
-
-        // Theme selector
-        const themeSelect = document.getElementById('theme-select');
-        if (themeSelect) {
-          themeSelect.addEventListener('change', (e) => {
-            this.changeTheme(e.target.value);
-          });
-        }
-
-        // Form submission
-        const requestForm = document.getElementById('request-form');
-        if (requestForm) {
-          requestForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
-        }
-
-        // PMID/DOI lookup buttons
-        document.getElementById('lookup-pmid')?.addEventListener('click', () => {
-          const pmid = document.getElementById('pmid').value;
-          if (pmid) this.lookupPMID(pmid);
-        });
-
-        document.getElementById('lookup-doi')?.addEventListener('click', () => {
-          const doi = document.getElementById('doi').value;
-          if (doi) this.lookupDOI(doi);
-        });
-
-        // Bulk operations
-        document.getElementById('bulk-paste-btn')?.addEventListener('click', () => {
-          this.handleBulkPaste();
-        });
-
-        document.getElementById('upload-csv-btn')?.addEventListener('click', () => {
-          const fileInput = document.getElementById('csv-file-input');
-          if (fileInput.files[0]) {
-            this.handleCSVUpload(fileInput.files[0]);
-          }
-        });
-
-        // Export buttons
-        document.getElementById('export-csv')?.addEventListener('click', () => {
-          this.exportData('csv');
-        });
-
-        document.getElementById('export-json')?.addEventListener('click', () => {
-          this.exportData('json');
-        });
-
-        // Help button
-        document.getElementById('help-button')?.addEventListener('click', () => {
-          this.showHelp();
-        });
-
-        // Global error handler
-        window.addEventListener('error', (event) => {
-          console.error('Global error:', event.error);
-          this.showUserFriendlyError('An unexpected error occurred. Please try again.');
-        });
-
-        // Unhandled promise rejection handler
-        window.addEventListener('unhandledrejection', (event) => {
-          console.error('Unhandled promise rejection:', event.reason);
-          this.showUserFriendlyError('A network or processing error occurred.');
-          event.preventDefault();
-        });
-      }
-
-      // ===== LOOKUP FUNCTIONS =====
-      async lookupPMID(pmid) {
-        const statusEl = document.getElementById('pmid-status');
-        statusEl.textContent = '🔄 Looking up...';
-        
-        try {
-          const metadata = await this.fetchPubMedData(pmid);
-          if (metadata) {
-            // Auto-fill form
-            document.getElementById('title').value = metadata.title || '';
-            document.getElementById('authors').value = metadata.authors || '';
-            document.getElementById('journal').value = metadata.journal || '';
-            document.getElementById('year').value = metadata.year || '';
-            
-            statusEl.textContent = '✅ Metadata retrieved';
-            statusEl.style.color = 'var(--success-color)';
-          } else {
-            statusEl.textContent = '❌ No data found';
-            statusEl.style.color = 'var(--danger-color)';
-          }
-        } catch (error) {
-          statusEl.textContent = '❌ Lookup failed';
-          statusEl.style.color = 'var(--danger-color)';
-        }
-      }
-
-      async lookupDOI(doi) {
-        const statusEl = document.getElementById('doi-status');
-        statusEl.textContent = '🔄 Looking up...';
-        
-        try {
-          const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
-          const response = await this.apiCall(url, {}, `doi_${doi}`);
-          const data = await response.json();
-          
-          if (data.message) {
-            const work = data.message;
-            document.getElementById('title').value = work.title?.[0] || '';
-            document.getElementById('journal').value = work['container-title']?.[0] || '';
-            document.getElementById('year').value = work.published?.['date-parts']?.[0]?.[0] || '';
-            
-            if (work.author) {
-              const authors = work.author.map(a => `${a.family} ${a.given || ''}`).join(', ');
-              document.getElementById('authors').value = authors;
-            }
-            
-            statusEl.textContent = '✅ Metadata retrieved';
-            statusEl.style.color = 'var(--success-color)';
-          }
-        } catch (error) {
-          statusEl.textContent = '❌ Lookup failed';
-          statusEl.style.color = 'var(--danger-color)';
-        }
-      }
-
-      // ===== BULK OPERATIONS =====
-      handleBulkPaste() {
-        const textarea = document.getElementById('bulk-paste-textarea');
-        const content = textarea.value.trim();
-        
-        if (!content) {
-          this.showUserFriendlyError('Please enter some data to import');
-          return;
-        }
-
-        try {
-          // Try to parse as CSV first
-          if (typeof Papa !== 'undefined') {
-            const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
-            if (parsed.data && parsed.data.length > 0) {
-              this.handleBulkImport(parsed.data);
-              return;
-            }
-          }
-
-          // Try as line-separated PMIDs
-          const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-          const pmids = lines.filter(line => /^\d+$/.test(line));
-          
-          if (pmids.length > 0) {
-            const requests = pmids.map(pmid => ({ pmid, title: '', status: 'pending' }));
-            this.handleBulkImport(requests);
-          } else {
-            this.showUserFriendlyError('No valid data found. Please check format.');
-          }
-          
-        } catch (error) {
-          this.showUserFriendlyError(`Import failed: ${error.message}`);
-        }
-      }
-
-      async handleCSVUpload(file) {
-        if (typeof Papa === 'undefined') {
-          this.showUserFriendlyError('CSV parser not available');
-          return;
-        }
-
-        try {
-          const text = await file.text();
-          const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-          
-          if (parsed.errors.length > 0) {
-            console.warn('CSV parsing errors:', parsed.errors);
-          }
-          
-          if (parsed.data && parsed.data.length > 0) {
-            await this.handleBulkImport(parsed.data);
-          } else {
-            this.showUserFriendlyError('No valid data found in CSV file');
-          }
-          
-        } catch (error) {
-          this.showUserFriendlyError(`CSV upload failed: ${error.message}`);
-        }
-      }
-
-      // ===== EXPORT FUNCTIONS =====
-      exportData(format) {
-        try {
-          let content, filename, mimeType;
-          
-          if (format === 'csv') {
-            if (typeof Papa !== 'undefined') {
-              content = Papa.unparse(this.requests);
-              filename = `silentstacks_export_${new Date().toISOString().split('T')[0]}.csv`;
-              mimeType = 'text/csv';
-            } else {
-              throw new Error('CSV export not available');
-            }
-          } else if (format === 'json') {
-            content = JSON.stringify(this.requests, null, 2);
-            filename = `silentstacks_export_${new Date().toISOString().split('T')[0]}.json`;
-            mimeType = 'application/json';
-          }
-          
-          const blob = new Blob([content], { type: mimeType });
-          const url = URL.createObjectURL(blob);
-          
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          
-          this.showUserFriendlyError(`Exported ${this.requests.length} requests as ${format.toUpperCase()}`, 'info');
-          
-        } catch (error) {
-          this.showUserFriendlyError(`Export failed: ${error.message}`);
-        }
-      }
-
-      // ===== NAVIGATION =====
-      showSection(sectionId) {
-        // Hide all sections
-        document.querySelectorAll('.section').forEach(section => {
-          section.classList.remove('active');
-        });
-        
-        // Show target section
-        const targetSection = document.getElementById(sectionId);
-        if (targetSection) {
-          targetSection.classList.add('active');
-        }
-        
-        // Update nav tabs
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-          tab.classList.remove('active');
-          tab.setAttribute('aria-selected', 'false');
-        });
-        
-        const activeTab = document.querySelector(`[data-section="${sectionId}"]`);
-        if (activeTab) {
-          activeTab.classList.add('active');
-          activeTab.setAttribute('aria-selected', 'true');
-        }
-        
-        this.currentSection = sectionId;
-        
-        // Load section-specific data
-        if (sectionId === 'all-requests') {
-          this.displayRequests(this.requests);
-          document.getElementById('results-count').textContent = `${this.requests.length} requests`;
-        }
-      }
-
-      // ===== HELP SYSTEM =====
-      showHelp() {
-        const helpModal = document.getElementById('help-modal');
-        if (helpModal) {
-          helpModal.style.display = 'block';
-        }
-      }
-
-      // ===== UTILITY FUNCTIONS =====
-      editRequest(id) {
-        const request = this.requests.find(r => r.id === id);
-        if (request) {
-          // Switch to add request form and populate it
-          this.showSection('add-request');
-          
-          // Populate form fields
-          Object.keys(request).forEach(key => {
-            const field = document.getElementById(key);
-            if (field) field.value = request[key] || '';
-          });
-          
-          // Store editing ID for update instead of create
-          document.getElementById('request-form').dataset.editingId = id;
-        }
-      }
-
-      deleteRequest(id) {
-        if (confirm('Are you sure you want to delete this request?')) {
-          this.requests = this.requests.filter(r => r.id !== id);
-          this.saveRequests();
-          this.updateSearchIndex();
-          this.updateDashboard();
-          this.displayRequests(this.requests);
-          this.showUserFriendlyError('Request deleted', 'info');
-        }
-      }
-    }
-
-    // ===== GLOBAL FUNCTIONS =====
-    function toggleSelectAll(checked) {
-      const checkboxes = document.querySelectorAll('.request-card input[type="checkbox"]');
-      checkboxes.forEach(cb => {
-        cb.checked = checked;
-        const requestId = cb.closest('.request-card').dataset.requestId;
-        if (requestId) {
-          app.toggleRequestSelection(requestId, checked);
-        }
-      });
-    }
-
-    function deleteSelectedRequests() {
-      const selectedIds = Array.from(app.selectedRequests);
-      if (selectedIds.length === 0) {
-        app.showUserFriendlyError('No requests selected');
-        return;
-      }
-      
-      if (confirm(`Delete ${selectedIds.length} selected requests?`)) {
-        app.requests = app.requests.filter(r => !selectedIds.includes(r.id));
-        app.selectedRequests.clear();
-        app.saveRequests();
-        app.updateSearchIndex();
-        app.updateDashboard();
-        app.displayRequests(app.requests);
-        app.updateSelectionUI();
-        app.showUserFriendlyError(`Deleted ${selectedIds.length} requests`, 'info');
-      }
-    }
-
-    function closeHelpModal() {
-      const helpModal = document.getElementById('help-modal');
-      if (helpModal) {
-        helpModal.style.display = 'none';
-      }
-    }
-
-    // ===== INITIALIZE APP =====
-    let app;
-    
-    document.addEventListener('DOMContentLoaded', () => {
-      app = new SilentStacksApp();
-      
-      // Make app globally available for onclick handlers
-      window.app = app;
-      window.toggleSelectAll = toggleSelectAll;
-      window.deleteSelectedRequests = deleteSelectedRequests;
-      window.closeHelpModal = closeHelpModal;
-    });
-
-    // ===== SERVICE WORKER REGISTRATION =====
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
-            console.log('✅ Service Worker registered');
-          })
-          .catch(error => {
-            console.log('❌ Service Worker registration failed:', error);
-          });
-      });
-    }
-  </script>
-
-  <!-- Register service worker with correct GitHub Pages scope -->
-  <script>
-  (function () {
-    if (!('serviceWorker' in navigator)) return;
-    // e.g. /SilentStacksTest
-    const base = location.pathname.split('/').slice(0, 2).join('/') || '';
-    navigator.serviceWorker.register(`${base}/service-worker.js`, { scope: `${base}/` })
-      .catch(console.error);
-  })();
-  </script>
-
-  <!-- Initialize Application -->
-  <script>
-    // Global state initialization
-    window.SilentStacks = window.SilentStacks || {};
-    window.SilentStacks.state = window.SilentStacks.state || {
-      selectedRequests: new Set(),
-      currentTheme: 'light',
-      isOnline: navigator.onLine
-    };
-
-    // Connection monitoring
-    function updateConnectionStatus() {
-      const isOnline = navigator.onLine;
-      window.SilentStacks.state.isOnline = isOnline;
-      
-      const indicator = document.getElementById('connection-status');
-      const text = document.getElementById('connection-text');
-      
-      if (indicator && text) {
-        if (isOnline) {
-          indicator.className = 'connection-indicator connection-clean';
-          text.textContent = '●';
-        } else {
-          indicator.className = 'connection-indicator offline';
-          text.textContent = '⚠ Offline';
-        }
-      }
-      
-      window.SilentStacks?.core?.eventBus?.emit('connection:changed', { isOnline });
-    }
-
-    // Set up connection monitoring
-    window.addEventListener('online', updateConnectionStatus);
-    window.addEventListener('offline', updateConnectionStatus);
-    updateConnectionStatus();
-
-    // Performance monitoring
-    function monitorPerformance() {
-      if (performance.memory) {
-        const usedMB = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
-        
-        // Warn at 400MB
-        if (usedMB > 400) {
-          console.warn(`⚠️ High memory usage: ${usedMB}MB`);
-          window.SilentStacks?.core?.eventBus?.emit('performance:warning', { memoryMB: usedMB });
-        }
-        
-        // Critical at 600MB
-        if (usedMB > 600) {
-          console.error(`🚨 Critical memory usage: ${usedMB}MB`);
-          window.SilentStacks?.core?.eventBus?.emit('performance:critical', { memoryMB: usedMB });
-        }
-      }
-    }
-
-    // Monitor every 30 seconds
-    setInterval(monitorPerformance, 30000);
-
-    console.log('🚀 SilentStacks v2.0 - Security & Performance Ready');
-  </script>
+        document.head.insertAdjacentHTML('beforeend', additionalStyles);
+    </script>
 </body>
 </html>
