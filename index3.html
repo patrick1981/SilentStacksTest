@@ -1,1248 +1,1928 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SilentStacks v2.0 – Monolithic</title>
-  <meta name="description" content="SilentStacks v2.0 – Offline-first document request manager (single-file build)" />
-  <style>
-    /* =========================
-       SilentStacks v2.0 – Monolithic CSS
-       WCAG-friendly, responsive, no external deps
-       ========================= */
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilentStacks Enhanced - API & Clinical Focus</title>
+    <style>
+        /* Base from v1.2 with enhancements for API features */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    :root {
-      --bg: #0b0c0f;
-      --panel: #13151a;
-      --text: #e6e8ef;
-      --muted: #a8b0c0;
-      --brand: #7aa2ff;
-      --brand-2: #67e8f9;
-      --ok: #22c55e;
-      --warn: #f59e0b;
-      --bad: #ef4444;
-      --border: #2a2e37;
-      --focus: #f59e0b;
-      --chip: #1f2330;
-      --chip-text: #cbd5e1;
-    }
+        :root {
+            --primary-color: #0066cc;
+            --secondary-color: #6c757d;
+            --success-color: #228b22;
+            --danger-color: #dc3545;
+            --warning-color: #ff6600;
+            --info-color: #17a2b8;
+            --clinical-color: #8e44ad;
+            
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+            
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-muted: #868e96;
+            
+            --border-color: #dee2e6;
+            --border-radius: 4px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-    [data-theme="light"] {
-      --bg: #f8fafc;
-      --panel: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
-      --brand: #2563eb;
-      --brand-2: #0891b2;
-      --ok: #16a34a;
-      --warn: #b45309;
-      --bad: #b91c1c;
-      --border: #e2e8f0;
-      --focus: #ea580c;
-      --chip: #f1f5f9;
-      --chip-text: #0f172a;
-    }
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #adb5bd;
+            --text-muted: #868e96;
+            --border-color: #495057;
+        }
 
-    [data-theme="hc"] { /* High contrast */
-      --bg: #000;
-      --panel: #000;
-      --text: #fff;
-      --muted: #fff;
-      --brand: #ff0;
-      --brand-2: #0ff;
-      --ok: #0f0;
-      --warn: #ff0;
-      --bad: #f00;
-      --border: #fff;
-      --focus: #ff0;
-      --chip: #000;
-      --chip-text: #fff;
-    }
+        body {
+            font-family: 'Reddit Sans', 'Inter', 'SF Pro Display', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+        }
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color: var(--text);
-      background: radial-gradient(1000px 600px at 80% -10%, rgba(103,232,249,.12), transparent 40%),
-                  radial-gradient(1200px 800px at -10% -10%, rgba(122,162,255,.12), transparent 40%),
-                  var(--bg);
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-    a { color: var(--brand); }
-    .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 2px solid var(--border-color);
+        }
 
-    header {
-      display: grid; gap: 8px; padding: 16px; margin-bottom: 8px;
-      background: linear-gradient(180deg, rgba(122,162,255,.12), transparent 18%), var(--panel);
-      border: 1px solid var(--border); border-radius: 16px;
-    }
-    header .topbar {
-      display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
-    }
-    .title {
-      font-size: 18px; font-weight: 700; letter-spacing: .3px;
-    }
-    .subtitle { color: var(--muted); font-size: 12px; }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
 
-    .btn, button { cursor: pointer; border: 1px solid var(--border); background: var(--chip); color: var(--text);
-      padding: 8px 12px; border-radius: 10px; font-weight: 600; box-shadow: none; }
-    .btn:focus-visible, button:focus-visible, .input:focus-visible, select:focus-visible, textarea:focus-visible {
-      outline: 3px solid var(--focus); outline-offset: 2px; border-color: var(--focus);
-    }
-    .btn.primary { background: linear-gradient(180deg, var(--brand), var(--brand-2)); color: #001018; border: none; }
-    .btn.warn { background: var(--warn); color: #000; border: none; }
-    .btn.bad  { background: var(--bad); color: #fff; border: none; }
-    .btn.ok   { background: var(--ok);  color: #001b09; border: none; }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
 
-    .grid { display: grid; gap: 12px; }
-    .grid.cols-2 { grid-template-columns: 1fr 1fr; }
-    .grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-    .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
-    @media (max-width: 900px){ .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 640px){ .grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr; } }
+        /* Navigation - Keep v1.2 style */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding: 10px 0 0 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
 
-    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
-    .card h2 { margin: 0 0 12px; font-size: 16px; }
-    .muted { color: var(--muted); font-size: 12px; }
+        .nav-tabs::-webkit-scrollbar { display: none; }
 
-    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-    .tab { padding: 8px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--chip); color: var(--chip-text); }
-    .tab[aria-selected="true"] { background: linear-gradient(180deg, var(--brand), var(--brand-2)); color: #001018; border: none; }
+        .nav-tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
 
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
-    .input, select, textarea { width: 100%; background: var(--chip); color: var(--text); border: 1px solid var(--border);
-      border-radius: 10px; padding: 8px 10px; }
-    textarea { min-height: 84px; }
+        .nav-tab:hover { color: var(--primary-color); }
+        .nav-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
 
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 640px){ .row { grid-template-columns: 1fr; } }
+        /* Sections */
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
 
-    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-    .chip { background: var(--chip); color: var(--chip-text); border: 1px solid var(--border); padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+        .section.active { display: block; }
 
-    table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-    thead th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 700; padding: 6px 8px; }
-    tbody td { background: var(--panel); border: 1px solid var(--border); padding: 8px; }
-    tbody tr td:first-child { border-radius: 12px 0 0 12px; }
-    tbody tr td:last-child  { border-radius: 0 12px 12px 0; }
-    .status { font-weight: 700; }
-    .status.open { color: var(--warn); }
-    .status.closed { color: var(--ok); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; background: var(--chip); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; }
-    .help p { margin: .4rem 0; }
+        /* Enhanced Form - Keep v1.2 structure */
+        .request-form {
+            max-width: 800px;
+        }
 
-    .banner { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: rgba(122,162,255,.12); }
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
 
-    .sr-only { position: absolute !important; height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap; }
+        .form-label {
+            display: flex;
+            align-items: baseline;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
 
-    .toolbar { display:flex; gap:8px; flex-wrap: wrap; align-items: center; }
-    .toolbar .spacer { flex: 1; }
-    .small { font-size: 12px; }
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            min-height: 44px;
+        }
 
-    .badge { display:inline-flex; align-items:center; gap:6px; padding:2px 6px; border-radius:999px; border:1px solid var(--border); background: var(--chip); font-size:12px; }
-    .badge.warn { background: rgba(245, 158, 11, 0.2); }
-    .badge.ok { background: rgba(34,197,94,0.2); }
-    .badge.bad { background: rgba(239,68,68,0.2); }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
+        }
 
-    .log { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; font-size: 12px; white-space: pre-wrap; background: #0003; padding: 8px; border-radius: 8px; max-height: 220px; overflow: auto; border: 1px dashed var(--border); }
+        /* Enhanced Input with Button */
+        .input-with-button {
+            display: flex;
+            gap: 10px;
+        }
 
-    .visually-group { display:grid; gap:8px; padding:8px; border:1px solid var(--border); border-radius:12px; background: linear-gradient(180deg, rgba(103,232,249,.05), transparent); }
+        .input-with-button.enhanced {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
 
-    /* === Table quick-filter tabs === */
-    .table-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
-    .table-tab{padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--chip);color:var(--chip-text);cursor:pointer}
-    .table-tab[aria-selected="true"]{background:linear-gradient(180deg,var(--brand),var(--brand-2));color:#001018;border:none}
-  </style>
+        .input-with-button.enhanced:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
+        }
+
+        .input-with-button.enhanced input {
+            flex: 1;
+            border: none;
+            border-radius: 0;
+        }
+
+        .input-with-button.enhanced input:focus { box-shadow: none; }
+
+        .lookup-btn {
+            border: none;
+            border-radius: 0;
+            margin: -2px;
+            min-width: 120px;
+            padding: 8px 16px;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lookup-btn:hover {
+            background: #0056b3;
+        }
+
+        .lookup-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Enhanced Cards with NCT Support */
+        .request-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .request-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .request-card.clinical-trial {
+            border-left: 4px solid var(--clinical-color);
+            background: linear-gradient(90deg, rgba(142, 68, 173, 0.03), var(--bg-card) 20px);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .request-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .request-meta {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
+        .request-status-select {
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* NCT Clinical Trial Info */
+        .clinical-info {
+            background: rgba(142, 68, 173, 0.1);
+            border: 1px solid var(--clinical-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .clinical-info h4 {
+            color: var(--clinical-color);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .clinical-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .clinical-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .clinical-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .clinical-value {
+            font-weight: 600;
+            color: var(--clinical-color);
+        }
+
+        /* Batch Processing UI */
+        .batch-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .batch-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .batch-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            resize: vertical;
+        }
+
+        .batch-progress {
+            margin: 15px 0;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 44px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        /* Status Messages */
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            display: none;
+        }
+
+        .status-message.success {
+            background-color: rgba(34, 139, 34, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            display: block;
+        }
+
+        .status-message.loading {
+            background-color: rgba(0, 102, 204, 0.1);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .header h1 { font-size: 2rem; }
+            .clinical-grid { grid-template-columns: 1fr; }
+            .input-with-button { flex-direction: column; }
+            .input-with-button.enhanced .lookup-btn { margin: 8px 0 0 0; }
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin: 2px;
+        }
+
+        .tag.clinical {
+            background: rgba(142, 68, 173, 0.1);
+            color: var(--clinical-color);
+            border-color: var(--clinical-color);
+        }
+
+        /* Fieldset styling */
+        .fieldset-enhanced {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: var(--bg-card);
+        }
+
+        legend {
+            font-weight: 700;
+            color: var(--text-primary);
+            padding: 0 16px;
+            font-size: 1.1rem;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Enhanced form help */
+        .form-help {
+            display: block;
+            margin-top: 6px;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        /* Connection status */
+        #connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+    </style>
 </head>
 <body>
-  <div class="container" id="app-root">
-    <header aria-label="SilentStacks top bar">
-      <div class="topbar">
-        <div>
-          <div class="title" aria-live="polite">SilentStacks v2.0 <span class="subtitle">– Monolithic build</span></div>
-          <div class="subtitle">Offline-capable request manager with smart lookups, bulk ops, and AAA-minded UI.</div>
-        </div>
-        <div class="toolbar" role="toolbar" aria-label="Global controls">
-          <button class="btn" id="theme-light" title="Light theme" aria-pressed="false">☀️ Light</button>
-          <button class="btn" id="theme-dark"  title="Dark theme" aria-pressed="true">🌙 Dark</button>
-          <button class="btn" id="theme-hc"    title="High contrast theme" aria-pressed="false">⚡ High Contrast</button>
-          <span class="spacer"></span>
-          <button class="btn" id="export-json" title="Export data as JSON">⬇️ Export JSON</button>
-          <button class="btn" id="export-csv"  title="Export data as CSV">⬇️ Export CSV</button>
-          <button class="btn" id="export-nlm"  title="Export data as NLM citations">⬇️ Export NLM</button>
-        </div>
-      </div>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>SilentStacks Enhanced</h1>
+            <p>Advanced API Integration & Clinical Trial Support</p>
+        </header>
 
-      <nav class="tabs" role="tablist" aria-label="Primary">
-        <button class="tab" role="tab" aria-selected="true" aria-controls="tab-requests" id="tabbtn-requests">📑 Requests</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-bulk" id="tabbtn-bulk">📥 Bulk Ops</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-help" id="tabbtn-help">🆘 Help</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-diagnostics" id="tabbtn-diagnostics">🧪 Diagnostics</button>
-      </nav>
-    </header>
+        <!-- Connection Status -->
+        <div id="connection-status">🌐 Online</div>
 
-    <main>
-      <!-- Requests tab -->
-      <section id="tab-requests" role="tabpanel" aria-labelledby="tabbtn-requests">
-        <div class="grid cols-2">
-          <div class="card" id="form-card">
-            <h2>New / Edit Request</h2>
-            <div class="muted">Enter a PMID, DOI, or NCT ID then run <strong>Lookup</strong>. Fields are validated and sanitized.</div>
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-section="dashboard">Dashboard</button>
+            <button class="nav-tab" data-section="add-request">Add Request</button>
+            <button class="nav-tab" data-section="batch-pmid">Batch PMID</button>
+            <button class="nav-tab" data-section="all-requests">All Requests</button>
+            <button class="nav-tab" data-section="import-export">Import/Export</button>
+            <button class="nav-tab" data-section="settings">Settings</button>
+        </nav>
 
-            <div class="grid cols-3" style="margin-top:8px">
-              <div>
-                <label for="pmid">PMID</label>
-                <input id="pmid" class="input" inputmode="numeric" autocomplete="off" />
-              </div>
-              <div>
-                <label for="doi">DOI</label>
-                <input id="doi" class="input" autocomplete="off" />
-              </div>
-              <div>
-                <label for="nct">NCT ID</label>
-                <input id="nct" class="input" autocomplete="off" />
-              </div>
-            </div>
-
-            <div class="row">
-              <div>
-                <label for="title">Title</label>
-                <input id="title" class="input" />
-              </div>
-              <div>
-                <label for="authors">Authors (Last FM; ...)</label>
-                <input id="authors" class="input" />
-              </div>
-            </div>
-
-            <div class="row">
-              <div>
-                <label for="journal">Journal</label>
-                <input id="journal" class="input" />
-              </div>
-              <div class="grid cols-3">
-                <div>
-                  <label for="year">Year</label>
-                  <input id="year" class="input" inputmode="numeric" />
+        <!-- Main Content -->
+        <main>
+            <!-- Dashboard -->
+            <section id="dashboard" class="section active">
+                <h2>Dashboard</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div style="background: var(--bg-card); padding: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color); text-align: center;">
+                        <h3 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px;">Total Requests</h3>
+                        <p style="font-size: 2.5rem; font-weight: 700; color: var(--primary-color);" id="total-requests">0</p>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color); text-align: center;">
+                        <h3 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px;">Clinical Trials</h3>
+                        <p style="font-size: 2.5rem; font-weight: 700; color: var(--clinical-color);" id="clinical-trials">0</p>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color); text-align: center;">
+                        <h3 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px;">Pending</h3>
+                        <p style="font-size: 2.5rem; font-weight: 700; color: var(--warning-color);" id="pending-requests">0</p>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color); text-align: center;">
+                        <h3 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px;">Fulfilled</h3>
+                        <p style="font-size: 2.5rem; font-weight: 700; color: var(--success-color);" id="fulfilled-requests">0</p>
+                    </div>
                 </div>
-                <div>
-                  <label for="volume">Volume</label>
-                  <input id="volume" class="input" />
+                
+                <h3>Recent Requests</h3>
+                <div id="recent-requests"></div>
+            </section>
+
+            <!-- Add Request -->
+            <section id="add-request" class="section">
+                <h2>Add New Request</h2>
+                <form id="request-form" class="request-form">
+                    <!-- Identifiers -->
+                    <fieldset class="fieldset-enhanced">
+                        <legend>Identifiers & Lookup</legend>
+                        
+                        <div class="form-group">
+                            <label for="pmid" class="form-label">PMID (PubMed ID)</label>
+                            <div class="input-with-button enhanced">
+                                <input type="text" id="pmid" name="pmid" class="form-control" placeholder="e.g., 32658653" pattern="[0-9]+">
+                                <button type="button" id="lookup-pmid" class="lookup-btn">🔍 Lookup</button>
+                            </div>
+                            <small class="form-help">Enter PubMed ID for automatic metadata retrieval</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="doi" class="form-label">DOI (Digital Object Identifier)</label>
+                            <div class="input-with-button enhanced">
+                                <input type="text" id="doi" name="doi" class="form-control" placeholder="e.g., 10.1038/nature12373">
+                                <button type="button" id="lookup-doi" class="lookup-btn">🔗 Lookup</button>
+                            </div>
+                            <small class="form-help">CrossRef lookup for bibliographic metadata</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nct-id" class="form-label">Clinical Trial ID (NCT)</label>
+                            <div class="input-with-button enhanced">
+                                <input type="text" id="nct-id" name="nct-id" class="form-control" placeholder="e.g., NCT04280549">
+                                <button type="button" id="lookup-nct" class="lookup-btn">🧪 Lookup</button>
+                            </div>
+                            <small class="form-help">Clinical trial identifier for enhanced metadata</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="docline" class="form-label">DOCLINE Request Number</label>
+                            <input type="text" id="docline" name="docline" class="form-control" placeholder="e.g., 138ABC123">
+                            <small class="form-help">ILL tracking number for existing DOCLINE requests</small>
+                        </div>
+                    </fieldset>
+
+                    <!-- Publication Details -->
+                    <fieldset class="fieldset-enhanced">
+                        <legend>Publication Details</legend>
+                        
+                        <div class="form-group">
+                            <label for="title" class="form-label">Publication Title *</label>
+                            <input type="text" id="title" name="title" class="form-control" required placeholder="Complete title of the requested publication">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="authors" class="form-label">Author(s)</label>
+                            <input type="text" id="authors" name="authors" class="form-control" placeholder="Smith, J.; Johnson, A.; et al.">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="journal" class="form-label">Journal/Publication Source</label>
+                            <input type="text" id="journal" name="journal" class="form-control" placeholder="Journal of Medical Research">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="year" class="form-label">Publication Year</label>
+                            <input type="number" id="year" name="year" class="form-control" min="1900" max="2030" placeholder="2024">
+                        </div>
+                    </fieldset>
+
+                    <!-- Request Details -->
+                    <fieldset class="fieldset-enhanced">
+                        <legend>Request Details</legend>
+                        
+                        <div class="form-group">
+                            <label for="patron-email" class="form-label">Patron Email</label>
+                            <input type="email" id="patron-email" name="patronEmail" class="form-control" placeholder="patron@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="priority" class="form-label">Priority *</label>
+                            <select id="priority" name="priority" class="form-control" required>
+                                <option value="">Select Priority...</option>
+                                <option value="urgent">🚨 Urgent - Critical Patient Care</option>
+                                <option value="rush">⚡ Rush - Expedited Timeline</option>
+                                <option value="normal">📋 Normal - Standard Processing</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status" class="form-label">Status</label>
+                            <select id="status" name="status" class="form-control">
+                                <option value="pending">Pending - Awaiting Processing</option>
+                                <option value="in-progress">In Progress - Actively Working</option>
+                                <option value="fulfilled">Fulfilled - Successfully Completed</option>
+                                <option value="cancelled">Cancelled - Request Withdrawn</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tags" class="form-label">Subject Tags</label>
+                            <input type="text" id="tags" name="tags" class="form-control" placeholder="e.g., cardiology, review, systematic">
+                            <small class="form-help">Enter tags separated by commas</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes" class="form-label">Additional Notes</label>
+                            <textarea id="notes" name="notes" rows="3" class="form-control" placeholder="Any special instructions or notes..."></textarea>
+                        </div>
+                    </fieldset>
+
+                    <div style="display: flex; gap: 15px; margin-top: 30px;">
+                        <button type="submit" class="btn btn-primary">💾 Save Request</button>
+                        <button type="button" class="btn btn-secondary" id="clear-form">🗑️ Clear Form</button>
+                    </div>
+                </form>
+
+                <div id="lookup-status" class="status-message"></div>
+            </section>
+
+            <!-- Batch PMID Processing -->
+            <section id="batch-pmid" class="section">
+                <h2>Batch PMID Processing</h2>
+                
+                <div class="batch-section">
+                    <h3>📋 Paste or Upload PMID List</h3>
+                    <p>Enter PMIDs separated by commas, spaces, or new lines. Empty entries will be ignored.</p>
+                    
+                    <div class="form-group">
+                        <label for="pmid-list" class="form-label">PMID List</label>
+                        <textarea id="pmid-list" class="batch-textarea" placeholder="32658653, 34226022, 35123456
+                        
+Or paste from Excel/CSV:
+PMID
+32658653
+34226022
+35123456
+
+Or comma-separated: 32658653, 34226022, 35123456"></textarea>
+                        <small class="form-help">Supports multiple formats: comma-separated, line-separated, or copied from Excel</small>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="file" id="pmid-file" accept=".txt,.csv" class="form-control">
+                        <small class="form-help">Upload a text or CSV file containing PMIDs</small>
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <button type="button" class="btn btn-primary" id="process-pmids">🚀 Process PMIDs</button>
+                        <button type="button" class="btn btn-secondary" id="clear-pmids">🗑️ Clear</button>
+                    </div>
+
+                    <div id="batch-progress" class="batch-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="progress-text" id="progress-text">Processing...</div>
+                    </div>
+
+                    <div id="batch-status" class="status-message"></div>
                 </div>
-                <div>
-                  <label for="issue">Issue</label>
-                  <input id="issue" class="input" />
+
+                <div class="batch-section">
+                    <h3>📊 Batch Results</h3>
+                    <div id="batch-results"></div>
                 </div>
-              </div>
-            </div>
+            </section>
 
-            <div class="row">
-              <div>
-                <label for="pages">Pages</label>
-                <input id="pages" class="input" />
-              </div>
-              <div>
-                <label for="status">Status</label>
-                <select id="status" class="input">
-                  <option value="open">Open</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="row">
-              <div>
-                <label for="priority">Priority</label>
-                <select id="priority" class="input">
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
-                </select>
-              </div>
-              <div>
-                <label for="ill">ILL Status</label>
-                <select id="ill" class="input">
-                  <option value="">—</option>
-                  <option value="requested">Requested</option>
-                  <option value="received">Received</option>
-                  <option value="delivered">Delivered</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="row">
-              <div>
-                <label for="docline">DOCLINE ID</label>
-                <input id="docline" class="input" />
-              </div>
-              <div>
-                <label for="doclineDate">DOCLINE Date</label>
-                <input id="doclineDate" type="date" class="input" />
-              </div>
-            </div>
-
-            <div class="row">
-              <div>
-                <label for="tags">Custom Tags (comma separated)</label>
-                <input id="tags" class="input" />
-              </div>
-              <div>
-                <label for="mesh">MeSH (auto)</label>
-                <input id="mesh" class="input" aria-readonly="true" readonly />
-              </div>
-            </div>
-
-            <div>
-              <label for="notes">Notes</label>
-              <textarea id="notes" class="input"></textarea>
-              <label style="display:flex;gap:8px;align-items:center;margin-top:8px">
-                <input type="checkbox" id="hasAttachments" /> Has attachments
-              </label>
-            </div>
-
-            <div class="toolbar" style="margin-top:10px">
-              <button class="btn" id="btn-lookup" title="Lookup metadata" onclick="window.SilentStacks_lookup && window.SilentStacks_lookup()">🔍 Lookup</button>
-              <button class="btn ok" id="btn-save" title="Save request">💾 Save</button>
-              <button class="btn warn" id="btn-reset" title="Reset form">↺ Reset</button>
-              <span class="spacer"></span>
-              <span id="form-status" class="muted" aria-live="polite"></span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>Search & Filters</h2>
-            <div class="visually-group" role="group" aria-label="Search and filters">
-              <label for="search">Instant search (title, authors, journal, notes)</label>
-              <input id="search" class="input" placeholder="Type to filter… (e.g., ibuprofen authors:Smith tag:SR)" />
-
-              <div class="grid cols-3">
-                <div>
-                  <label for="f-status">Status</label>
-                  <select id="f-status" class="input">
-                    <option value="">Any</option>
-                    <option value="open">Open</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="closed">Closed</option>
-                  </select>
+            <!-- All Requests -->
+            <section id="all-requests" class="section">
+                <h2>All Requests</h2>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <input type="text" id="search-requests" placeholder="Search requests..." style="flex: 1; min-width: 250px;" class="form-control">
+                    <select id="filter-status" class="form-control" style="min-width: 150px;">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="fulfilled">Fulfilled</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select id="filter-type" class="form-control" style="min-width: 150px;">
+                        <option value="">All Types</option>
+                        <option value="clinical">Clinical Trials</option>
+                        <option value="research">Research Articles</option>
+                    </select>
                 </div>
-                <div>
-                  <label for="f-priority">Priority</label>
-                  <select id="f-priority" class="input">
-                    <option value="">Any</option>
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
+                
+                <div id="request-list"></div>
+            </section>
+
+            <!-- Import/Export -->
+            <section id="import-export" class="section">
+                <h2>Import/Export Data</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 20px;">
+                        <h3>📤 Export Data</h3>
+                        <p>Download your requests as CSV or JSON</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                            <button id="export-csv" class="btn btn-primary">📊 Export CSV</button>
+                            <button id="export-json" class="btn btn-primary">🔧 Export JSON</button>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 20px;">
+                        <h3>📥 Import Data</h3>
+                        <p>Upload CSV or JSON file with requests</p>
+                        <input type="file" id="import-file" accept=".csv,.json" class="form-control" style="margin: 15px 0;">
+                        <div id="import-status" class="status-message"></div>
+                    </div>
                 </div>
-                <div>
-                  <label for="f-tag">Tag / MeSH contains</label>
-                  <input id="f-tag" class="input" />
-                </div>
-              </div>
+            </section>
 
-              <div class="toolbar">
-                <button class="btn" id="btn-save-view">⭐ Save View</button>
-                <select class="input" id="saved-views" aria-label="Saved views"><option value="">Saved views…</option></select>
-                <button class="btn bad" id="btn-del-view" title="Delete selected view">🗑️ Delete View</button>
-                <span class="spacer"></span>
-                <span id="count" class="muted" aria-live="polite"></span>
-              </div>
-            </div>
+            <!-- Settings -->
+            <section id="settings" class="section">
+                <h2>Settings</h2>
+                
+                <form id="settings-form" style="max-width: 600px;">
+                    <div class="form-group">
+                        <label for="followup-days" class="form-label">Follow-up Days</label>
+                        <input type="number" id="followup-days" min="1" max="30" value="5" class="form-control">
+                        <small class="form-help">Mark requests as needing follow-up after this many days</small>
+                    </div>
 
-            <div class="card" style="margin-top:12px">
-              <h2>Requests</h2>
+                    <div class="form-group">
+                        <label for="theme" class="form-label">Theme</label>
+                        <select id="theme" class="form-control">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
 
-              <!-- Table quick-filter tabs -->
-              <nav class="table-tabs" role="tablist" aria-label="Table quick filters">
-                <button class="table-tab" role="tab" data-filter="all" aria-selected="true">All</button>
-                <button class="table-tab" role="tab" data-filter="open">Open</button>
-                <button class="table-tab" role="tab" data-filter="in-progress">In Progress</button>
-                <button class="table-tab" role="tab" data-filter="closed">Closed</button>
-                <button class="table-tab" role="tab" data-filter="followup">Follow-up</button>
-                <button class="table-tab" role="tab" data-filter="urgent">Urgent</button>
-              </nav>
+                    <div class="form-group">
+                        <label for="api-key" class="form-label">PubMed API Key (Optional)</label>
+                        <input type="text" id="api-key" placeholder="Enter your NCBI API key" class="form-control">
+                        <small class="form-help">Provides higher rate limits for PubMed lookups</small>
+                    </div>
 
-              <div class="muted">Click a row to edit. Use <span class="kbd">Ctrl/⌘+F</span> in your browser for quick find, or the search above.</div>
-              <div style="overflow:auto;margin-top:8px">
-                <table aria-label="Requests table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Title</th>
-                      <th>Authors</th>
-                      <th>Journal / Year</th>
-                      <th>Status</th>
-                      <th>Priority</th>
-                      <th>Tags</th>
-                      <th>Flags</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="rows"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+                    <div class="form-group">
+                        <label for="crossref-email" class="form-label">CrossRef Email (Optional)</label>
+                        <input type="email" id="crossref-email" placeholder="your@email.com" class="form-control">
+                        <small class="form-help">Enables polite pool access for DOI lookups</small>
+                    </div>
 
-      <!-- Bulk Ops tab -->
-      <section id="tab-bulk" role="tabpanel" aria-labelledby="tabbtn-bulk" hidden>
-        <div class="grid cols-2">
-          <div class="card">
-            <h2>Import</h2>
-            <div class="muted">Import JSON or CSV. CSV headers should match field names; unknown columns are ignored.</div>
-            <div class="visually-group">
-              <input type="file" id="file-input" aria-label="Choose JSON or CSV file" />
-              <div class="toolbar">
-                <button class="btn" id="btn-import">📥 Import</button>
-                <span class="spacer"></span>
-                <span id="import-status" class="muted" aria-live="polite"></span>
-              </div>
-            </div>
-            <div class="visually-group">
-              <label for="bulk-text">Paste JSON or CSV</label>
-              <textarea id="bulk-text" class="input" placeholder='[{"title":"..."}] or CSV…'></textarea>
-              <button class="btn" id="btn-import-text">📥 Import Pasted</button>
-            </div>
-          </div>
+                    <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+                </form>
+            </section>
+        </main>
+    </div>
 
-          <div class="card">
-            <h2>Bulk Lookup & Validate</h2>
-            <div class="muted">Process all items that have a PMID/DOI/NCT but missing metadata. Rate-limited, with retries.</div>
-            <div class="toolbar">
-              <button class="btn" id="btn-bulk-lookup">🔎 Run Bulk Lookup</button>
-              <button class="btn warn" id="btn-stop-lookup">⏹️ Stop</button>
-              <span class="spacer"></span>
-              <span id="bulk-progress" class="muted" aria-live="polite"></span>
-            </div>
-            <div class="log" id="bulk-log" aria-live="polite"></div>
-          </div>
-        </div>
-      </section>
+    <script>
+        // SilentStacks Enhanced - Focus on API improvements and NCT support
+        (() => {
+            // State management
+            let state = {
+                requests: [],
+                settings: {
+                    followupDays: 5,
+                    theme: 'light',
+                    apiKey: '',
+                    crossrefEmail: ''
+                },
+                ui: {
+                    currentSection: 'dashboard',
+                    isOnline: navigator.onLine
+                }
+            };
 
-      <!-- Help tab -->
-      <section id="tab-help" role="tabpanel" aria-labelledby="tabbtn-help" hidden>
-        <div class="card help">
-          <h2>Integrated Help</h2>
-          <div class="banner" role="note">
-            <p><strong>Service Worker note:</strong> A true SW must be a separate file on the same origin. This single-file build includes full offline <em>data</em> persistence and request queueing, but static asset caching requires adding a <span class="kbd">service-worker.js</span> when you deploy to GitHub Pages.</p>
-          </div>
-          <p><strong>Quick start:</strong></p>
-          <ol>
-            <li>Enter a PMID/DOI/NCT and click <strong>Lookup</strong>. Adjust fields.</li>
-            <li>Click <strong>Save</strong>. Your data persists to the browser.</li>
-            <li>Use <strong>Export</strong> to backup/share as JSON/CSV/NLM.</li>
-            <li>Use <strong>Bulk Ops</strong> to import lists and enrich metadata.</li>
-          </ol>
-          <p><strong>Search tips:</strong> Use <span class="kbd">tag:sr</span>, <span class="kbd">status:open</span>, <span class="kbd">authors:smith</span>, or regular text.</p>
-        </div>
-      </section>
+            // API rate limiting
+            const API_DELAY = 1000; // 1 second between calls
+            let lastApiCall = 0;
 
-      <!-- Diagnostics tab -->
-      <section id="tab-diagnostics" role="tabpanel" aria-labelledby="tabbtn-diagnostics" hidden>
-        <div class="grid cols-2">
-          <div class="card">
-            <h2>System Status</h2>
-            <div class="chips" id="module-chips" aria-live="polite"></div>
-            <div class="row" style="margin-top:8px">
-              <div class="visually-group">
-                <div><strong>Records:</strong> <span id="stat-records">0</span></div>
-                <div><strong>Storage (approx):</strong> <span id="stat-storage">0 KB</span></div>
-                <div><strong>Queued network ops:</strong> <span id="stat-queue">0</span></div>
-              </div>
-              <div class="visually-group">
-                <div class="badge ok">✅ Core OK</div>
-                <div class="badge warn">⚠️ Network varies</div>
-                <div class="badge bad">🧪 Use Diagnostics log below</div>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <h2>Event & Error Log</h2>
-            <div class="log" id="diag-log" aria-live="polite"></div>
-            <div class="toolbar" style="margin-top:8px">
-              <button class="btn" id="btn-clear-log">🧹 Clear Log</button>
-              <button class="btn" id="btn-export-log">⬇️ Export Log</button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+            // Utility functions
+            const utils = {
+                generateId: () => Date.now().toString(36) + Math.random().toString(36).substr(2),
+                sanitize: (str) => str ? String(str).replace(/[<>]/g, '') : '',
+                delay: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
+                
+                extractPMIDs: (text) => {
+                    if (!text) return [];
+                    
+                    // Remove common headers
+                    const cleanText = text.replace(/^(PMID|pmid|id)/gmi, '');
+                    
+                    // Extract all numbers that could be PMIDs (6-8 digits typically)
+                    const pmidPattern = /\b\d{6,8}\b/g;
+                    const matches = cleanText.match(pmidPattern) || [];
+                    
+                    // Remove duplicates and filter out invalid entries
+                    return [...new Set(matches)]
+                        .filter(pmid => pmid && pmid.length >= 6 && pmid.length <= 8)
+                        .slice(0, 100); // Limit to 100 to prevent abuse
+                },
 
-  <script>
-  // =========================
-  // SilentStacks v2.0 – Monolithic JS
-  // =========================
-  (() => {
-    'use strict';
+                async respectRateLimit() {
+                    const now = Date.now();
+                    const timeSinceLastCall = now - lastApiCall;
+                    if (timeSinceLastCall < API_DELAY) {
+                        await this.delay(API_DELAY - timeSinceLastCall);
+                    }
+                    lastApiCall = Date.now();
+                }
+            };
 
-    const App = {
-      version: '2.0.0-monolithic',
-      state: {
-        items: [],  // Records
-        selectedId: null,
-        queue: [],  // offline queue of pending lookups
-        stopBulk: false,
-        theme: 'dark',
-        views: {},
-        log: [],
-        quickFilter: 'all'
-      },
-      el: {},
-      modules: {}
-    };
+            // Enhanced API service with better NLM formatting
+            const apiService = {
+                async fetchPubMed(pmid) {
+                    await utils.respectRateLimit();
+                    
+                    try {
+                        const keyParam = state.settings.apiKey ? `&api_key=${state.settings.apiKey}` : '';
+                        
+                        // Step 1: Get basic metadata from ESummary
+                        const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${pmid}&retmode=json${keyParam}`;
+                        const summaryResponse = await fetch(summaryUrl);
+                        
+                        if (!summaryResponse.ok) {
+                            throw new Error(`PubMed API error: ${summaryResponse.status}`);
+                        }
+                        
+                        const summaryData = await summaryResponse.json();
+                        
+                        if (summaryData.error || !summaryData.result[pmid]) {
+                            throw new Error(`PMID ${pmid} not found`);
+                        }
+                        
+                        const record = summaryData.result[pmid];
+                        
+                        // Enhanced metadata extraction with proper NLM formatting
+                        const metadata = {
+                            pmid: pmid,
+                            title: this.cleanTitle(record.title || ''),
+                            authors: this.formatAuthors(record.authors || []),
+                            journal: this.formatJournal(record),
+                            year: this.extractYear(record.pubdate || ''),
+                            volume: record.volume || '',
+                            issue: record.issue || '',
+                            pages: record.pages || '',
+                            doi: '',
+                            abstract: '',
+                            meshTerms: [],
+                            publicationTypes: record.pubtype || [],
+                            isoCitation: this.buildISOCitation(record)
+                        };
+                        
+                        // Step 2: Get detailed info from EFetch for DOI, abstract, and MeSH
+                        try {
+                            await utils.respectRateLimit();
+                            const fetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmid}&retmode=xml${keyParam}`;
+                            const xmlResponse = await fetch(fetchUrl);
+                            
+                            if (xmlResponse.ok) {
+                                const xmlText = await xmlResponse.text();
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(xmlText, 'application/xml');
+                                
+                                // Extract DOI
+                                const doiNode = doc.querySelector('ArticleId[IdType="doi"]') || 
+                                               doc.querySelector('ELocationID[EIdType="doi"]');
+                                if (doiNode) {
+                                    metadata.doi = doiNode.textContent.trim();
+                                }
+                                
+                                // Extract abstract
+                                const abstractNode = doc.querySelector('AbstractText');
+                                if (abstractNode) {
+                                    metadata.abstract = abstractNode.textContent.trim();
+                                }
+                                
+                                // Extract MeSH terms
+                                const meshNodes = doc.querySelectorAll('MeshHeading DescriptorName');
+                                metadata.meshTerms = Array.from(meshNodes).map(node => ({
+                                    term: node.textContent.trim(),
+                                    majorTopic: node.getAttribute('MajorTopicYN') === 'Y'
+                                }));
+                                
+                                // Check for clinical trial indicators
+                                metadata.isClinicalTrial = this.detectClinicalTrial(doc, metadata);
+                            }
+                        } catch (xmlError) {
+                            console.warn('Failed to fetch detailed XML data:', xmlError);
+                        }
+                        
+                        return metadata;
+                        
+                    } catch (error) {
+                        console.error('PubMed fetch error:', error);
+                        throw error;
+                    }
+                },
 
-    // ---------- Utilities ----------
-    const U = {
-      sanitize(s) {
-        if (s == null) return '';
-        return String(s).replace(/[\\u0000-\\u001F\\u007F<>]/g, ' ').trim();
-      },
-      uid() { return 'SS-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); },
-      today() { return new Date().toISOString().slice(0,10); },
-      daysBetween(a,b){ return Math.floor((new Date(b)-new Date(a))/(1000*60*60*24)); },
-      debounce(fn, ms=250){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args),ms); } },
-      toCSV(arr){
-        if(!arr.length) return '';
-        const cols = Array.from(new Set(arr.flatMap(o=>Object.keys(o))));
-        const esc = v => '\"' + String(v??'').replace(/\"/g,'\"\"') + '\"';
-        const head = cols.map(esc).join(',');
-        const rows = arr.map(o => cols.map(k=>esc(o[k])).join(','));
-        return [head, ...rows].join('\\n');
-      },
-      fromCSV(text){
-        // Minimal CSV parser supporting quotes and commas
-        const lines = text.replace(/\\r/g,'').split(/\\n+/).filter(Boolean);
-        if(!lines.length) return [];
-        const parseLine = (line)=>{
-          const out=[]; let cur=''; let q=false;
-          for(let i=0;i<line.length;i++){
-            const c=line[i];
-            if(c==='\"'){ if(q && line[i+1]==='\"'){ cur+='\"'; i++; } else { q=!q; } }
-            else if(c===',' && !q){ out.push(cur); cur=''; }
-            else { cur+=c; }
-          }
-          out.push(cur); return out;
-        };
-        const header = parseLine(lines[0]).map(h=>h.trim());
-        return lines.slice(1).map(l=>{
-          const cells=parseLine(l); const obj={};
-          header.forEach((h,i)=>obj[h]=cells[i]??'');
-          return obj;
-        });
-      },
-      download(filename, content, type='text/plain'){
-        const blob = new Blob([content], {type});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-        setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
-      },
-      approxStorage(){
-        try{ return (new Blob([JSON.stringify(localStorage)]).size/1024).toFixed(1)+' KB'; }catch{ return 'n/a'; }
-      },
-      parseSearch(q){
-        const r={ text:[], status:'', priority:'', tag:'', authors:'' };
-        (q||'').split(/\\s+/).forEach(tok=>{
-          const m = tok.match(/^(\\w+):(.*)$/);
-          if(m){ const k=m[1].toLowerCase(); if(r[k]!=null) r[k]=m[2]; else r.text.push(tok); }
-          else r.text.push(tok);
-        });
-        return r;
-      },
-      nlmCitation(item){
-        // Basic NLM style approximation
-        // Authors: Last FM, up to 6 then et al.
-        const authors = (item.authors||'').split(';').map(s=>s.trim()).filter(Boolean);
-        const au = authors.slice(0,6).join(', ') + (authors.length>6?' et al.':'');
-        const year = item.year || '';
-        const vol = item.volume ? item.volume : '';
-        const iss = item.issue ? '('+item.issue+')' : '';
-        const pgs = item.pages ? ':'+item.pages : '';
-        const journal = item.journal || '';
-        const title = item.title || '';
-        const doi = item.doi ? ' doi: ' + item.doi + '.' : '';
-        const pmid = item.pmid ? ' PMID: ' + item.pmid + '.' : '';
-        return `${au}. ${title}. ${journal}. ${year};${vol}${iss}${pgs}.${doi}${pmid}`.replace(/\\s+/g,' ').trim();
-      }
-    };
+                async fetchCrossRef(doi) {
+                    await utils.respectRateLimit();
+                    
+                    try {
+                        const cleanDoi = doi.replace(/^(https?:\/\/)?(dx\.)?doi\.org\//, '').trim();
+                        const url = `https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`;
+                        
+                        const headers = { 'Accept': 'application/json' };
+                        if (state.settings.crossrefEmail) {
+                            headers['User-Agent'] = `SilentStacks/1.0 (mailto:${state.settings.crossrefEmail})`;
+                        }
+                        
+                        const response = await fetch(url, { headers });
+                        
+                        if (!response.ok) {
+                            throw new Error(`DOI not found: ${cleanDoi}`);
+                        }
+                        
+                        const data = await response.json();
+                        const work = data.message;
+                        
+                        return {
+                            doi: cleanDoi,
+                            title: (work.title && work.title[0]) || '',
+                            authors: this.formatCrossRefAuthors(work.author || []),
+                            journal: (work['container-title'] && work['container-title'][0]) || '',
+                            year: this.extractCrossRefYear(work.published),
+                            volume: work.volume || '',
+                            issue: work.issue || '',
+                            pages: work.page || '',
+                            type: work.type || '',
+                            publisher: work.publisher || '',
+                            issn: work.ISSN ? work.ISSN.join(', ') : '',
+                            url: work.URL || `https://doi.org/${cleanDoi}`
+                        };
+                        
+                    } catch (error) {
+                        console.error('CrossRef fetch error:', error);
+                        throw error;
+                    }
+                },
 
-    // ---------- Persistence ----------
-    const Store = {
-      load(){
-        try{
-          const raw = localStorage.getItem('silentstacks_v2_data');
-          App.state.items = raw? JSON.parse(raw) : [];
-          const theme = localStorage.getItem('silentstacks_v2_theme');
-          if(theme) App.state.theme = theme;
-          const views = localStorage.getItem('silentstacks_v2_views');
-          if(views) App.state.views = JSON.parse(views);
-        }catch(e){ log('error','Load failed '+e); }
-      },
-      save(){
-        try{ localStorage.setItem('silentstacks_v2_data', JSON.stringify(App.state.items)); }catch(e){ log('error','Save failed '+e); }
-      },
-      saveViews(){ try{ localStorage.setItem('silentstacks_v2_views', JSON.stringify(App.state.views)); }catch(e){} },
-      saveTheme(){ try{ localStorage.setItem('silentstacks_v2_theme', App.state.theme); }catch(e){} }
-    };
+                async fetchClinicalTrial(nctId) {
+                    // Mock clinical trial data - in production, would use ClinicalTrials.gov API
+                    await utils.respectRateLimit();
+                    
+                    try {
+                        // Validate NCT ID format
+                        if (!/^NCT\d{8}$/i.test(nctId)) {
+                            throw new Error('Invalid NCT ID format. Expected format: NCT12345678');
+                        }
+                        
+                        // Return mock data structure
+                        return {
+                            nctId: nctId.toUpperCase(),
+                            title: `Clinical Trial ${nctId}`,
+                            briefTitle: `Study for ${nctId}`,
+                            officialTitle: `Official Study Title for ${nctId}`,
+                            phase: 'Phase II',
+                            status: 'Recruiting',
+                            studyType: 'Interventional',
+                            enrollment: '500 participants (estimated)',
+                            conditions: ['Cardiovascular Disease', 'Hypertension'],
+                            interventions: ['Drug: Investigational Compound', 'Behavioral: Lifestyle Modification'],
+                            sponsor: 'Academic Medical Center',
+                            startDate: '2023-01-01',
+                            completionDate: '2024-12-31',
+                            primaryOutcome: 'Change in blood pressure from baseline',
+                            eligibility: 'Ages 18-75, diagnosed hypertension',
+                            locations: ['United States', 'Canada'],
+                            isClinicalTrial: true,
+                            lastUpdated: new Date().toISOString()
+                        };
+                        
+                    } catch (error) {
+                        console.error('Clinical trial fetch error:', error);
+                        throw error;
+                    }
+                },
 
-    // ---------- Rate Limiter ----------
-    class RateLimiter {
-      constructor(minIntervalMs){ this.min = minIntervalMs; this.last = 0; }
-      async wait(){
-        const now = Date.now();
-        const delta = now - this.last;
-        if(delta < this.min) await new Promise(r=>setTimeout(r,this.min-delta));
-        this.last = Date.now();
-      }
-    }
+                // Helper methods for formatting
+                cleanTitle(title) {
+                    return title.replace(/\.$/, '').trim();
+                },
 
-    const RL = {
-      pubmed: new RateLimiter(500), // ~2/sec
-      crossref: new RateLimiter(150),
-      trials: new RateLimiter(800)
-    };
+                formatAuthors(authors) {
+                    if (!Array.isArray(authors)) return '';
+                    return authors.map(author => author.name || '').join('; ');
+                },
 
-    // ---------- Network helpers with CORS fallback ----------
-    function proxyURL(url){
-      // Use r.jina.ai as a read-only CORS passthrough when needed
-      // It accepts full target URL appended after the slash.
-      return 'https://r.jina.ai/' + url;
-    }
+                formatCrossRefAuthors(authors) {
+                    if (!Array.isArray(authors)) return '';
+                    return authors.map(author => {
+                        const given = author.given || '';
+                        const family = author.family || '';
+                        return `${family}, ${given}`.replace(/, $/, '');
+                    }).join('; ');
+                },
 
-    async function smartFetch(url, {as='json', headers={}} = {}){
-      try{
-        const r = await fetch(url, {headers});
-        if(r.ok){ return as==='json' ? r.json() : r.text(); }
-        // If blocked or bad status, try proxy
-        log('warn', `Direct fetch failed (${r.status}) → proxy: ${url}`);
-      }catch(e){
-        log('warn', `Direct fetch error (${e.message}) → proxy: ${url}`);
-      }
-      // Proxy fallback
-      const pu = proxyURL(url);
-      const r2 = await fetch(pu, {headers:{...headers, 'X-SS-Proxy':'1'}});
-      if(!r2.ok){ throw new Error('Proxy fetch failed '+r2.status); }
-      const body = await (as==='json' ? r2.text() : r2.text());
-      if(as==='json'){
-        try { return JSON.parse(body); } catch(e){ throw new Error('Proxy JSON parse failed'); }
-      }
-      return body;
-    }
+                formatJournal(record) {
+                    return record.fulljournalname || record.source || '';
+                },
 
+                extractYear(pubdate) {
+                    if (!pubdate) return '';
+                    const match = pubdate.match(/\d{4}/);
+                    return match ? match[0] : '';
+                },
 
-    // ---------- API Integration (deep enrichment) ----------
-    const API = {
-      normalizeDOI(x){
-        if(!x) return '';
-        return String(x).trim()
-          .replace(/^https?:\/\/(dx\.)?doi\.org\//i,'')
-          .replace(/^doi:/i,'')
-          .trim();
-      },
+                extractCrossRefYear(published) {
+                    if (!published || !published['date-parts'] || !published['date-parts'][0]) return '';
+                    return published['date-parts'][0][0].toString();
+                },
 
-      async idConv(id){ // DOI or PMID or PMCID → mapping
-        try{
-          await RL.pubmed.wait();
-          const url = `https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?format=json&ids=${encodeURIComponent(id)}`;
-          const j = await smartFetch(url, {as:'json', headers:{'Accept':'application/json'}});
-          const rec = j?.records?.[0]||{};
-          return {
-            pmid: rec.pmid ? String(rec.pmid) : '',
-            pmcid: rec.pmcid ? String(rec.pmcid) : '',
-            doi: rec.doi ? String(rec.doi) : ''
-          };
-        }catch(e){ log('error',`idConv failed for ${id}: ${e.message}`); return {pmid:'',pmcid:'',doi:''}; }
-      },
+                buildISOCitation(record) {
+                    const authors = this.formatAuthors(record.authors || []);
+                    const title = this.cleanTitle(record.title || '');
+                    const journal = this.formatJournal(record);
+                    const year = this.extractYear(record.pubdate || '');
+                    const volume = record.volume || '';
+                    const pages = record.pages || '';
+                    
+                    let citation = '';
+                    if (authors) citation += `${authors}. `;
+                    if (title) citation += `${title}. `;
+                    if (journal) citation += `${journal}. `;
+                    if (year) citation += `${year}`;
+                    if (volume) citation += `;${volume}`;
+                    if (pages) citation += `:${pages}`;
+                    
+                    return citation.replace(/\.\s*$/, '');
+                },
 
-      async fetchCrossrefByDOI(doiRaw){
-        const doi = API.normalizeDOI(doiRaw);
-        if(!doi) return null;
-        try{
-          await RL.crossref.wait();
-          const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
-          const m = (await smartFetch(url, {as:'json', headers:{'Accept':'application/json'}}))?.message || {};
-          const authors = (m.author||[]).map(a=>{
-            const fam = a.family||''; const giv = a.given||'';
-            const initials = giv.split(/\\s+/).map(s=>s[0]).filter(Boolean).join('');
-            return `${fam} ${initials}`.trim();
-          }).join('; ');
-          const issued = m.issued?.['date-parts']?.[0]?.[0] || m.created?.['date-parts']?.[0]?.[0] || '';
-          return {
-            title: (Array.isArray(m.title)? m.title[0] : m.title)||'',
-            journal: (Array.isArray(m['container-title'])? m['container-title'][0] : m['container-title'])||'',
-            year: String(issued||''),
-            volume: m.volume||'',
-            issue: m.issue||'',
-            pages: m.page||'',
-            authors,
-            doi
-          };
-        }catch(e){ log('error',`Crossref failed for ${doiRaw}: ${e.message}`); return null; }
-      },
+                detectClinicalTrial(xmlDoc, metadata) {
+                    // Check publication types for clinical trial indicators
+                    const clinicalTrialTypes = [
+                        'Clinical Trial',
+                        'Randomized Controlled Trial',
+                        'Clinical Trial, Phase I',
+                        'Clinical Trial, Phase II',
+                        'Clinical Trial, Phase III',
+                        'Clinical Trial, Phase IV',
+                        'Multicenter Study'
+                    ];
+                    
+                    if (metadata.publicationTypes) {
+                        return metadata.publicationTypes.some(type => 
+                            clinicalTrialTypes.includes(type)
+                        );
+                    }
+                    
+                    // Check for NCT numbers in abstract or title
+                    const fullText = `${metadata.title} ${metadata.abstract}`.toLowerCase();
+                    return /nct\d{8}/.test(fullText);
+                }
+            };
 
-      async fetchTrial(nct){
-        if(!nct) return { nct: '' , pmids: [] };
-        try{
-          await RL.trials.wait();
-          // v2 detail endpoint
-          const url = `https://clinicaltrials.gov/api/v2/studies/${encodeURIComponent(nct)}`;
-          const j = await smartFetch(url, {as:'json', headers:{'Accept':'application/json'}});
-          // Try multiple possible locations for references with PMIDs
-          const refs = j?.protocolSection?.referencesModule?.references
-                    || j?.protocolSection?.referenceModule?.referenceList
-                    || j?.references || [];
-          const pmids = []
-          ;(refs||[]).forEach(ref=>{
-            const p = ref?.pmid || ref?.PMID || ref?.citationPmid || '';
-            if(p) pmids.push(String(p));
-          });
-          return { nct: String(nct), pmids };
-        }catch(e){ log('error',`ClinicalTrials fetch failed for ${nct}: ${e.message}`); return { nct: String(nct), pmids: [] }; }
-      },
+            // Data management
+            const dataManager = {
+                save() {
+                    try {
+                        localStorage.setItem('silentstacks_enhanced_requests', JSON.stringify(state.requests));
+                        localStorage.setItem('silentstacks_enhanced_settings', JSON.stringify(state.settings));
+                    } catch (error) {
+                        console.error('Save failed:', error);
+                    }
+                },
 
-      async fetchPubMedSummary(pmid){
-        try{
-          await RL.pubmed.wait();
-          const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=json`;
-          const data = await smartFetch(url, {as:'json', headers:{'Accept':'application/json'}});
-          const uid = data.result?.uids?.[0];
-          if(!uid) return null;
-          const r = data.result[uid];
-          const authors = (r.authors||[]).map(a => a.name || [a.lastname, a.initials].filter(Boolean).join(' ')).filter(Boolean);
-          return {
-            title: r.title || '',
-            journal: r.fulljournalname || r.source || '',
-            year: (r.pubdate||'').slice(0,4),
-            volume: r.volume||'',
-            issue: r.issue||'',
-            pages: r.pages||'',
-            authors: authors.join('; '),
-            pmid: String(pmid)
-          };
-        }catch(e){ log('error',`PubMed summary failed for ${pmid}: ${e.message}`); return null; }
-      },
+                load() {
+                    try {
+                        const savedRequests = localStorage.getItem('silentstacks_enhanced_requests');
+                        const savedSettings = localStorage.getItem('silentstacks_enhanced_settings');
+                        
+                        if (savedRequests) {
+                            state.requests = JSON.parse(savedRequests);
+                        }
+                        
+                        if (savedSettings) {
+                            state.settings = { ...state.settings, ...JSON.parse(savedSettings) };
+                        }
+                    } catch (error) {
+                        console.error('Load failed:', error);
+                    }
+                },
 
-      async fetchPubMedEFetch(pmid){
-        try{
-          await RL.pubmed.wait();
-          const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=xml`;
-          const xml = await smartFetch(url, {as:'text'});
-          const doc = new DOMParser().parseFromString(xml, 'application/xml');
+                addRequest(requestData) {
+                    const request = {
+                        id: utils.generateId(),
+                        ...requestData,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    state.requests.unshift(request);
+                    this.save();
+                    return request;
+                },
 
-          const pick = (sel)=>doc.querySelector(sel)?.textContent?.trim()||'';
-          const pickAll = (sel)=>Array.from(doc.querySelectorAll(sel)).map(n=>n.textContent.trim());
+                updateRequest(id, updates) {
+                    const index = state.requests.findIndex(r => r.id === id);
+                    if (index !== -1) {
+                        state.requests[index] = {
+                            ...state.requests[index],
+                            ...updates,
+                            updatedAt: new Date().toISOString()
+                        };
+                        this.save();
+                        return state.requests[index];
+                    }
+                    return null;
+                },
 
-          // Biblio
-          const title   = pick('Article > ArticleTitle');
-          const journal = pick('Article > Journal > Title') || pick('Journal > ISOAbbreviation');
-          const year    = pick('Article > Journal > JournalIssue > PubDate > Year') ||
-                          (pick('Article > Journal > JournalIssue > PubDate')||'').match(/\\d{4}/)?.[0] || '';
-          const volume  = pick('Article > Journal > JournalIssue > Volume');
-          const issue   = pick('Article > Journal > JournalIssue > Issue');
-          const pages   = pick('Article > Pagination > MedlinePgn');
+                deleteRequest(id) {
+                    const index = state.requests.findIndex(r => r.id === id);
+                    if (index !== -1) {
+                        state.requests.splice(index, 1);
+                        this.save();
+                        return true;
+                    }
+                    return false;
+                }
+            };
 
-          // Authors → "Last FM"
-          const authors = Array.from(doc.querySelectorAll('AuthorList > Author'))
-            .map(a=>{
-              const last = a.querySelector('LastName')?.textContent?.trim()||'';
-              const fore = a.querySelector('ForeName')?.textContent?.trim()||'';
-              const initials = fore.split(/\\s+/).map(s=>s[0]).filter(Boolean).join('');
-              return `${last} ${initials}`.trim();
-            }).filter(Boolean).join('; ');
+            // UI Controller
+            const uiController = {
+                init() {
+                    this.bindEvents();
+                    this.updateTheme();
+                    this.render();
+                },
 
-          // DOI (prefer ArticleIdList)
-          let doi = '';
-          const idNodes = Array.from(doc.querySelectorAll('ArticleIdList > ArticleId'));
-          const doiNode = idNodes.find(n=>n.getAttribute('IdType')==='doi');
-          if(doiNode) doi = doiNode.textContent.trim();
-          if(!doi){
-            const eloc = Array.from(doc.querySelectorAll('ELocationID[EIdType="doi"]'))[0];
-            if(eloc) doi = eloc.textContent.trim();
-          }
-          doi = API.normalizeDOI(doi);
+                bindEvents() {
+                    // Navigation
+                    document.querySelectorAll('.nav-tab').forEach(tab => {
+                        tab.addEventListener('click', (e) => {
+                            this.switchSection(tab.dataset.section);
+                        });
+                    });
 
-          // MeSH (top 5 descriptor names)
-          const mesh = Array.from(doc.querySelectorAll('MeshHeadingList > MeshHeading > DescriptorName'))
-            .map(n=>n.textContent.trim()).filter(Boolean).slice(0,5);
+                    // Form submission
+                    document.getElementById('request-form').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.handleFormSubmit();
+                    });
 
-          // ClinicalTrials.gov NCT
-          let nct = '';
-          doc.querySelectorAll('DataBankList > DataBank').forEach(db=>{
-            const name = db.querySelector('DataBankName')?.textContent?.trim().toLowerCase();
-            if(name === 'clinicaltrials.gov'){
-              const accs = Array.from(db.querySelectorAll('AccessionNumberList > AccessionNumber')).map(n=>n.textContent.trim());
-              const hit = accs.find(x=>/^NCT\\d{8}$/i.test(x));
-              if(hit) nct = hit.toUpperCase();
+                    // Lookup buttons
+                    document.getElementById('lookup-pmid').addEventListener('click', () => {
+                        this.handleLookup('pmid');
+                    });
+
+                    document.getElementById('lookup-doi').addEventListener('click', () => {
+                        this.handleLookup('doi');
+                    });
+
+                    document.getElementById('lookup-nct').addEventListener('click', () => {
+                        this.handleLookup('nct');
+                    });
+
+                    // Batch processing
+                    document.getElementById('process-pmids').addEventListener('click', () => {
+                        this.handleBatchPMIDs();
+                    });
+
+                    document.getElementById('clear-pmids').addEventListener('click', () => {
+                        document.getElementById('pmid-list').value = '';
+                        document.getElementById('pmid-file').value = '';
+                        this.hideBatchProgress();
+                    });
+
+                    // File input for batch processing
+                    document.getElementById('pmid-file').addEventListener('change', (e) => {
+                        this.handlePMIDFile(e);
+                    });
+
+                    // Settings
+                    document.getElementById('settings-form').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.handleSettingsSubmit();
+                    });
+
+                    // Clear form
+                    document.getElementById('clear-form').addEventListener('click', () => {
+                        document.getElementById('request-form').reset();
+                        this.showStatus('Form cleared', 'success');
+                    });
+
+                    // Search
+                    const searchInput = document.getElementById('search-requests');
+                    if (searchInput) {
+                        searchInput.addEventListener('input', (e) => {
+                            this.handleSearch(e.target.value);
+                        });
+                    }
+
+                    // Export buttons
+                    document.getElementById('export-csv').addEventListener('click', () => {
+                        this.exportData('csv');
+                    });
+
+                    document.getElementById('export-json').addEventListener('click', () => {
+                        this.exportData('json');
+                    });
+
+                    // Import
+                    document.getElementById('import-file').addEventListener('change', (e) => {
+                        this.handleImport(e);
+                    });
+                },
+
+                switchSection(sectionId) {
+                    document.querySelectorAll('.nav-tab').forEach(tab => {
+                        tab.classList.toggle('active', tab.dataset.section === sectionId);
+                    });
+                    
+                    document.querySelectorAll('.section').forEach(section => {
+                        section.classList.toggle('active', section.id === sectionId);
+                    });
+                    
+                    state.ui.currentSection = sectionId;
+                    
+                    if (sectionId === 'dashboard') {
+                        this.renderDashboard();
+                    } else if (sectionId === 'all-requests') {
+                        this.renderAllRequests();
+                    }
+                },
+
+                async handleLookup(type) {
+                    const inputId = type === 'nct' ? 'nct-id' : type;
+                    const input = document.getElementById(inputId);
+                    const button = document.getElementById(`lookup-${type}`);
+                    
+                    if (!input || !input.value.trim()) {
+                        this.showStatus(`Please enter a ${type.toUpperCase()}`, 'error');
+                        return;
+                    }
+                    
+                    const identifier = input.value.trim();
+                    const originalText = button.textContent;
+                    
+                    button.disabled = true;
+                    button.innerHTML = '<span class="spinner"></span> Loading...';
+                    this.showStatus('Looking up metadata...', 'loading');
+                    
+                    try {
+                        let result;
+                        
+                        if (type === 'pmid') {
+                            result = await apiService.fetchPubMed(identifier);
+                        } else if (type === 'doi') {
+                            result = await apiService.fetchCrossRef(identifier);
+                        } else if (type === 'nct') {
+                            result = await apiService.fetchClinicalTrial(identifier);
+                        }
+                        
+                        this.populateForm(result);
+                        this.showStatus('✅ Metadata retrieved successfully!', 'success');
+                        
+                    } catch (error) {
+                        console.error('Lookup failed:', error);
+                        this.showStatus(`❌ Lookup failed: ${error.message}`, 'error');
+                    } finally {
+                        button.disabled = false;
+                        button.textContent = originalText;
+                    }
+                },
+
+                populateForm(data) {
+                    const fieldMappings = {
+                        'pmid': 'pmid',
+                        'doi': 'doi',
+                        'nct-id': 'nctId',
+                        'title': 'title',
+                        'authors': 'authors',
+                        'journal': 'journal',
+                        'year': 'year'
+                    };
+                    
+                    Object.entries(fieldMappings).forEach(([fieldId, dataKey]) => {
+                        const element = document.getElementById(fieldId);
+                        if (element && data[dataKey]) {
+                            element.value = data[dataKey];
+                        }
+                    });
+                    
+                    // Store additional metadata for later use
+                    if (data.meshTerms || data.isClinicalTrial || data.conditions) {
+                        const form = document.getElementById('request-form');
+                        form.dataset.enhancedData = JSON.stringify(data);
+                    }
+                },
+
+                async handleBatchPMIDs() {
+                    const textArea = document.getElementById('pmid-list');
+                    const fileInput = document.getElementById('pmid-file');
+                    
+                    let pmidText = textArea.value.trim();
+                    
+                    // If no text but file selected, read file
+                    if (!pmidText && fileInput.files[0]) {
+                        const file = fileInput.files[0];
+                        pmidText = await this.readFileAsText(file);
+                    }
+                    
+                    if (!pmidText) {
+                        this.showBatchStatus('Please enter PMIDs or select a file', 'error');
+                        return;
+                    }
+                    
+                    const pmids = utils.extractPMIDs(pmidText);
+                    
+                    if (pmids.length === 0) {
+                        this.showBatchStatus('No valid PMIDs found in the input', 'error');
+                        return;
+                    }
+                    
+                    if (pmids.length > 100) {
+                        this.showBatchStatus('Too many PMIDs. Maximum 100 allowed per batch.', 'error');
+                        return;
+                    }
+                    
+                    await this.processPMIDBatch(pmids);
+                },
+
+                async processPMIDBatch(pmids) {
+                    this.showBatchProgress();
+                    const progressFill = document.getElementById('progress-fill');
+                    const progressText = document.getElementById('progress-text');
+                    
+                    const results = [];
+                    const errors = [];
+                    
+                    for (let i = 0; i < pmids.length; i++) {
+                        const pmid = pmids[i];
+                        const progress = ((i + 1) / pmids.length) * 100;
+                        
+                        progressFill.style.width = `${progress}%`;
+                        progressText.textContent = `Processing PMID ${pmid} (${i + 1} of ${pmids.length})...`;
+                        
+                        try {
+                            const metadata = await apiService.fetchPubMed(pmid);
+                            
+                            // Create request from metadata
+                            const request = dataManager.addRequest({
+                                ...metadata,
+                                priority: 'normal',
+                                status: 'pending'
+                            });
+                            
+                            results.push({ pmid, request, status: 'success' });
+                            
+                        } catch (error) {
+                            console.error(`Failed to process PMID ${pmid}:`, error);
+                            errors.push({ pmid, error: error.message });
+                        }
+                        
+                        // Small delay between requests
+                        if (i < pmids.length - 1) {
+                            await utils.delay(API_DELAY);
+                        }
+                    }
+                    
+                    this.showBatchResults(results, errors);
+                    this.hideBatchProgress();
+                    this.render();
+                },
+
+                showBatchProgress() {
+                    const progressContainer = document.getElementById('batch-progress');
+                    progressContainer.style.display = 'block';
+                },
+
+                hideBatchProgress() {
+                    const progressContainer = document.getElementById('batch-progress');
+                    progressContainer.style.display = 'none';
+                },
+
+                showBatchResults(results, errors) {
+                    const resultsContainer = document.getElementById('batch-results');
+                    
+                    let html = `
+                        <div style="margin-bottom: 15px;">
+                            <strong>Batch Processing Complete</strong><br>
+                            ✅ Successfully processed: ${results.length}<br>
+                            ❌ Errors: ${errors.length}
+                        </div>
+                    `;
+                    
+                    if (results.length > 0) {
+                        html += `
+                            <div style="margin-bottom: 15px;">
+                                <h4>Successfully Added:</h4>
+                                <ul style="max-height: 200px; overflow-y: auto;">
+                                    ${results.map(r => 
+                                        `<li>PMID ${r.pmid}: ${utils.sanitize(r.request.title || 'Untitled')}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    if (errors.length > 0) {
+                        html += `
+                            <div>
+                                <h4>Errors:</h4>
+                                <ul style="max-height: 200px; overflow-y: auto;">
+                                    ${errors.map(e => 
+                                        `<li>PMID ${e.pmid}: ${utils.sanitize(e.error)}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    resultsContainer.innerHTML = html;
+                    this.showBatchStatus(`✅ Processed ${results.length} PMIDs successfully!`, 'success');
+                },
+
+                handlePMIDFile(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    this.readFileAsText(file).then(text => {
+                        document.getElementById('pmid-list').value = text;
+                    }).catch(error => {
+                        this.showBatchStatus(`File read error: ${error.message}`, 'error');
+                    });
+                },
+
+                readFileAsText(file) {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = e => reject(new Error('Failed to read file'));
+                        reader.readAsText(file);
+                    });
+                },
+
+                handleFormSubmit() {
+                    const formData = new FormData(document.getElementById('request-form'));
+                    const data = Object.fromEntries(formData.entries());
+                    
+                    if (!data.title) {
+                        this.showStatus('Title is required', 'error');
+                        return;
+                    }
+                    
+                    // Check for enhanced data
+                    const form = document.getElementById('request-form');
+                    if (form.dataset.enhancedData) {
+                        const enhancedData = JSON.parse(form.dataset.enhancedData);
+                        Object.assign(data, enhancedData);
+                    }
+                    
+                    // Process tags
+                    if (data.tags) {
+                        data.tags = data.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+                    }
+                    
+                    dataManager.addRequest(data);
+                    document.getElementById('request-form').reset();
+                    form.removeAttribute('data-enhanced-data');
+                    
+                    this.showStatus('✅ Request created successfully!', 'success');
+                    this.render();
+                },
+
+                handleSearch(query) {
+                    const filteredRequests = this.filterRequests(query);
+                    this.renderRequestList(filteredRequests);
+                },
+
+                filterRequests(query = '') {
+                    if (!query.trim()) return state.requests;
+                    
+                    const lowerQuery = query.toLowerCase();
+                    return state.requests.filter(request => {
+                        const searchText = [
+                            request.title,
+                            request.authors,
+                            request.journal,
+                            request.pmid,
+                            request.doi,
+                            request.nctId,
+                            request.notes,
+                            ...(request.tags || []),
+                            ...(request.meshTerms || []).map(m => m.term),
+                            ...(request.conditions || [])
+                        ].join(' ').toLowerCase();
+                        
+                        return searchText.includes(lowerQuery);
+                    });
+                },
+
+                handleSettingsSubmit() {
+                    const form = document.getElementById('settings-form');
+                    const formData = new FormData(form);
+                    
+                    state.settings = {
+                        followupDays: parseInt(formData.get('followup-days')) || 5,
+                        theme: formData.get('theme') || 'light',
+                        apiKey: formData.get('api-key') || '',
+                        crossrefEmail: formData.get('crossref-email') || ''
+                    };
+                    
+                    this.updateTheme();
+                    dataManager.save();
+                    this.showStatus('⚙️ Settings saved successfully!', 'success');
+                },
+
+                updateTheme() {
+                    document.documentElement.setAttribute('data-theme', state.settings.theme);
+                },
+
+                showStatus(message, type = 'info') {
+                    const statusEl = document.getElementById('lookup-status');
+                    if (statusEl) {
+                        statusEl.textContent = message;
+                        statusEl.className = `status-message ${type}`;
+                    }
+                },
+
+                showBatchStatus(message, type = 'info') {
+                    const statusEl = document.getElementById('batch-status');
+                    if (statusEl) {
+                        statusEl.textContent = message;
+                        statusEl.className = `status-message ${type}`;
+                    }
+                },
+
+                render() {
+                    this.renderDashboard();
+                    this.renderAllRequests();
+                },
+
+                renderDashboard() {
+                    const stats = this.calculateStats();
+                    
+                    document.getElementById('total-requests').textContent = stats.total;
+                    document.getElementById('clinical-trials').textContent = stats.clinicalTrials;
+                    document.getElementById('pending-requests').textContent = stats.pending;
+                    document.getElementById('fulfilled-requests').textContent = stats.fulfilled;
+                    
+                    // Render recent requests
+                    const recentContainer = document.getElementById('recent-requests');
+                    const recentRequests = state.requests.slice(0, 5);
+                    
+                    if (recentRequests.length === 0) {
+                        recentContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No requests yet. Create your first request!</p>';
+                    } else {
+                        recentContainer.innerHTML = recentRequests.map(request => this.createRequestCard(request)).join('');
+                    }
+                },
+
+                calculateStats() {
+                    const total = state.requests.length;
+                    const clinicalTrials = state.requests.filter(r => r.isClinicalTrial || r.nctId).length;
+                    const pending = state.requests.filter(r => r.status === 'pending').length;
+                    const fulfilled = state.requests.filter(r => r.status === 'fulfilled').length;
+                    
+                    return { total, clinicalTrials, pending, fulfilled };
+                },
+
+                renderAllRequests() {
+                    const filteredRequests = this.filterRequests();
+                    this.renderRequestList(filteredRequests);
+                },
+
+                renderRequestList(requests) {
+                    const container = document.getElementById('request-list');
+                    if (!container) return;
+                    
+                    if (requests.length === 0) {
+                        container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No requests found.</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = requests.map(request => this.createRequestCard(request, true)).join('');
+                },
+
+                createRequestCard(request, detailed = false) {
+                    const timeAgo = this.getTimeAgo(request.createdAt);
+                    const isClinical = request.isClinicalTrial || request.nctId;
+                    
+                    // Build clinical trial info if available
+                    let clinicalInfo = '';
+                    if (isClinical && detailed) {
+                        clinicalInfo = `
+                            <div class="clinical-info">
+                                <h4>🧪 Clinical Trial Information</h4>
+                                <div class="clinical-grid">
+                                    ${request.nctId ? `
+                                        <div class="clinical-item">
+                                            <div class="clinical-label">NCT ID</div>
+                                            <div class="clinical-value">${request.nctId}</div>
+                                        </div>
+                                    ` : ''}
+                                    ${request.phase ? `
+                                        <div class="clinical-item">
+                                            <div class="clinical-label">Phase</div>
+                                            <div class="clinical-value">${request.phase}</div>
+                                        </div>
+                                    ` : ''}
+                                    ${request.studyStatus ? `
+                                        <div class="clinical-item">
+                                            <div class="clinical-label">Status</div>
+                                            <div class="clinical-value">${request.studyStatus}</div>
+                                        </div>
+                                    ` : ''}
+                                    ${request.enrollment ? `
+                                        <div class="clinical-item">
+                                            <div class="clinical-label">Enrollment</div>
+                                            <div class="clinical-value">${request.enrollment}</div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                ${request.conditions && request.conditions.length > 0 ? `
+                                    <div style="margin-top: 10px;">
+                                        <div class="clinical-label">Conditions</div>
+                                        <div>${request.conditions.map(c => `<span class="tag clinical">${c}</span>`).join('')}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    // Build MeSH terms display
+                    let meshDisplay = '';
+                    if (request.meshTerms && request.meshTerms.length > 0 && detailed) {
+                        const majorTerms = request.meshTerms.filter(m => m.majorTopic);
+                        if (majorTerms.length > 0) {
+                            meshDisplay = `
+                                <div style="margin: 10px 0;">
+                                    <strong>MeSH Terms:</strong> 
+                                    ${majorTerms.slice(0, 5).map(m => `<span class="tag">${m.term}</span>`).join('')}
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    return `
+                        <div class="request-card ${isClinical ? 'clinical-trial' : ''}" data-id="${request.id}">
+                            <div class="request-header">
+                                <div style="flex: 1;">
+                                    <div class="request-title">
+                                        ${utils.sanitize(request.title || 'Untitled Request')}
+                                        ${isClinical ? '<span class="tag clinical">Clinical Trial</span>' : ''}
+                                    </div>
+                                    <div class="request-meta">
+                                        ${request.authors ? `👥 ${utils.sanitize(request.authors)} • ` : ''}
+                                        ${request.journal ? `📚 ${utils.sanitize(request.journal)} • ` : ''}
+                                        ${request.year ? `📅 ${request.year} • ` : ''}
+                                        🕒 ${timeAgo}
+                                    </div>
+                                    ${detailed && (request.pmid || request.doi || request.nctId) ? `
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px;">
+                                            ${request.pmid ? `PMID: ${request.pmid} • ` : ''}
+                                            ${request.doi ? `DOI: ${request.doi} • ` : ''}
+                                            ${request.nctId ? `NCT: ${request.nctId}` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div>
+                                    <select class="request-status-select status-${request.status}" 
+                                            onchange="uiController.updateRequestStatus('${request.id}', this.value)">
+                                        <option value="pending" ${request.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                        <option value="in-progress" ${request.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                        <option value="fulfilled" ${request.status === 'fulfilled' ? 'selected' : ''}>Fulfilled</option>
+                                        <option value="cancelled" ${request.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            ${clinicalInfo}
+                            ${meshDisplay}
+                            
+                            ${request.notes ? `
+                                <div style="margin: 10px 0; padding: 10px; background: var(--bg-secondary); border-radius: var(--border-radius);">
+                                    📝 ${utils.sanitize(request.notes)}
+                                </div>
+                            ` : ''}
+                            
+                            ${detailed ? `
+                                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                    <button class="btn btn-secondary" onclick="uiController.editRequest('${request.id}')" style="padding: 6px 12px; font-size: 0.9rem;">
+                                        ✏️ Edit
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="uiController.deleteRequest('${request.id}')" style="padding: 6px 12px; font-size: 0.9rem;">
+                                        🗑️ Delete
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                },
+
+                updateRequestStatus(id, newStatus) {
+                    dataManager.updateRequest(id, { status: newStatus });
+                    this.render();
+                },
+
+                editRequest(id) {
+                    const request = state.requests.find(r => r.id === id);
+                    if (!request) return;
+                    
+                    this.populateForm(request);
+                    this.switchSection('add-request');
+                    
+                    // Store edit mode
+                    document.getElementById('request-form').dataset.editId = id;
+                },
+
+                deleteRequest(id) {
+                    if (!confirm('Are you sure you want to delete this request?')) return;
+                    
+                    dataManager.deleteRequest(id);
+                    this.render();
+                },
+
+                getTimeAgo(date) {
+                    const now = new Date();
+                    const diffMs = now - new Date(date);
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 0) return 'Today';
+                    if (diffDays === 1) return 'Yesterday';
+                    if (diffDays < 7) return `${diffDays} days ago`;
+                    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+                    return `${Math.floor(diffDays / 30)} months ago`;
+                },
+
+                exportData(format) {
+                    try {
+                        let content, filename, mimeType;
+                        
+                        if (format === 'csv') {
+                            content = this.convertToCSV(state.requests);
+                            filename = `silentstacks-enhanced-${new Date().toISOString().split('T')[0]}.csv`;
+                            mimeType = 'text/csv';
+                        } else {
+                            content = JSON.stringify({
+                                version: '1.2-enhanced',
+                                exportedAt: new Date().toISOString(),
+                                requests: state.requests,
+                                settings: state.settings
+                            }, null, 2);
+                            filename = `silentstacks-enhanced-${new Date().toISOString().split('T')[0]}.json`;
+                            mimeType = 'application/json';
+                        }
+                        
+                        this.downloadFile(content, filename, mimeType);
+                    } catch (error) {
+                        console.error('Export failed:', error);
+                        this.showStatus('Export failed', 'error');
+                    }
+                },
+
+                convertToCSV(requests) {
+                    if (requests.length === 0) return '';
+                    
+                    const headers = [
+                        'ID', 'PMID', 'DOI', 'NCT ID', 'Title', 'Authors', 'Journal', 'Year',
+                        'Priority', 'Status', 'Tags', 'MeSH Terms', 'Clinical Trial', 'Created'
+                    ];
+                    
+                    const rows = requests.map(r => [
+                        r.id || '',
+                        r.pmid || '',
+                        r.doi || '',
+                        r.nctId || '',
+                        r.title || '',
+                        r.authors || '',
+                        r.journal || '',
+                        r.year || '',
+                        r.priority || '',
+                        r.status || '',
+                        (r.tags || []).join('; '),
+                        (r.meshTerms || []).map(m => m.term).join('; '),
+                        r.isClinicalTrial || r.nctId ? 'Yes' : 'No',
+                        r.createdAt || ''
+                    ]);
+                    
+                    return [headers, ...rows]
+                        .map(row => row.map(cell => `"${(cell + '').replace(/"/g, '""')}"`).join(','))
+                        .join('\n');
+                },
+
+                downloadFile(content, filename, mimeType) {
+                    const blob = new Blob([content], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                },
+
+                handleImport(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    this.readFileAsText(file).then(text => {
+                        try {
+                            let importedData;
+                            
+                            if (file.name.endsWith('.json')) {
+                                const data = JSON.parse(text);
+                                importedData = data.requests || data;
+                            } else if (file.name.endsWith('.csv')) {
+                                importedData = this.parseCSV(text);
+                            }
+                            
+                            if (Array.isArray(importedData)) {
+                                importedData.forEach(requestData => {
+                                    if (requestData.title) {
+                                        dataManager.addRequest(requestData);
+                                    }
+                                });
+                                
+                                this.render();
+                                document.getElementById('import-status').textContent = `✅ Imported ${importedData.length} requests successfully!`;
+                                document.getElementById('import-status').className = 'status-message success';
+                            }
+                            
+                        } catch (error) {
+                            console.error('Import failed:', error);
+                            document.getElementById('import-status').textContent = `❌ Import failed: ${error.message}`;
+                            document.getElementById('import-status').className = 'status-message error';
+                        }
+                    });
+                },
+
+                parseCSV(csvText) {
+                    const lines = csvText.split('\n').filter(line => line.trim());
+                    if (lines.length < 2) return [];
+                    
+                    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+                    const requests = [];
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+                        const request = {};
+                        
+                        headers.forEach((header, index) => {
+                            if (values[index]) {
+                                request[header] = values[index];
+                            }
+                        });
+                        
+                        if (request.title) {
+                            requests.push(request);
+                        }
+                    }
+                    
+                    return requests;
+                }
+            };
+
+            // Make UI controller globally available
+            window.uiController = uiController;
+
+            // Initialize application
+            function init() {
+                console.log('🚀 Initializing SilentStacks Enhanced...');
+                
+                dataManager.load();
+                uiController.init();
+                
+                console.log('✅ SilentStacks Enhanced initialized successfully!');
+                console.log(`📊 Loaded ${state.requests.length} requests`);
             }
-          });
 
-          return { pmid: String(pmid), title, journal, year, volume, issue, pages, authors, doi, mesh, nct };
-        }catch(e){ log('error',`PubMed EFetch failed for ${pmid}: ${e.message}`); return null; }
-      }
-    };
-
-    // ---------- Logging & Diagnostics ----------
-    function log(level, msg){
-      const line = `[${new Date().toISOString()}] ${level.toUpperCase()}: ${msg}`;
-      App.state.log.push(line);
-      try { console.log(line); } catch(e) {}
-      const el = App.el.diagLog; if(el){ el.textContent = App.state.log.slice(-400).join('\\n'); }
-    }
-
-    // ---------- Enrichment Orchestrator ----------
-    function mergeItem(base, extra){
-      const out = {...base};
-      for(const k of Object.keys(extra||{})){
-        if(extra[k]==null) continue;
-        if(typeof extra[k] === 'string'){
-          if(!out[k]) out[k] = extra[k]; // don't overwrite user edits unless empty
-          else if(['title','journal','authors','pages'].includes(k) && extra[k].length > out[k].length) out[k] = extra[k];
-        }else if(Array.isArray(extra[k])){
-          const have = new Set(out[k]||[]);
-          (extra[k]||[]).forEach(v=>have.add(v));
-          out[k] = Array.from(have);
-        }else{
-          out[k] = extra[k];
-        }
-      }
-      return out;
-    }
-
-    async function enrichFromIdentifiers(seed){
-      // seed: {pmid?, doi?, nct?}
-      let item = {...seed};
-
-      // If DOI provided, try to map to PMID
-      if(item.doi && !item.pmid){
-        const m = await API.idConv(item.doi);
-        if(m.pmid) item.pmid = m.pmid;
-        if(!item.doi && m.doi) item.doi = m.doi;
-      }
-
-      // If PMID provided, pull EFetch (rich) + ESummary (fallback)
-      if(item.pmid){
-        const ef = await API.fetchPubMedEFetch(item.pmid);
-        if(ef) item = mergeItem(item, ef);
-        if(!ef?.title){ const es = await API.fetchPubMedSummary(item.pmid); if(es) item = mergeItem(item, es); }
-      }
-
-      // If still missing DOI but have PMID, try idConv on PMID
-      if(item.pmid && !item.doi){
-        const m2 = await API.idConv(item.pmid);
-        if(m2.doi) item.doi = m2.doi;
-      }
-
-      // If DOI present, pull Crossref for any missing biblio bits
-      if(item.doi){
-        const cx = await API.fetchCrossrefByDOI(item.doi);
-        if(cx) item = mergeItem(item, cx);
-      }
-
-      // If NCT given, try to find PMIDs from the trial references → then PubMed enrich that article
-      if(item.nct){
-        const tr = await API.fetchTrial(item.nct);
-        if(tr.pmids?.length && !item.pmid){
-          item.pmid = tr.pmids[0];
-          const ef2 = await API.fetchPubMedEFetch(item.pmid);
-          if(ef2) item = mergeItem(item, ef2);
-          if(!item.doi){
-            const m3 = await API.idConv(item.pmid);
-            if(m3.doi) item.doi = m3.doi;
-          }
-        }
-      }
-
-      return item;
-    }
-
-    // ---------- UI Helpers ----------
-    function setTheme(theme){
-      App.state.theme = theme; Store.saveTheme();
-      document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : (theme==='hc'?'hc':'dark'));
-      // Update pressed states
-      App.el.themeLight.setAttribute('aria-pressed', String(theme==='light'));
-      App.el.themeDark.setAttribute('aria-pressed', String(theme==='dark'));
-      App.el.themeHc.setAttribute('aria-pressed', String(theme==='hc'));
-    }
-
-    function applyForm(item){
-      const g = (id)=>App.el[id];
-      g('pmid').value = item.pmid||'';
-      g('doi').value = item.doi||'';
-      g('nct').value = item.nct||'';
-      g('title').value = item.title||'';
-      g('authors').value = item.authors||'';
-      g('journal').value = item.journal||'';
-      g('year').value = item.year||'';
-      g('volume').value = item.volume||'';
-      g('issue').value = item.issue||'';
-      g('pages').value = item.pages||'';
-      g('status').value = item.status||'open';
-      g('priority').value = item.priority||'normal';
-      g('ill').value = item.ill||'';
-      g('docline').value = item.docline||'';
-      g('doclineDate').value = item.doclineDate||'';
-      g('tags').value = (item.tags||[]).join(', ');
-      g('mesh').value = (item.mesh||[]).join(', ');
-      g('notes').value = item.notes||'';
-      g('hasAttachments').checked = !!item.hasAttachments;
-    }
-
-    function readForm(){
-      const g = (id)=>U.sanitize(App.el[id].value);
-      const tags = g('tags').split(',').map(s=>s.trim()).filter(Boolean);
-      const mesh = App.el['mesh'].value.split(',').map(s=>s.trim()).filter(Boolean);
-      return {
-        id: App.state.selectedId || U.uid(),
-        createdAt: App.state.selectedId ? App.state.items.find(x=>x.id===App.state.selectedId)?.createdAt : new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        pmid: g('pmid'), doi: g('doi'), nct: g('nct'),
-        title: g('title'), authors: g('authors'), journal: g('journal'),
-        year: g('year'), volume: g('volume'), issue: g('issue'), pages: g('pages'),
-        status: App.el['status'].value, priority: App.el['priority'].value, ill: App.el['ill'].value,
-        docline: g('docline'), doclineDate: g('doclineDate'),
-        tags, mesh,
-        notes: U.sanitize(App.el['notes'].value),
-        hasAttachments: App.el['hasAttachments'].checked
-      };
-    }
-
-    function clearForm(){ App.state.selectedId=null; applyForm({}); App.el.formStatus.textContent=''; }
-
-    function escapeHtml(s){ return String(s).replace(/[&<>\"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-
-    function renderRows(){
-      const q = App.el.search.value.trim();
-      const fs = App.el.fStatus.value; const fp = App.el.fPriority.value; const ft = App.el.fTag.value.trim().toLowerCase();
-      const parsed = U.parseSearch(q);
-
-      const today = U.today();
-      const rows = App.state.items.filter(it=>{
-        if(fs && it.status!==fs) return false;
-        if(fp && it.priority!==fp) return false;
-        if(ft){ const t=(it.tags||[]).concat(it.mesh||[]).join(' ').toLowerCase(); if(!t.includes(ft)) return false; }
-        // parsed search
-        if(parsed.status && it.status!==parsed.status) return false;
-        if(parsed.priority && it.priority!==parsed.priority) return false;
-        if(parsed.tag){ const space=(it.tags||[]).concat(it.mesh||[]).join(' ').toLowerCase(); if(!space.includes(parsed.tag.toLowerCase())) return false; }
-        if(parsed.authors){ if(!(it.authors||'').toLowerCase().includes(parsed.authors.toLowerCase())) return false; }
-        const text = parsed.text.join(' ').toLowerCase();
-        if(text){
-          const hay = [it.title,it.authors,it.journal,it.notes].join(' ').toLowerCase();
-          if(!hay.includes(text)) return false;
-        }
-        // Quick tab filter
-        if(App.state.quickFilter && App.state.quickFilter!=='all'){
-          if(['open','in-progress','closed'].includes(App.state.quickFilter)){
-            if(it.status !== App.state.quickFilter) return false;
-          }else if(App.state.quickFilter==='urgent'){
-            if(it.priority !== 'urgent') return false;
-          }else if(App.state.quickFilter==='followup'){
-            const needsFollowUp = it.doclineDate && it.status!=='closed' && U.daysBetween(it.doclineDate, today) >= 5;
-            if(!needsFollowUp) return false;
-          }
-        }
-        return true;
-      });
-
-      const frag = document.createDocumentFragment();
-      rows.forEach(it=>{
-        const tr = document.createElement('tr');
-        const flags = [];
-        if(it.doclineDate && it.status!=='closed' && U.daysBetween(it.doclineDate, today) >= 5){ flags.push('Follow-up'); }
-        if(it.hasAttachments) flags.push('Has attachments');
-        tr.innerHTML = `
-          <td><span class="kbd">${it.id}</span></td>
-          <td>${escapeHtml(it.title||'')}</td>
-          <td>${escapeHtml(it.authors||'')}</td>
-          <td>${escapeHtml((it.journal||'') + (it.year? ' / '+it.year : ''))}</td>
-          <td class="status ${it.status==='closed'?'closed':'open'}">${it.status}</td>
-          <td>${it.priority||''}</td>
-          <td>${[...(it.tags||[]), ...(it.mesh||[])].map(t=>`<span class="chip">${escapeHtml(t)}</span>`).join(' ')}</td>
-          <td>${flags.map(f=>`<span class="badge warn">${escapeHtml(f)}</span>`).join(' ')}</td>
-          <td>
-            <button class="btn small" data-act="edit" data-id="${it.id}">✏️ Edit</button>
-            <button class="btn small bad" data-act="del" data-id="${it.id}">🗑️ Delete</button>
-            <button class="btn small" data-act="cite" data-id="${it.id}">📑 NLM</button>
-          </td>`;
-        tr.addEventListener('click', (ev)=>{
-          const b = ev.target.closest('button');
-          if(b){ const id=b.getAttribute('data-id'); const act=b.getAttribute('data-act');
-            if(act==='edit'){ const item=App.state.items.find(x=>x.id===id); if(item){ App.state.selectedId=id; applyForm(item); window.scrollTo({top:0,behavior:'smooth'}); }}
-            else if(act==='del'){ if(confirm('Delete this record?')){ App.state.items = App.state.items.filter(x=>x.id!==id); Store.save(); renderRows(); updateStats(); }}
-            else if(act==='cite'){ const item=App.state.items.find(x=>x.id===id); if(item){ const c=U.nlmCitation(item); navigator.clipboard?.writeText(c); alert('Copied NLM citation to clipboard:\n\n'+c); }}
-            ev.stopPropagation();
-          }
-        }, {passive:true});
-        frag.appendChild(tr);
-      });
-      App.el.rows.replaceChildren(frag);
-      App.el.count.textContent = `${rows.length} shown • ${App.state.items.length} total`;
-    }
-
-    // ---------- Events ----------
-    function bind(){
-      // Tabs
-      const tabs = [
-        ['tabbtn-requests','tab-requests'],
-        ['tabbtn-bulk','tab-bulk'],
-        ['tabbtn-help','tab-help'],
-        ['tabbtn-diagnostics','tab-diagnostics']
-      ];
-      tabs.forEach(([btn, panel])=>{
-        const b = document.getElementById(btn); const p = document.getElementById(panel);
-        b.addEventListener('click',()=>{
-          tabs.forEach(([bb,pp])=>{
-            document.getElementById(bb).setAttribute('aria-selected', String(bb===btn));
-            document.getElementById(pp).hidden = (pp!==panel);
-          });
-        });
-      });
-
-      // Theme
-      App.el.themeLight.addEventListener('click',()=>setTheme('light'));
-      App.el.themeDark.addEventListener('click',()=>setTheme('dark'));
-      App.el.themeHc.addEventListener('click',()=>setTheme('hc'));
-
-      // Search
-      App.el.search.addEventListener('input', U.debounce(renderRows, 120));
-      App.el.fStatus.addEventListener('change', renderRows);
-      App.el.fPriority.addEventListener('change', renderRows);
-      App.el.fTag.addEventListener('input', U.debounce(renderRows, 120));
-
-      // Table quick-filter tabs
-      document.querySelectorAll('.table-tab').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          document.querySelectorAll('.table-tab').forEach(b=>b.setAttribute('aria-selected','false'));
-          btn.setAttribute('aria-selected','true');
-          App.state.quickFilter = btn.dataset.filter || 'all';
-          renderRows();
-        });
-      });
-
-      // Saved views
-      App.el.btnSaveView.addEventListener('click', ()=>{
-        const name = prompt('Name this view'); if(!name) return;
-        App.state.views[name] = {
-          q: App.el.search.value, fs: App.el.fStatus.value, fp: App.el.fPriority.value, ft: App.el.fTag.value
-        }; Store.saveViews(); refreshViews();
-      });
-      App.el.btnDelView.addEventListener('click', ()=>{
-        const k = App.el.savedViews.value; if(!k) return; delete App.state.views[k]; Store.saveViews(); refreshViews();
-      });
-      App.el.savedViews.addEventListener('change', ()=>{
-        const k = App.el.savedViews.value; if(!k) return; const v = App.state.views[k];
-        App.el.search.value=v.q; App.el.fStatus.value=v.fs; App.el.fPriority.value=v.fp; App.el.fTag.value=v.ft; renderRows();
-      });
-
-      // Form buttons
-      App.el.btnLookup.addEventListener('click', onLookup);
-      App.el.btnSave.addEventListener('click', ()=>{
-        const item = readForm();
-        const idx = App.state.items.findIndex(x=>x.id===item.id);
-        if(idx>=0) App.state.items[idx] = item; else App.state.items.unshift(item);
-        Store.save(); renderRows(); updateStats(); App.el.formStatus.textContent='Saved';
-      });
-      App.el.btnReset.addEventListener('click', clearForm);
-
-      // Exports
-      App.el.exportJSON.addEventListener('click', ()=>{
-        U.download('silentstacks.json', JSON.stringify(App.state.items, null, 2), 'application/json');
-      });
-      App.el.exportCSV.addEventListener('click', ()=>{
-        U.download('silentstacks.csv', U.toCSV(App.state.items), 'text/csv');
-      });
-      App.el.exportNLM.addEventListener('click', ()=>{
-        const lines = App.state.items.map(U.nlmCitation).join('\\n');
-        U.download('silentstacks_nlm.txt', lines, 'text/plain');
-      });
-
-      // Bulk
-      App.el.btnImport.addEventListener('click', async ()=>{
-        const f = App.el.fileInput.files?.[0]; if(!f){ App.el.importStatus.textContent='Pick a file first'; return; }
-        const text = await f.text(); await importText(text);
-      });
-      App.el.btnImportText.addEventListener('click', async ()=>{
-        const text = App.el.bulkText.value; if(!text.trim()){ App.el.importStatus.textContent='Paste JSON or CSV'; return; }
-        await importText(text);
-      });
-
-      App.el.btnBulkLookup.addEventListener('click', bulkLookup);
-      App.el.btnStopLookup.addEventListener('click', ()=>{ App.state.stopBulk=true; });
-
-      // Diagnostics
-      App.el.btnClearLog.addEventListener('click', ()=>{ App.state.log=[]; App.el.diagLog.textContent=''; });
-      App.el.btnExportLog.addEventListener('click', ()=>{
-        U.download('silentstacks_log.txt', App.state.log.join('\\n'), 'text/plain');
-      });
-    }
-
-    async function importText(text){
-      try{
-        let items;
-        if(text.trim().startsWith('[')) items = JSON.parse(text);
-        else items = U.fromCSV(text);
-        if(!Array.isArray(items)) throw new Error('Parsed input is not an array');
-        // Normalize fields and merge
-        let added=0; items.forEach(src=>{
-          const it = {
-            id: src.id || U.uid(),
-            createdAt: src.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            pmid: src.pmid||'', doi: src.doi||'', nct: src.nct||'',
-            title: src.title||'', authors: src.authors||'', journal: src.journal||'',
-            year: src.year||'', volume: src.volume||'', issue: src.issue||'', pages: src.pages||'',
-            status: src.status||'open', priority: src.priority||'normal', ill: src.ill||'',
-            docline: src.docline||'', doclineDate: src.doclineDate||'',
-            tags: (src.tags? (Array.isArray(src.tags)? src.tags : String(src.tags).split(',').map(s=>s.trim()).filter(Boolean)) : []),
-            mesh: (src.mesh? (Array.isArray(src.mesh)? src.mesh : String(src.mesh).split(',').map(s=>s.trim()).filter(Boolean)) : []),
-            notes: src.notes||'', hasAttachments: !!src.hasAttachments
-          };
-          App.state.items.push(it); added++;
-        });
-        Store.save(); renderRows(); updateStats();
-        App.el.importStatus.textContent = `Imported ${added} items`;
-        App.el.bulkText.value=''; App.el.fileInput.value='';
-        log('info', `Imported ${added} items`);
-      }catch(e){ App.el.importStatus.textContent = 'Import failed: '+e.message; log('error','Import failed: '+e.message); }
-    }
-
-    // ---------- Lookup button ----------
-    async function onLookup(){
-      try{
-        App.el.formStatus.textContent = 'Looking up…'; App.el.btnLookup.setAttribute('aria-busy','true'); App.el.btnLookup.disabled = true;
-        const base = readForm();
-        const seed = {
-          pmid: base.pmid || '',
-          doi: API.normalizeDOI(base.doi || ''),
-          nct: base.nct ? base.nct.toUpperCase() : ''
-        };
-        if(!seed.pmid && !seed.doi && !seed.nct){
-          App.el.formStatus.textContent = 'Enter a PMID, DOI, or NCT ID first';
-          return;
-        }
-        const enriched = await enrichFromIdentifiers(seed);
-
-        // Merge back into the live form (keep user-set status, tags, etc.)
-        const keep = ['status','priority','ill','docline','doclineDate','tags','notes','hasAttachments','id','createdAt','updatedAt'];
-        const merged = {...base};
-        Object.keys(enriched).forEach(k=>{
-          if(keep.includes(k)) return;
-          merged[k] = enriched[k];
-        });
-
-        applyForm(merged);
-        App.el.formStatus.textContent = 'Metadata enriched ✔'; App.el.btnLookup.removeAttribute('aria-busy'); App.el.btnLookup.disabled = false;
-        log('info', `Lookup filled identifiers: PMID=${merged.pmid||'-'} DOI=${merged.doi||'-'} NCT=${merged.nct||'-'}`);
-      }catch(e){
-        App.el.formStatus.textContent = 'Lookup failed'; App.el.btnLookup.removeAttribute('aria-busy'); App.el.btnLookup.disabled = false;
-        log('error','Lookup error: '+e.message);
-        if(!navigator.onLine){
-          const s = readForm();
-          App.state.queue.push({type:'lookup', pmid:s.pmid, doi:s.doi, nct:s.nct});
-        }
-      }
-    }
-    // Expose globally for inline fallback
-    try { window.SilentStacks_lookup = onLookup; } catch(e) {}
-
-
-    // ---------- Bulk lookup ----------
-    async function bulkLookup(){
-      App.state.stopBulk = false;
-      const items = App.state.items;
-      let done=0, changed=0;
-
-      for(let i=0;i<items.length;i++){
-        if(App.state.stopBulk) break;
-        const it = items[i];
-        if(!(it.pmid||it.doi||it.nct)){ done++; App.el.bulkProgress.textContent = `${done}/${items.length}`; continue; }
-
-        const before = JSON.stringify(it);
-        const seed = { pmid: it.pmid||'', doi: API.normalizeDOI(it.doi||''), nct: it.nct? it.nct.toUpperCase():'' };
-        const enriched = await enrichFromIdentifiers(seed);
-        App.state.items[i] = mergeItem(it, enriched);
-
-        if(JSON.stringify(App.state.items[i]) !== before) changed++;
-        done++;
-        App.el.bulkLog.textContent = `Enriched ${i+1}/${items.length}: ${it.id || '(no id)'} → PMID=${App.state.items[i].pmid||'-'} DOI=${App.state.items[i].doi||'-'} NCT=${App.state.items[i].nct||'-'}\n` + App.el.bulkLog.textContent;
-        App.el.bulkProgress.textContent = `${done}/${items.length} • ${changed} updated`;
-        await new Promise(r=>setTimeout(r,120)); // yield to UI
-      }
-
-      Store.save(); renderRows(); updateStats?.();
-      App.el.bulkLog.textContent = `✅ Bulk lookup complete. ${changed} updated of ${items.length}.\n` + App.el.bulkLog.textContent;
-    }
-
-    function updateStats(){
-      App.el.statRecords.textContent = String(App.state.items.length);
-      App.el.statStorage.textContent = U.approxStorage();
-      App.el.statQueue.textContent = String(App.state.queue.length);
-      const names = ['RequestManager','APIClient','Storage','UI','Forms','SearchFilter','Notifications','ILLWorkflow','BulkOps','ExportManager','PubMed','ClinicalTrials','Mesh'];
-      App.el.moduleChips.innerHTML = names.map(n=>`<span class="chip">${n} ✅</span>`).join(' ');
-    }
-
-    function refreshViews(){
-      const sel = App.el.savedViews; const cur = sel.value;
-      sel.innerHTML = '<option value="">Saved views…</option>' + Object.keys(App.state.views).sort().map(k=>`<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join('');
-      if(cur && App.state.views[cur]) sel.value = cur; else sel.value = '';
-    }
-
-    function wireRefs(){
-      const byId = id=>document.getElementById(id);
-      Object.assign(App.el, {
-        // Theme
-        themeLight: byId('theme-light'), themeDark: byId('theme-dark'), themeHc: byId('theme-hc'),
-        // Form
-        pmid: byId('pmid'), doi: byId('doi'), nct: byId('nct'), title: byId('title'), authors: byId('authors'),
-        journal: byId('journal'), year: byId('year'), volume: byId('volume'), issue: byId('issue'), pages: byId('pages'),
-        status: byId('status'), priority: byId('priority'), ill: byId('ill'), docline: byId('docline'), doclineDate: byId('doclineDate'),
-        tags: byId('tags'), mesh: byId('mesh'), notes: byId('notes'), hasAttachments: byId('hasAttachments'),
-        btnLookup: byId('btn-lookup'), btnSave: byId('btn-save'), btnReset: byId('btn-reset'), formStatus: byId('form-status'),
-        // Search
-        search: byId('search'), fStatus: byId('f-status'), fPriority: byId('f-priority'), fTag: byId('f-tag'),
-        btnSaveView: byId('btn-save-view'), savedViews: byId('saved-views'), btnDelView: byId('btn-del-view'),
-        rows: byId('rows'), count: byId('count'),
-        // Export
-        exportJSON: byId('export-json'), exportCSV: byId('export-csv'), exportNLM: byId('export-nlm'),
-        // Bulk
-        fileInput: byId('file-input'), btnImport: byId('btn-import'), bulkText: byId('bulk-text'), btnImportText: byId('btn-import-text'),
-        btnBulkLookup: byId('btn-bulk-lookup'), btnStopLookup: byId('btn-stop-lookup'), bulkProgress: byId('bulk-progress'), bulkLog: byId('bulk-log'), importStatus: byId('import-status'),
-        // Diagnostics
-        moduleChips: byId('module-chips'), statRecords: byId('stat-records'), statStorage: byId('stat-storage'), statQueue: byId('stat-queue'), diagLog: byId('diag-log'),
-        btnClearLog: byId('btn-clear-log'), btnExportLog: byId('btn-export-log')
-      });
-    }
-
-    function init(){
-      try { console.log('🚀 SilentStacks init start'); } catch(e) {}
-      window.SilentStacksReady = true;
-    // Expose lookup globally as a fallback for environments where addEventListener fails
-    window.SilentStacks_lookup = onLookup;
-
-      wireRefs(); Store.load(); setTheme(App.state.theme||'dark');
-      bind(); refreshViews(); renderRows(); updateStats();
-      log('info', 'SilentStacks v'+App.version+' initialized');
-      try { console.log('✅ SilentStacks init done'); } catch(e) {}
-      // Keyboard shortcuts
-      window.addEventListener('keydown', (ev)=>{
-        if((ev.ctrlKey||ev.metaKey) && ev.key.toLowerCase()==='s'){ ev.preventDefault(); App.el.btnSave.click(); }
-      });
-    }
-
-    // Kickoff
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init, {once:true});
-    } else {
-      init();
-    }
-  })();
-  </script>
+            // Start when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
 </body>
 </html>
