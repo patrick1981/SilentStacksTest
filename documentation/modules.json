@@ -1,0 +1,118 @@
+{
+  "initOrder": [
+    "EventBus",
+    "State",
+    "StorageAdapter",
+    "APIClient",
+    "MeshIntegration",
+    "PubMedIntegration",
+    "ClinicalTrials",
+    "CrossRefIntegration",
+    "RequestManager",
+    "BulkUpload",
+    "SearchFilter",
+    "UIController",
+    "ExportManager",
+    "Notifications",
+    "ILLWorkflow"
+  ],
+  "modules": {
+    "EventBus": {
+      "path": "modules/event-bus.js",
+      "dependsOn": []
+    },
+    "State": {
+      "path": "modules/state.js",
+      "dependsOn": [
+        "EventBus"
+      ]
+    },
+    "StorageAdapter": {
+      "path": "modules/storage-adapter.js",
+      "dependsOn": [
+        "EventBus",
+        "State"
+      ]
+    },
+    "APIClient": {
+      "path": "modules/api-client.js",
+      "dependsOn": [
+        "EventBus",
+        "State"
+      ]
+    },
+    "MeshIntegration": {
+      "path": "modules/mesh-integration.js",
+      "dependsOn": [
+        "APIClient"
+      ]
+    },
+    "PubMedIntegration": {
+      "path": "modules/pubmed.js",
+      "dependsOn": [
+        "APIClient"
+      ]
+    },
+    "ClinicalTrials": {
+      "path": "modules/clinical-trials.js",
+      "dependsOn": [
+        "APIClient"
+      ]
+    },
+    "CrossRefIntegration": {
+      "path": "modules/crossref.js",
+      "dependsOn": [
+        "APIClient"
+      ]
+    },
+    "RequestManager": {
+      "path": "modules/request-manager.js",
+      "dependsOn": [
+        "State",
+        "PubMedIntegration",
+        "CrossRefIntegration",
+        "ClinicalTrials",
+        "MeshIntegration"
+      ]
+    },
+    "BulkUpload": {
+      "path": "modules/bulk-upload.js",
+      "dependsOn": [
+        "RequestManager"
+      ]
+    },
+    "SearchFilter": {
+      "path": "modules/search-filter.js",
+      "dependsOn": [
+        "RequestManager"
+      ]
+    },
+    "UIController": {
+      "path": "modules/ui-controller.js",
+      "dependsOn": [
+        "SearchFilter",
+        "BulkUpload",
+        "RequestManager"
+      ]
+    },
+    "ExportManager": {
+      "path": "modules/export-manager.js",
+      "dependsOn": [
+        "RequestManager"
+      ]
+    },
+    "Notifications": {
+      "path": "modules/notifications.js",
+      "dependsOn": [
+        "EventBus"
+      ]
+    },
+    "ILLWorkflow": {
+      "path": "modules/ill-workflow.js",
+      "dependsOn": [
+        "RequestManager",
+        "Notifications"
+      ]
+    }
+  }
+}

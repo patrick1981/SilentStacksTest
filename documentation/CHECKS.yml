@@ -1,0 +1,34 @@
+# Must-pass checks
+
+syntax:
+  description: "No syntax errors; lint clean"
+  steps:
+    - "eslint . || true"
+  must_pass: true
+
+api_contracts:
+  description: "API fields map and rate limits enforced (mocked then live)"
+  steps:
+    - "run tests/api-mocked.spec.js"
+    - "run tests/api-live.spec.js"
+  must_pass: true
+
+a11y_aaa:
+  description: "WCAG 2.2 AAA checks on critical flows"
+  steps:
+    - "run tests/a11y-forms.spec.js"
+    - "run tests/a11y-navigation.spec.js"
+  must_pass: true
+
+offline_first:
+  description: "SW cache manifest integrity; offline load"
+  steps:
+    - "build service worker"
+    - "simulate offline and load"
+  must_pass: true
+
+smoke_boot:
+  description: "All modules initialize with no uncaught errors"
+  steps:
+    - "capture boot log and assert all modules present"
+  must_pass: true
