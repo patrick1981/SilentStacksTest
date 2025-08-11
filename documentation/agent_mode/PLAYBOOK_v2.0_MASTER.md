@@ -1,55 +1,67 @@
-# SilentStacks – Master Playbook (v1.2 → v2.0)
-**Repo URL:** https://github.com/patrick1981/SilentStacksTest  
-**Branch for v2.0 work:** main  
-**Baseline Commit/Tag:** v1.2_baseline
+Perfect—here’s a **cleaned, consolidated, and idiot-proof** version of your playbook with duplicates removed, typos fixed, and all the extras (build/packaging, table rules, cards/MeSH, APIs/security) folded in. Paste this over your current file:
 
+`documentation/Agent_Package/PLAYBOOK_v2.0_MASTER.md`
+
+````markdown
+# SilentStacks – Master Playbook (v1.2 → v2.0)
+
+**Repo URL:** https://github.com/patrick1981/SilentStacksTest  
+**Primary branch:** main  
+**Working branch (agent):** feature/v2.0-monolith
+
+> **LIVING DOCUMENT** — Agent must treat this file as living.
+> On every run:
+> 1) Read this playbook in full.
+> 2) Update `CHANGELOG.md` and `RELEASE_NOTES.md`.
+> 3) Append a dated “What changed in this build” section to:
+>    - `documentation/QuickStart.md`
+>    - `documentation/TechMaintenance.md`
+>    - `documentation/DevelopersGuide.md`
+> 4) If rules/features evolve, update this playbook and summarize the change in `RELEASE_NOTES.md`.
+
+---
 
 ## Baseline Declaration (Read First)
 
-**This repository’s file architecture is a direct replication of SilentStacks v1.2 and serves as the immutable baseline for v2.0 work.**
+This repo is a **direct replication of SilentStacks v1.2** and serves as the **immutable baseline** for v2.0 work.
 
-Agent requirements:
-- Treat the current `index.html`, `assets/css/style.css`, and v1.2 JS as **read-only UI contract**.
-- Do **not** alter DOM structure, IDs, classes, ARIA roles, tab markup, or the 3-step indicator without explicit approval.
-- All v2.0 behavior must be implemented via new JS (adapters/api/exporters) without structural HTML/CSS changes.
-- Any requested DOM/CSS change requires: (1) written rationale, (2) DOM/CSS diff, (3) before/after screenshots, (4) explicit approval.
+- Treat current `index.html` and `assets/css/style.css` as **read-only UI contract**.
+- **Do not** change DOM structure, IDs, classes, ARIA roles, tab markup, or the 3-step indicator.
+- Any DOM/CSS change requires: written rationale, DOM/CSS diff, before/after screenshots, and explicit approval.
+- **Fail the run** if DOM/CSS diffs alter IDs/classes/roles or tab/stepper structure.
 
-**Baseline verification (must run once at start):**
+**Baseline verification (run once at start and attach results to `RELEASE_NOTES.md`):**
 1) Snapshot DOM of the live v1.2 UI (header, tabs, stepper, main panels).  
 2) Compare current repo `index.html` against v1.2 reference; assert **0** structural diffs.  
 3) Confirm CSS selectors for tablist, panels, inputs, buttons are unchanged.  
-4) Save results to `RELEASE_NOTES.md` under “Baseline Verification”.
+4) Save results under “Baseline Verification” in `RELEASE_NOTES.md`.
 
-
-> **LIVING DOCUMENT**
-> Agent Mode must treat this file as living. On every run:
-> 1) Read it in full; 2) Append “What changed in this build” to each doc;
-> 3) Update CHANGELOG/RELEASE_NOTES; 4) If rules/features evolve, update this playbook and summarize the change.
-
-Source of truth for UI: https://patrick1981.github.io/SilentStacks/  
-Reference bundle (optional): `SilentStacks_v1.2_UI_Reference.zip`
+**Source of truth for UI:** https://patrick1981.github.io/SilentStacks/  
+**Reference bundle (optional):** `SilentStacks_v1.2_UI_Reference.zip`
 
 ---
 
 ## 0) UI Contract (Non-Negotiable)
 
-- **Do not add frameworks** (no Bootstrap/Tailwind/CDNs).
-- **Do not change** existing IDs, classes, ARIA roles, tab markup, or the 3-step indicator.
-- All new behavior via **JS only** (adapters/api/exporters). **No HTML restructuring.**
+- **No frameworks** added (no Bootstrap/Tailwind/CDNs).
+- **No HTML restructuring.** All new behavior via **new JS modules** (adapters/api/exporters).
 - If a referenced file is missing (e.g., `documentation.js`), create a **no-op stub**.
 - **Default theme = Light**; Dark/High-Contrast only when explicitly toggled.
-- **Fail the run** if DOM/CSS diffs alter IDs/classes/roles or tab/stepper structure.
+- **Run fails** if UI contract violations are detected.
 
 ---
 
 ## 1) Deliverables
 
-- **One file:** `dist/SilentStacks_v2_monolith.html` (all CSS/JS **inlined**; **no external/CDN** refs).
+- **Monolith:** `dist/SilentStacks_v2_monolith.html` (all CSS/JS **inlined**; **no external/CDN** refs).
 - **Release ZIP:** `SilentStacks_Release.zip` containing:
   - the monolith
-  - `RELEASE_NOTES.md` (with screenshots)
-  - `GAP_REPORT.md` (see template below)
+  - `RELEASE_NOTES.md` (with required screenshots)
+  - `GAP_REPORT.md`
   - updated docs (`documentation/QuickStart.md`, `TechMaintenance.md`, `DevelopersGuide.md`)
+
+**Required screenshots (attach to `RELEASE_NOTES.md`):**
+- Dashboard, Add New Request, All Requests, Import/Export, Settings
 
 ---
 
@@ -59,7 +71,7 @@ Reference bundle (optional): `SilentStacks_v1.2_UI_Reference.zip`
 1. Add **Service Worker** + cache manifest (offline after first visit).
 2. Add error boundary + `aria-live` notifications.
 3. Implement **exporters** behind existing buttons: JSON, CSV, **NLM**.
-4. Tests: **no uncaught errors** on boot; keyboard traversal across tabs.
+4. Add tests: **no uncaught errors** on boot; keyboard traversal across all tabs.
 
 ### Phase B — Enrichment & Cross-Population
 1. API clients with rate limits (see §4).
@@ -96,8 +108,7 @@ Reference bundle (optional): `SilentStacks_v1.2_UI_Reference.zip`
 - Security: sanitize inputs, escape renders (XSS-safe)  
 - **No DOM/CSS drift** from v1.2
 
-> **Future hooks only (leave UI unchanged in 2.0):**
-> predictive synonyms; MeSH hierarchy (+★ for major topic); specialty detection; urgency heat map; simple trends; dynamic/custom fields import/export.
+> **Future hooks only (do not alter UI in 2.0):** predictive synonyms; MeSH hierarchy (+★ for major topic); specialty detection; urgency heat map; simple trends; dynamic/custom fields import/export.
 
 ---
 
@@ -108,11 +119,11 @@ Reference bundle (optional): `SilentStacks_v1.2_UI_Reference.zip`
 {
   id: "uuid",
   createdAt: "ISO",
-  priority: "Low|Normal|High|Urgent",  // maps to "Urgency"
-  docline: "string",                   // "Docline Number"
+  priority: "Low|Normal|High|Urgent",        // maps to "Urgency"
+  docline: "string",                          // "Docline Number"
   identifiers: { pmid:"", doi:"", nct:"" },
   title:"", authors:"", journal:"", year:"", volume:"", issue:"", pages:"",
-  citation:"",                         // NLM string for quick display/exports
+  citation:"",                                // NLM string for quick display/exports
   patronName:"", status:"New|In Progress|On Hold|Fulfilled|Canceled",
   mesh:[], tags:[], notes:"",
   sources:{ pubmed:{}, crossref:{}, clinicaltrials:{} },
@@ -136,8 +147,8 @@ Reference bundle (optional): `SilentStacks_v1.2_UI_Reference.zip`
 
 **Bulk Paste/Upload (PMID-only path):**
 
-* Accept PMIDs only (commas / spaces / newlines)
-* Enrich each via **PubMed**; if NCT is present/linked, also fetch **ClinicalTrials.gov**
+* Accept **PMIDs only** (commas / spaces / newlines)
+* Enrich each via **PubMed**; if NCT present/linked, also fetch **ClinicalTrials.gov**
 * **Ignore empty tokens/rows** (no blank records)
 
 **Empty/Blank fields:**
@@ -148,8 +159,8 @@ Reference bundle (optional): `SilentStacks_v1.2_UI_Reference.zip`
 **Validation:**
 
 * PMID is 6–9 digits
-* Urgency ∈ {Low, Normal, High, Urgent} (default Normal)
-* Status ∈ {New, In Progress, On Hold, Fulfilled, Canceled} (default New)
+* Urgency ∈ {Low, Normal, High, Urgent} (default **Normal**)
+* Status ∈ {New, In Progress, On Hold, Fulfilled, Canceled} (default **New**)
 
 **Acceptance Tests:**
 
@@ -173,7 +184,7 @@ Reference bundle (optional): `SilentStacks_v1.2_UI_Reference.zip`
 </thead>
 ```
 
-**CSV helpers (Agent may use):**
+**CSV helpers (optional):**
 
 ```js
 const CSV_HEADERS = ["Urgency","Docline Number","PMID","Citation","Patron Name","Status"];
@@ -195,10 +206,7 @@ function toCSV(records){ return [CSV_HEADERS.join(',')].concat(records.map(toRow
 
 ## 6) Record Cards & MeSH Chips (no DOM restructuring)
 
-**Where to render:**
-
-* Dashboard “Recent Activity” (compact cards)
-* Row expansion in “All Requests” via `<details>` inside existing table cell
+**Where to render:** Dashboard “Recent Activity” (compact cards) and row expansion in “All Requests” via `<details>` inside an existing table cell.
 
 **Card must include:**
 
@@ -285,7 +293,8 @@ function rowDetailsCell(r){
       </div>
     </details>`;
 }
-// After adding the row, call: renderMeshChips(document.getElementById(`mesh-${r.id}`), r.mesh);
+// After adding the row's HTML, call:
+// renderMeshChips(document.getElementById(`mesh-${r.id}`), r.mesh);
 ```
 
 ---
@@ -293,7 +302,8 @@ function rowDetailsCell(r){
 ## 7) Tests (must pass)
 
 * Boot, Lookup (PMID/DOI/NCT), Bulk, Enrichment/Merge, Search, Export, Offline, A11Y
-* **Screenshots:** Dashboard, Add New Request, All Requests, Import/Export, Settings (attach to `RELEASE_NOTES.md`)
+* Screenshots attached (Dashboard, Add New Request, All Requests, Import/Export, Settings)
+* Zero uncaught errors across core flows
 
 ---
 
@@ -309,37 +319,23 @@ Rules:
 
 * Append dated **“What changed in this build”** to each
 * Update `RELEASE_NOTES.md` and `CHANGELOG.md`
-* JSDoc for all exported/public functions
-* Rationale comments for non-obvious logic
+* **JSDoc** for all exported/public functions
+* Rationale comments for non-obvious logic (rate-limits, merge rules, queue logic)
 
 **Fail the run** if docs are missing/outdated or exported functions lack JSDoc.
 
 ---
 
-## 9) Agent Start Prompt (copy into Agent Mode)
+## 9) Agent Start Prompt (paste into Agent Mode)
 
 > You are the lead developer for SilentStacks v2.0.
+> Work in this repo: **[https://github.com/patrick1981/SilentStacksTest](https://github.com/patrick1981/SilentStacksTest)** (branch `feature/v2.0-monolith`).
 > Follow `documentation/Agent_Package/PLAYBOOK_v2.0_MASTER.md` **exactly**.
-> Treat this playbook as **living**; update it when rules/features change.
-> Preserve the v1.2 UI (no DOM/CSS changes).
-> Build a single-file `dist/SilentStacks_v2_monolith.html` (no CDNs).
-> Implement all v2.0 features, run tests, generate screenshots/docs, and package `SilentStacks_Release.zip`.
-> **Pause for approval** before any DOM/CSS edits; provide diffs + screenshots.
+> Acknowledge the **Baseline Declaration**, then perform **Baseline Verification** (0 structural diffs) and attach the 5 screenshots to `RELEASE_NOTES.md`.
+> Build **`dist/SilentStacks_v2_monolith.html`** with all CSS/JS inlined (no CDNs).
+> Implement the full v2.0 scope, enforce table headings/order and PMID-only bulk rules, render cards & MeSH chips as specified, sanitize input, respect rate-limits, and support offline queueing.
+> Produce **`SilentStacks_Release.zip`** (monolith + screenshots + `RELEASE_NOTES.md` + `GAP_REPORT.md`).
+> Update QuickStart/TechMaintenance/DevelopersGuide with a **dated delta** and bump `CHANGELOG.md`.
+> **Pause for approval** before any DOM/CSS edits; include diffs + screenshots.
 
-
-## Quick self-check for your permalinked agent file
-
-While I’m waiting on the link or file contents, you can sanity check it yourself in 30 seconds:
-
-* ✅ Does it say **LIVING DOCUMENT** and require updates each run?
-* ✅ Does it output **`dist/SilentStacks_v2_monolith.html`** (all inline, no CDNs)?
-* ✅ Does it lock the table headings/order exactly as:
-  `Urgency | Docline Number | PMID | Citation | Patron Name | Status`
-* ✅ Are **PMID-only bulk paste/upload** rules there (enrich PubMed + CT.gov, ignore blanks)?
-* ✅ Does it include **Record Cards & MeSH chips** requirements?
-* ✅ Does it **fail the run** on DOM/CSS drift or missing docs/JSDoc?
-* ✅ Does it demand **screenshots** and a **GAP\_REPORT.md** each run?
-
-If any of those are missing, paste your permalink here and I’ll patch it to match this master.
-
-Want me to also generate a **RELEASE\_NOTES.md** template with screenshot slots so the agent can’t skip them?
+```
