@@ -319,7 +319,66 @@ Rules:
 * Rationale comments for non-obvious logic (rate-limits, merge rules, queue logic)
 
 **Fail the run** if docs are missing/outdated or exported functions lack JSDoc.
+Yes — you can **append this correction directly** to the bottom of your existing playbook, in the **Playbook Addendum** section under Item A.
+
+Here’s the clean **append-ready** block so it drops in without breaking numbering or formatting:
 
 ---
+
+### **Correction – Item A: PMID Enrichment with Major/Minor MeSH + Tags + NLM Formatting**
+
+**Behavior**
+
+* User enters valid **PMID (6–9 digits)** in the Add form → clicks “Lookup.”
+* **PubMed API** populates:
+
+  * `title, authors, journal, year, volume, issue, pages, doi`
+  * **MeSH headings**: both **major** and **minor** topics, rendered as selectable chips in the MeSH area.
+
+    * Major topics → **bold label** or **dark teal border/light teal background**.
+    * Minor topics → **light gray border/white background**.
+  * **NCT detection**: If present in PubMed metadata, auto-fill NCT field and enrich with ClinicalTrials.gov:
+
+    * `briefSummary/description`, `overallStatus`
+    * Append **status chip** to abstract snippet, color-coded per trial status mapping.
+* User can:
+
+  * Select/deselect any MeSH heading (major/minor).
+  * Add user-created tags (free text) in existing tag field.
+
+**Color coding** (medical UX best practices):
+
+* **Urgency chips**: Urgent = Red `#B71C1C`; High = Orange `#E65100`; Normal = Blue `#1565C0`; Low = Green `#2E7D32`.
+* **User tags**: Neutral gray border, light yellow background.
+* **Trial status chips**: Per clinical trial status mapping (Recruiting, Completed, etc.).
+
+**Validation**
+
+* PMIDs are **required** for enrichment; invalid/missing PMID blocks save with aria-live error.
+
+**On Save**
+
+* Record is stored with:
+
+  * `citation` in **NLM format**:
+
+    ```
+    Author(s). Title. Journal. Year;Volume(Issue):Pages. doi: DOI
+    ```
+  * Selected MeSH and user tags in `mesh` and `tags` arrays.
+  * All other form fields preserved.
+
+**Column Headings (single + bulk)** — exact order:
+
+```
+Urgency | DOCLINE Number | Citation | Patron E-mail | Status | Date Stamp
+```
+
+* **DOCLINE Number** must be unique.
+* **Bulk operations** use same metadata enrichment rules as single-item add; MeSH chip selection remains per-record.
+
+---
+
+
 
 
