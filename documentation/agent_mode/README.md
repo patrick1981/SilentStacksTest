@@ -1,4 +1,8 @@
 # SilentStacks – v1.2 Baseline → v2.0 Upgrade
+**Repo URL:** https://github.com/patrick1981/SilentStacksTest  
+**Branch for v2.0 work:** main  
+**Baseline Commit/Tag:** v1.2_baseline
+
 
 SilentStacks is an **offline-first interlibrary loan & research request management platform**.  
 This repo contains the **v1.2 UI** and file structure as a **locked baseline** for building v2.0 features.
