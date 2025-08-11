@@ -1,384 +1,263 @@
+# **📄 Merged Master Playbook (v1.2 → v2.0 + Item A Correction)**
 
-# SilentStacks – Master Playbook (v1.2 → v2.0)
-
-**Repo URL:** https://github.com/patrick1981/SilentStacksTest  
-**Primary branch:** main  
+**Repo URL:** [https://github.com/patrick1981/SilentStacksTest](https://github.com/patrick1981/SilentStacksTest)
+**Primary branch:** main
 **Working branch (agent):** feature/v2.0-monolith
 
 > **LIVING DOCUMENT** — Agent must treat this file as living.
 > On every run:
-> 1) Read this playbook in full.
-> 2) Update `CHANGELOG.md` and `RELEASE_NOTES.md`.
-> 3) Append a dated “What changed in this build” section to:
->    - `documentation/QuickStart.md`
->    - `documentation/TechMaintenance.md`
->    - `documentation/DevelopersGuide.md`
-> 4) If rules/features evolve, update this playbook and summarize the change in `RELEASE_NOTES.md`.
+>
+> 1. Read this playbook in full.
+> 2. Update `CHANGELOG.md` and `RELEASE_NOTES.md`.
+> 3. Append a dated “What changed in this build” to:
+>
+>    * `documentation/QuickStart.md`
+>    * `documentation/TechMaintenance.md`
+>    * `documentation/DevelopersGuide.md`
+> 4. If rules/features evolve, update this playbook and summarize the change in `RELEASE_NOTES.md`.
 
 ---
 
-## Baseline Declaration (Read First)
+## **Baseline Declaration (Read First)**
 
-This repo is a **direct replication of SilentStacks v1.2** and serves as the **immutable baseline** for v2.0 work.
+* This repo is a **direct replication of SilentStacks v1.2** — the **immutable baseline** for v2.0.
+* Treat current `index.html` and `assets/css/style.css` as **read-only UI contract**.
+* **Do not** change DOM structure, IDs, classes, ARIA roles, tab markup, or the 3-step indicator.
+* Any DOM/CSS change requires written rationale, diff, before/after screenshots, and approval.
+* **Fail the run** if DOM/CSS diffs alter IDs/classes/roles or tab/stepper structure.
 
-- Treat current `index.html` and `assets/css/style.css` as **read-only UI contract**.
-- **Do not** change DOM structure, IDs, classes, ARIA roles, tab markup, or the 3-step indicator.
-- Any DOM/CSS change requires: written rationale, DOM/CSS diff, before/after screenshots, and explicit approval.
-- **Fail the run** if DOM/CSS diffs alter IDs/classes/roles or tab/stepper structure.
+**Baseline Verification** (run once and attach to `RELEASE_NOTES.md`):
 
-**Baseline verification (run once at start and attach results to `RELEASE_NOTES.md`):**
-1) Snapshot DOM of the live v1.2 UI (header, tabs, stepper, main panels).  
-2) Compare current repo `index.html` against v1.2 reference; assert **0** structural diffs.  
-3) Confirm CSS selectors for tablist, panels, inputs, buttons are unchanged.  
-4) Save results under “Baseline Verification” in `RELEASE_NOTES.md`.
+1. Snapshot DOM of live v1.2 UI (header, tabs, stepper, main panels).
+2. Compare current repo `index.html` to v1.2 reference; assert **0** structural diffs.
+3. Confirm CSS selectors for tablist, panels, inputs, buttons are unchanged.
+4. Save results under “Baseline Verification” in `RELEASE_NOTES.md`.
 
-**Source of truth for UI:** https://patrick1981.github.io/SilentStacks/  
-**Reference bundle (optional):** `SilentStacks_v1.2_UI_Reference.zip`
-
----
-
-## 0) UI Contract (Non-Negotiable)
-
-- **No frameworks** added (no Bootstrap/Tailwind/CDNs).
-- **No HTML restructuring.** All new behavior via **new JS modules** (adapters/api/exporters).
-- If a referenced file is missing (e.g., `documentation.js`), create a **no-op stub**.
-- **Default theme = Light**; Dark/High-Contrast only when explicitly toggled.
-- **Run fails** if UI contract violations are detected.
+**UI source of truth:** [https://patrick1981.github.io/SilentStacks/](https://patrick1981.github.io/SilentStacks/)
 
 ---
 
-## 1) Deliverables
+## **UI Contract (Non-Negotiable)**
 
-- **Monolith:** `dist/SilentStacks_v2_monolith.html` (all CSS/JS **inlined**; **no external/CDN** refs).
-- **Release ZIP:** `SilentStacks_Release.zip` containing:
-  - the monolith
-  - `RELEASE_NOTES.md` (with required screenshots)
-  - `GAP_REPORT.md`
-  - updated docs (`documentation/QuickStart.md`, `TechMaintenance.md`, `DevelopersGuide.md`)
-
-**Required screenshots (attach to `RELEASE_NOTES.md`):**
-- Dashboard, Add New Request, All Requests, Import/Export, Settings
+* **No frameworks** (no Bootstrap/Tailwind/CDNs).
+* **No HTML restructuring** — all behavior via new JS modules.
+* Missing files → create no-op stubs.
+* **Default theme = Light**; Dark/HC only when toggled.
+* **Run fails** on UI contract violations.
 
 ---
 
-## 2) Phased Roadmap (v1.2 → v2.0)
+## **Deliverables**
 
-### Phase A — Hardening & Parity
-1. Add **Service Worker** + cache manifest (offline after first visit).
-2. Add error boundary + `aria-live` notifications.
-3. Implement **exporters** behind existing buttons: JSON, CSV, **NLM**.
-4. Add tests: **no uncaught errors** on boot; keyboard traversal across all tabs.
+* **Monolith:** `dist/SilentStacks_v2_monolith.html` (all CSS/JS inlined, no external/CDN refs).
+* **Release ZIP:** `SilentStacks_Release.zip` containing:
 
-### Phase B — Enrichment & Cross-Population
-1. API clients with rate limits (see §4).
-2. **Bulk Paste / Bulk Upload** for mixed IDs (PMID/DOI/NCT).
-3. **Cross-populate** identifiers; merge sources; record conflicts in `sourceConflicts`.
-4. **MeSH auto-tagging** (≤5) rendered in existing tag UI.
+  * the monolith
+  * `RELEASE_NOTES.md` (with required screenshots)
+  * `GAP_REPORT.md`
+  * updated docs (`documentation/QuickStart.md`, `TechMaintenance.md`, `DevelopersGuide.md`)
 
-### Phase C — Accessibility (WCAG 2.2 AAA)
-1. Theme toggle (Light/Dark/HC) in **Settings**; persist choice.
-2. Labels, names/roles/values; **7:1** contrast; skip links; visible focus.
-3. Keyboard-only passes on: Add→Enrich→Save; Bulk Import→Export.
-
-### Phase D — Offline-First
-1. **Queue** lookups/exports while offline; retry on reconnect.
-2. Verify offline boot; add cache integrity check (Diagnostics).
-
-### Phase E — Search/Filter Upgrades
-1. Keep **Fuse.js**; add **fielded** search + ranking (no UI changes).
-2. Preserve table; add sort & filter bound to current headers/inputs.
+**Required screenshots:** Dashboard, Add New Request, All Requests, Import/Export, Settings
 
 ---
 
-## 3) Feature Checklist (v2.0 scope)
+## **Phased Roadmap (v1.2 → v2.0)**
 
-- Offline-first with SW + queue  
-- Bulk import/export (paste/CSV/JSON) with dedupe/normalize  
-- Cross-population between PMID, DOI, NCT  
-- Enrichment: PubMed, CrossRef, ClinicalTrials.gov  
-- MeSH auto-tags (≤5)  
-- Advanced search/filter (fuzzy + fielded); sortable table  
-- Status / Priority / Tags with color chips  
-- NLM citation export  
-- WCAG 2.2 AAA with Light/Dark/HC (**Light default**)  
-- Security: sanitize inputs, escape renders (XSS-safe)  
-- **No DOM/CSS drift** from v1.2
+**Phase A — Hardening & Parity**
 
-> **Future hooks only (do not alter UI in 2.0):** predictive synonyms; MeSH hierarchy (+★ for major topic); specialty detection; urgency heat map; simple trends; dynamic/custom fields import/export.
+1. Service Worker + cache manifest.
+2. Error boundary + `aria-live` notifications.
+3. JSON/CSV/NLM exporters behind existing buttons.
+4. Tests: zero uncaught errors; keyboard traversal.
+
+**Phase B — Enrichment & Cross-Population**
+
+1. API clients with rate limits.
+2. Bulk paste/upload for mixed IDs (PMID/DOI/NCT).
+3. Cross-populate identifiers; merge sources; track `sourceConflicts`.
+4. **MeSH auto-tagging** (≤5) rendered in tag UI.
+
+**Phase C — Accessibility (WCAG 2.2 AAA)**
+
+1. Theme toggle (Light/Dark/HC); persist choice.
+2. Labels, roles, values; **7:1** contrast; skip links; visible focus.
+3. Keyboard-only passes (Add→Enrich→Save; Bulk→Export).
+
+**Phase D — Offline-First**
+
+1. Queue lookups/exports offline; retry on reconnect.
+2. Offline boot; cache integrity check.
+
+**Phase E — Search/Filter Upgrades**
+
+1. Keep Fuse.js; add fielded search + ranking.
+2. Table sort/filter bound to headers/inputs.
 
 ---
 
-## 4) Data, API & Security
+## **Feature Checklist (v2.0 scope)**
 
-**Record model (keys used by table/cards/exports):**
+* Offline-first (SW + queue)
+* Bulk import/export (paste/CSV/JSON) with dedupe/normalize
+* Cross-population: PMID ↔ DOI ↔ NCT
+* Enrichment: PubMed, CrossRef, ClinicalTrials.gov
+* **PMID enrichment with Major/Minor MeSH + User Tags** (see correction below)
+* Advanced search/filter (fuzzy + fielded) in table + cards
+* Status / Priority / Tags with color chips (medical UX colors)
+* NLM citation export
+* WCAG 2.2 AAA (Light default; Dark/HC opt-in)
+* Security: sanitize inputs, escape renders
+* No DOM/CSS drift
+
+---
+
+## **Data, API & Security**
+
+**Record model:**
+
 ```js
 {
   id: "uuid",
   createdAt: "ISO",
-  priority: "Low|Normal|High|Urgent",        // maps to "Urgency"
-  docline: "string",                          // "Docline Number"
+  priority: "Low|Normal|High|Urgent",
+  docline: "string",
   identifiers: { pmid:"", doi:"", nct:"" },
   title:"", authors:"", journal:"", year:"", volume:"", issue:"", pages:"",
-  citation:"",                                // NLM string for quick display/exports
+  citation:"",
   patronName:"", status:"New|In Progress|On Hold|Fulfilled|Canceled",
   mesh:[], tags:[], notes:"",
   sources:{ pubmed:{}, crossref:{}, clinicaltrials:{} },
   sourceConflicts:{}
 }
-````
+```
 
-**Rate limits:** PubMed ≤ **2/sec**, CrossRef ≤ **5/sec**, ClinicalTrials.gov **1/sec**
-**Retries:** exponential backoff; **30s** timeouts; visible error messages
-**Security:** sanitize all inputs; **disallow HTML** in text fields; **escape** output when rendering
+**Rate limits:** PubMed ≤ 2/sec; CrossRef ≤ 5/sec; ClinicalTrials.gov 1/sec
+**Security:** sanitize inputs; escape output; disallow HTML.
 
 ---
 
-## 5) Table & Data Rules (v2.0 hard requirements)
+## **Table & Data Rules**
 
 **Column order (exact):**
-`Urgency | Docline Number | PMID | Citation | Patron Name | Status`
-
-**Headings (exact strings):**
-`Urgency`, `Docline Number`, `PMID`, `Citation`, `Patron Name`, `Status`
-
-**Bulk Paste/Upload (PMID-only path):**
-
-* Accept **PMIDs only** (commas / spaces / newlines)
-* Enrich each via **PubMed**; if NCT present/linked, also fetch **ClinicalTrials.gov**
-* **Ignore empty tokens/rows** (no blank records)
-
-**Empty/Blank fields:**
-
-* **Import:** ignore blanks; never overwrite existing values with blanks
-* **Export:** include columns; blanks output as **empty strings** (`""`) — never `null`/`undefined`
-
-**Validation:**
-
-* PMID is 6–9 digits
-* Urgency ∈ {Low, Normal, High, Urgent} (default **Normal**)
-* Status ∈ {New, In Progress, On Hold, Fulfilled, Canceled} (default **New**)
-
-**Acceptance Tests:**
-
-* Paste `12345678, 23456789` → 2 records enriched; CT.gov fetched when relevant; no blank rows created
-* CSV with blank Patron/Docline: blanks ignored on import; existing values not cleared
-* Header strings & order **exact**; sort & search work
-* CSV/JSON export shows blanks as `""` (CSV) or omitted/empty string (JSON)
-
-**Table Header Markup (must match):**
-
-```html
-<thead>
-  <tr>
-    <th><button data-sort="priority">Urgency</button></th>
-    <th><button data-sort="docline">Docline Number</button></th>
-    <th><button data-sort="identifiers.pmid">PMID</button></th>
-    <th><button data-sort="citation">Citation</button></th>
-    <th><button data-sort="patronName">Patron Name</button></th>
-    <th><button data-sort="status">Status</button></th>
-  </tr>
-</thead>
-```
-
-**CSV helpers (optional):**
-
-```js
-const CSV_HEADERS = ["Urgency","Docline Number","PMID","Citation","Patron Name","Status"];
-function toRow(r){
-  const h = {
-    "Urgency": r.priority || "Normal",
-    "Docline Number": r.docline || "",
-    "PMID": r.identifiers?.pmid || "",
-    "Citation": r.citation || "",
-    "Patron Name": r.patronName || "",
-    "Status": r.status || "New"
-  };
-  return CSV_HEADERS.map(k => `"${String(h[k]).replace(/"/g,'""')}"`).join(',');
-}
-function toCSV(records){ return [CSV_HEADERS.join(',')].concat(records.map(toRow)).join('\n'); }
-```
-
----
-
-## 6) Record Cards & MeSH Chips (no DOM restructuring)
-
-**Where to render:** Dashboard “Recent Activity” (compact cards) and row expansion in “All Requests” via `<details>` inside an existing table cell.
-
-**Card must include:**
-
-* **Citation** (NLM string)
-* **Clinical trial abstract snippet** (≤800 chars) if CT.gov data present
-* **Color-coded status icon** (trial status)
-* **Major keywords** (top MeSH + user tags) as **selectable, color-coded chips**
-
-**Status → color mapping (via CSS vars):**
-
-* Recruiting → green; Active, not recruiting → amber; Completed → neutral;
-* Terminated/Suspended/Withdrawn → red; Unknown/Not yet recruiting → muted
-
-**MeSH chips:**
-
-* Render top **≤5** MeSH terms
-* Click toggles selection; selection filters the table; “Clear” resets
-* Chips are `<button>`s with visible focus; a11y labels present
-
-**Acceptance:**
-
-* Card shows citation, trial snippet, correct status icon + `aria-label`
-* Chip selection filters table; export unaffected by UI filters
-
-**CSS (append safely; no layout changes):**
-
-```css
-.card { border:2px solid var(--border); border-radius:.5rem; padding:.75rem; margin:.5rem 0; background:var(--bg); }
-.card .row { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
-.status-dot { inline-size:.75rem; block-size:.75rem; border-radius:999px; background:var(--muted); }
-[data-status="Recruiting"] .status-dot { background: var(--ok); }
-[data-status="Active, not recruiting"] .status-dot { background: var(--warn); }
-[data-status="Completed"] .status-dot { background: var(--muted); }
-[data-status="Terminated"] .status-dot,
-[data-status="Suspended"] .status-dot,
-[data-status="Withdrawn"] .status-dot { background: var(--err); }
-.mesh-chips { display:flex; gap:.4rem; flex-wrap:wrap; }
-.mesh-chip { background:var(--chip); border:2px solid var(--chip-border); padding:.15rem .5rem; border-radius:999px; cursor:pointer; }
-.mesh-chip[aria-pressed="true"] { border-color: var(--accent); }
-.mesh-chip:focus { outline:3px solid var(--focus); outline-offset:2px; }
-```
-
-**JS (non-destructive glue):**
-
-```js
-function nlm(r){
-  const a=(r.authors||'').trim(), t=r.title||'', j=r.journal||'', y=r.year||'';
-  const v=r.volume?`${r.volume}`:'', i=r.issue?`(${r.issue})`:'', p=r.pages?`:${r.pages}`:'';
-  const d=r.identifiers?.doi?` doi: ${r.identifiers.doi}`:'';
-  return `${a}. ${t}. ${j}. ${y};${v}${i}${p}.${d}`.replace(/\s+/g,' ').trim();
-}
-function trialSnippet(ct){ const raw=ct?.briefSummary||ct?.description||''; return raw.length>800?raw.slice(0,800)+'…':raw; }
-function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-
-function renderMeshChips(container, meshList){
-  container.innerHTML='';
-  (meshList||[]).slice(0,5).forEach(term=>{
-    const b=document.createElement('button');
-    b.className='mesh-chip'; b.type='button'; b.textContent=term; b.setAttribute('aria-pressed','false');
-    b.addEventListener('click', ()=>{
-      const on=b.getAttribute('aria-pressed')!=='true';
-      b.setAttribute('aria-pressed', String(on));
-      if(!window.meshFilter) window.meshFilter=new Set();
-      if(on) window.meshFilter.add(term); else window.meshFilter.delete(term);
-      renderTable(); // table renderer should honor window.meshFilter if present
-    });
-    container.appendChild(b);
-  });
-}
-
-function rowDetailsCell(r){
-  const status=r.sources?.clinicaltrials?.trialStatus || 'Unknown';
-  const ct=r.sources?.clinicaltrials || {};
-  return `
-    <details>
-      <summary>Details</summary>
-      <div class="card" data-status="${escapeHtml(status)}" aria-label="Request details">
-        <div class="row">
-          <span class="status-dot" aria-label="${escapeHtml(status)}"></span>
-          <span class="citation">${escapeHtml(r.citation || nlm(r))}</span>
-        </div>
-        ${ct.briefSummary?`<div class="trial-abs">${escapeHtml(trialSnippet(ct))}</div>`:''}
-        <div class="mesh-chips" id="mesh-${r.id}"></div>
-      </div>
-    </details>`;
-}
-// After adding the row's HTML, call:
-// renderMeshChips(document.getElementById(`mesh-${r.id}`), r.mesh);
-```
-
----
-
-## 7) Tests (must pass)
-
-* Boot, Lookup (PMID/DOI/NCT), Bulk, Enrichment/Merge, Search, Export, Offline, A11Y
-* Screenshots attached (Dashboard, Add New Request, All Requests, Import/Export, Settings)
-* Zero uncaught errors across core flows
-
----
-
-## 8) Documentation & Code Quality (must-do each run)
-
-Update:
-
-* `documentation/QuickStart.md`
-* `documentation/TechMaintenance.md`
-* `documentation/DevelopersGuide.md`
-
-Rules:
-
-* Append dated **“What changed in this build”** to each
-* Update `RELEASE_NOTES.md` and `CHANGELOG.md`
-* **JSDoc** for all exported/public functions
-* Rationale comments for non-obvious logic (rate-limits, merge rules, queue logic)
-
-**Fail the run** if docs are missing/outdated or exported functions lack JSDoc.
-Yes — you can **append this correction directly** to the bottom of your existing playbook, in the **Playbook Addendum** section under Item A.
-
-Here’s the clean **append-ready** block so it drops in without breaking numbering or formatting:
-
----
-
-### **Correction – Item A: PMID Enrichment with Major/Minor MeSH + Tags + NLM Formatting**
-
-**Behavior**
-
-* User enters valid **PMID (6–9 digits)** in the Add form → clicks “Lookup.”
-* **PubMed API** populates:
-
-  * `title, authors, journal, year, volume, issue, pages, doi`
-  * **MeSH headings**: both **major** and **minor** topics, rendered as selectable chips in the MeSH area.
-
-    * Major topics → **bold label** or **dark teal border/light teal background**.
-    * Minor topics → **light gray border/white background**.
-  * **NCT detection**: If present in PubMed metadata, auto-fill NCT field and enrich with ClinicalTrials.gov:
-
-    * `briefSummary/description`, `overallStatus`
-    * Append **status chip** to abstract snippet, color-coded per trial status mapping.
-* User can:
-
-  * Select/deselect any MeSH heading (major/minor).
-  * Add user-created tags (free text) in existing tag field.
-
-**Color coding** (medical UX best practices):
-
-* **Urgency chips**: Urgent = Red `#B71C1C`; High = Orange `#E65100`; Normal = Blue `#1565C0`; Low = Green `#2E7D32`.
-* **User tags**: Neutral gray border, light yellow background.
-* **Trial status chips**: Per clinical trial status mapping (Recruiting, Completed, etc.).
-
-**Validation**
-
-* PMIDs are **required** for enrichment; invalid/missing PMID blocks save with aria-live error.
-
-**On Save**
-
-* Record is stored with:
-
-  * `citation` in **NLM format**:
-
-    ```
-    Author(s). Title. Journal. Year;Volume(Issue):Pages. doi: DOI
-    ```
-  * Selected MeSH and user tags in `mesh` and `tags` arrays.
-  * All other form fields preserved.
-
-**Column Headings (single + bulk)** — exact order:
 
 ```
 Urgency | DOCLINE Number | Citation | Patron E-mail | Status | Date Stamp
 ```
 
-* **DOCLINE Number** must be unique.
-* **Bulk operations** use same metadata enrichment rules as single-item add; MeSH chip selection remains per-record.
+* DOCLINE unique across dataset.
+
+**PMID-only Bulk Path:**
+
+* Accept PMIDs only; enrich via PubMed; if NCT present, enrich via ClinicalTrials.gov.
+* Ignore blanks; never overwrite with blanks.
 
 ---
 
+## **Correction – Item A: PMID Enrichment with Major/Minor MeSH + Tags + NLM Formatting**
 
+**Behavior**
 
+* User enters valid PMID → Lookup → PubMed populates core metadata + major & minor MeSH headings (chips).
+* MeSH chips selectable; major topics: dark teal border/light teal background or bold; minor topics: light gray border/white background.
+* User can add free-text tags (neutral gray border, light yellow background).
+* NCT auto-fill & CT.gov enrichment with abstract + color-coded status chip.
+* PMIDs required for enrichment.
 
+**Color coding (UX best practice)**
+
+* Urgent = #B71C1C; High = #E65100; Normal = #1565C0; Low = #2E7D32
+* Trial status chips: per mapping (Recruiting green, etc.).
+
+**On Save**
+
+* Citation stored in NLM format.
+* Selected MeSH & tags saved in arrays.
+* All form data preserved.
+
+---
+
+## **Record Cards & MeSH Chips**
+
+* Cards show citation, trial snippet, status dot, MeSH chips, user tags.
+* Chips toggle filter; no UI restructure.
+
+---
+
+## **Tests**
+
+* Boot, Add, Bulk, Enrichment, MeSH/tag selection, Search, Export, Offline, A11Y.
+* Screenshots for all main tabs.
+* Zero uncaught errors.
+
+---
+
+## **Documentation & Code Quality**
+
+* Update QuickStart, TechMaintenance, DevelopersGuide each run.
+* Append “What changed…” (dated).
+* Update RELEASE\_NOTES.md & CHANGELOG.md.
+* JSDoc for exported functions; rationale comments for non-obvious logic.
+
+---
+
+# **📄 Merged Master GAP\_REPORT.md**
+
+```markdown
+# GAP REPORT — SilentStacks v2.0
+
+**Run date:** <!-- agent fills -->
+**Commit/Build:** <!-- agent fills -->
+
+## Summary
+- ✅ Completed:
+  - <!-- feature bullets -->
+- ⚠️ Partial:
+  - <!-- bullets -->
+- ❌ Missing:
+  - <!-- bullets -->
+
+## Failing/Skipped Acceptance Tests
+- <!-- test name → reason → next action -->
+
+## Baseline & UI Contract
+- DOM diff vs v1.2: ☐ None / ☐ Differences (attach diff)
+- CSS selector compatibility (tablist/panels/inputs/buttons): ☐ OK / ☐ Issues
+- Screenshots attached (Dashboard/Add/All/Import-Export/Settings): ☐ Yes / ☐ No
+- Theme default Light; Dark/HC opt-in only: ☐ Verified
+- No DOM/CSS drift: ☐ Verified
+
+## Metadata Enrichment & Form Behavior
+- PMID enrichment populates core metadata from PubMed: ☐ Verified
+- Major/Minor MeSH headings rendered as selectable chips (correct colors): ☐ Verified
+- User-created tags accepted (neutral gray border, light yellow): ☐ Verified
+- NCT detection & ClinicalTrials.gov enrichment with abstract + color-coded status chip: ☐ Verified
+- PMIDs required for enrichment: ☐ Verified
+- On Save: citation stored in NLM format; MeSH & tags preserved: ☐ Verified
+
+## Bulk Operations
+- Bulk PMID paste/upload enriches same as Add form: ☐ Verified
+- Blanks ignored; PMIDs validated; CT.gov only when NCT present: ☐ Verified
+- Bulk urgency/status updates apply to selected records: ☐ Verified
+- DOCLINE uniqueness enforced (single + bulk): ☐ Verified
+- Column headings (exact): `Urgency | DOCLINE Number | Citation | Patron E-mail | Status | Date Stamp`: ☐ Verified
+
+## Search/Filter/Sort
+- All fields sortable; sorting stable: ☐ Verified
+- All fields filterable in table & cards; active filters reflected as chips: ☐ Verified
+
+## Accessibility (WCAG 2.2 AAA)
+- Theme toggle functional; Light default: ☐ Verified
+- 7:1 contrast; visible focus; skip links; keyboard traversal: ☐ Verified
+
+## Offline-First
+- Service worker caches app after first visit: ☐ Verified
+- Offline queue for lookups/exports works; retries on reconnect: ☐ Verified
+
+## Import/Export
+- JSON, CSV, NLM export works; blanks as empty strings (CSV) or omitted/empty (JSON): ☐ Verified
+
+## Documentation & Code Quality
+- QuickStart / TechMaintenance / DevelopersGuide updated: ☐ Yes / ☐ No
+- “What changed in this build” appended (dated): ☐ Yes / ☐ No
+- JSDoc coverage for exported functions: ☐ OK / ☐ Missing
+```
