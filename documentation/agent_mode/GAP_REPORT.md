@@ -1,48 +1,57 @@
-
----
-
-# Gap Report (drop-in template)
-
-**Save as:** `GAP_REPORT.md` (the agent should update this every run)
-
-```markdown
 # GAP REPORT — SilentStacks v2.0
 
 **Run date:** <!-- agent fills -->
 **Commit/Build:** <!-- agent fills -->
 
 ## Summary
-- ✅ Completed this run:
+- ✅ Completed:
   - <!-- feature bullets -->
 - ⚠️ Partial:
-  - <!-- bullets with notes -->
+  - <!-- bullets -->
 - ❌ Missing:
-  - <!-- bullets with owner/date -->
+  - <!-- bullets -->
 
 ## Failing/Skipped Acceptance Tests
-- <!-- list test name → reason → next action -->
+- <!-- test name → reason → next action -->
 
-## UI Contract Compliance
-- DOM/CSS diff: <!-- none / summary + link to diff -->
-- Screenshots attached: Dashboard / Add / All / Import-Export / Settings
-
-## Docs & Comments
-- QuickStart / TechMaintenance / DevelopersGuide: updated (Y/N)
-- JSDoc coverage for exported functions: <!-- % or N/A -->
-- “What changed in this build” sections appended (Y/N)
-
-## Risks / Decisions
-- <!-- short bullets, links to issues -->
-
-
-## Baseline Compliance
-- DOM diff vs v1.2 reference: ☐ None / ☐ Differences (attach diff)
+## Baseline & UI Contract
+- DOM diff vs v1.2: ☐ None / ☐ Differences (attach diff)
 - CSS selector compatibility (tablist/panels/inputs/buttons): ☐ OK / ☐ Issues
 - Screenshots attached (Dashboard/Add/All/Import-Export/Settings): ☐ Yes / ☐ No
-- Theme default = Light and opt-in HC/Dark only: ☐ Verified
+- Theme default Light; Dark/HC opt-in only: ☐ Verified
+- No DOM/CSS drift: ☐ Verified
 
-## Import/Export Rules
-- Bulk PMID paste ignores blanks; CT.gov enrichment on NCT present: ☐ Verified
-- Table headers (exact order & strings) render correctly:
-  Urgency | Docline Number | PMID | Citation | Patron Name | Status  ☐ Yes / ☐ No
-- Export blanks as empty strings (CSV) / empty or omitted (JSON): ☐ Verified
+## Metadata Enrichment & Form Behavior
+- PMID enrichment populates core metadata from PubMed: ☐ Verified
+- Major/Minor MeSH headings rendered as selectable chips (correct colors): ☐ Verified
+- User-created tags accepted (neutral gray border, light yellow): ☐ Verified
+- NCT detection & ClinicalTrials.gov enrichment with abstract + color-coded status chip: ☐ Verified
+- PMIDs required for enrichment: ☐ Verified
+- On Save: citation stored in NLM format; MeSH & tags preserved: ☐ Verified
+
+## Bulk Operations
+- Bulk PMID paste/upload enriches same as Add form: ☐ Verified
+- Blanks ignored; PMIDs validated; CT.gov only when NCT present: ☐ Verified
+- Bulk urgency/status updates apply to selected records: ☐ Verified
+- DOCLINE uniqueness enforced (single + bulk): ☐ Verified
+- Column headings (exact): `Urgency | DOCLINE Number | Citation | Patron E-mail | Status | Date Stamp`: ☐ Verified
+
+## Search/Filter/Sort
+- All fields sortable; sorting stable: ☐ Verified
+- All fields filterable in table & cards; active filters reflected as chips: ☐ Verified
+
+## Accessibility (WCAG 2.2 AAA)
+- Theme toggle functional; Light default: ☐ Verified
+- 7:1 contrast; visible focus; skip links; keyboard traversal: ☐ Verified
+
+## Offline-First
+- Service worker caches app after first visit: ☐ Verified
+- Offline queue for lookups/exports works; retries on reconnect: ☐ Verified
+
+## Import/Export
+- JSON, CSV, NLM export works; blanks as empty strings (CSV) or omitted/empty (JSON): ☐ Verified
+
+## Documentation & Code Quality
+- QuickStart / TechMaintenance / DevelopersGuide updated: ☐ Yes / ☐ No
+- “What changed in this build” appended (dated): ☐ Yes / ☐ No
+- JSDoc coverage for exported functions: ☐ OK / ☐ Missing
