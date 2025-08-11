@@ -32,3 +32,23 @@ smoke_boot:
   steps:
     - "capture boot log and assert all modules present"
   must_pass: true
+
+# --- v2.0 Feature & QA Enforcements ---
+
+enrichment_complete:
+  description: "PMID enrichment populates all v2.0 fields and NLM citation; PMIDs required"
+  steps:
+    - "run tests/enrichment/enrich-pmid.spec.js"
+    - "run tests/enrichment/nlm-format.spec.js"
+    - "run tests/enrichment/pmid-required.spec.js"
+  must_pass: true
+
+nct_enrichment:
+  description: "NCT detection triggers ClinicalTrials.gov fetch; abstract + color-coded status chip rendered"
+  steps:
+    - "run tests/enrichment/nct-detection.spec.js"
+    - "run tests/enrichment/ctgov-render.spec.js"
+  must_pass: true
+
+crossref_support:
+  description: "CrossRef e
