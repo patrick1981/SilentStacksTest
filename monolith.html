@@ -1,117 +1,2007 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SilentStacks v2.0</title>
-<style>
-/* === SilentStacks v2.0 Full CSS === */
-/* Tabs */
-.nav { display: flex; background: #333; color: #fff; }
-.nav button { flex: 1; padding: 1em; background: #444; border: none; color: #fff; cursor: pointer; }
-.nav button.active { background: #666; }
-/* Table and Card Views */
-.table-view { width: 100%; border-collapse: collapse; }
-.table-view th, .table-view td { padding: 0.5em; border: 1px solid #ccc; }
-.card { border: 1px solid #ccc; padding: 1em; margin: 0.5em 0; }
-/* MeSH Chips */
-.mesh-container { margin-top: 0.5em; }
-.mesh-chip { display: inline-block; background: #eee; border-radius: 4px; padding: 0.2em 0.5em; margin: 0.1em; font-size: 0.9em; }
-.mesh-icon { margin-right: 0.2em; }
-/* Accessibility */
-:focus { outline: 2px solid #000; }
-body { font-family: Arial, sans-serif; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SilentStacks v2.0 Beta - Interlibrary Loan Request Tracking">
+    <meta name="theme-color" content="#0066cc">
+    <title>SilentStacks v2.0 Beta - ILL Request Tracking</title>
+    
+    <style>
+/* ===== SILENTSTACKS V2.0 BETA CSS ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #0066cc;
+    --secondary-color: #6c757d;
+    --success-color: #228b22;
+    --danger-color: #dc3545;
+    --warning-color: #ff6600;
+    --info-color: #17a2b8;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-card: #ffffff;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #868e96;
+    --border-color: #dee2e6;
+    --border-radius: 4px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-card: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #adb5bd;
+    --text-muted: #868e96;
+    --border-color: #495057;
+}
+
+[data-theme="high-contrast"] {
+    --bg-primary: #000000;
+    --bg-secondary: #000000;
+    --bg-card: #000000;
+    --text-primary: #ffffff;
+    --text-secondary: #ffffff;
+    --border-color: #ffffff;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.version-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-left: 10px;
+}
+
+#connection-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 10000;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+#connection-status.offline {
+    background: var(--danger-color);
+    color: white;
+    font-weight: 600;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    padding: 10px 0 0 0;
+    overflow-x: auto;
+    background: var(--bg-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    scrollbar-width: none;
+}
+
+.nav-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-tab {
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-tab:hover {
+    color: var(--primary-color);
+}
+
+.nav-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-card h3 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.request-form {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.form-progress {
+    margin: 0 0 2rem 0;
+    padding: 1.5rem 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.progress-bar {
+    position: absolute;
+    top: 16px;
+    left: 10%;
+    right: 10%;
+    height: 4px;
+    background: rgba(128, 128, 128, 0.2);
+    border-radius: 2px;
+    z-index: 1;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--success-color) 100%);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    border: 3px solid var(--bg-card);
+}
+
+.progress-step.active .step-number {
+    background: var(--primary-color);
+    color: white;
+}
+
+.progress-step.completed .step-number {
+    background: var(--success-color);
+    color: white;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #666;
+    text-align: center;
+}
+
+.fieldset-enhanced {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+    background: var(--bg-card);
+}
+
+legend {
+    font-weight: 700;
+    color: var(--text-primary);
+    padding: 0 16px;
+    font-size: 1.25rem;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.form-label.required::after {
+    content: " *";
+    color: var(--danger-color);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
+}
+
+.form-help {
+    display: block;
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 10px;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.request-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.request-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.3s ease;
+    position: relative;
+}
+
+.request-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.request-card.needs-followup {
+    border-left: 4px solid var(--warning-color);
+}
+
+.request-header {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.request-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.request-meta {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+}
+
+.request-status-select {
+    padding: 8px 12px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.request-status-select.status-pending {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.request-status-select.status-in-progress {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}
+
+.request-status-select.status-fulfilled {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.request-status-select.status-cancelled {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.request-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.tag {
+    padding: 4px 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tag:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tag-color-1 { background: #e74c3c !important; color: white !important; }
+.tag-color-2 { background: #f39c12 !important; color: white !important; }
+.tag-color-3 { background: #27ae60 !important; color: white !important; }
+.tag-color-4 { background: #3498db !important; color: white !important; }
+.tag-color-5 { background: #9b59b6 !important; color: white !important; }
+.tag-color-6 { background: #e91e63 !important; color: white !important; }
+.tag-color-7 { background: #00bcd4 !important; color: white !important; }
+.tag-color-8 { background: #ff5722 !important; color: white !important; }
+
+.tag-color-picker {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: all 0.2s ease;
+}
+
+.tag-color-picker.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.color-option {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+}
+
+.color-option.selected::after {
+    content: "✓";
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.color-option.color-1 { background: #e74c3c; }
+.color-option.color-2 { background: #f39c12; }
+.color-option.color-3 { background: #27ae60; }
+.color-option.color-4 { background: #3498db; }
+.color-option.color-5 { background: #9b59b6; }
+.color-option.color-6 { background: #e91e63; }
+.color-option.color-7 { background: #00bcd4; }
+.color-option.color-8 { background: #ff5722; }
+.color-option.color-default { 
+    background: linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(-45deg, #ccc 25%, transparent 25%);
+    background-size: 8px 8px;
+}
+
+.mesh-container {
+    margin-top: 10px;
+}
+
+.mesh-chip {
+    display: inline-block;
+    margin: 0 4px 4px 0;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+
+.priority-badge.urgent { background: #f44336; color: white; }
+.priority-badge.rush { background: #ff9800; color: white; }
+.priority-badge.normal { background: #4caf50; color: white; }
+
+.priority-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0 2px 2px 0;
+}
+
+.priority-indicator.urgent { background: #e74c3c; }
+.priority-indicator.rush { background: #f39c12; }
+.priority-indicator.normal { background: #95a5a6; }
+
+.enhanced-filters {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 10px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+}
+
+.filter-select {
+    min-width: 150px;
+    padding: 10px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.sort-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.sort-btn {
+    padding: 8px 12px;
+    border: 2px solid var(--border-color);
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.sort-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-secondary);
+}
+
+.sort-btn.sort-asc::after {
+    content: " ↑";
+    color: var(--primary-color);
+}
+
+.sort-btn.sort-desc::after {
+    content: " ↓";
+    color: var(--primary-color);
+}
+
+.table-responsive {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.requests-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+}
+
+.requests-table th {
+    background: var(--bg-secondary);
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.requests-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.requests-table tr:hover {
+    background: var(--bg-secondary);
+}
+
+.import-export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.card h3 {
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.bulk-paste-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    margin-top: 30px;
+}
+
+#bulk-paste-data {
+    width: 100%;
+    min-height: 300px;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    resize: vertical;
+}
+
+.lookup-status,
+.import-status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    display: none;
+}
+
+.lookup-status.success,
+.import-status.success {
+    background-color: rgba(34, 139, 34, 0.1);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+    display: block;
+}
+
+.lookup-status.error,
+.import-status.error {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    display: block;
+}
+
+.lookup-status.loading {
+    background-color: rgba(0, 102, 204, 0.1);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    display: block;
+}
+
+.empty-message {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px 20px;
+    font-style: italic;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .nav-tab {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+}
+    </style>
 </head>
 <body>
-<div id="app">
-  <div class="nav">
-    <button data-section="add">Add Request</button>
-    <button data-section="all">All Requests</button>
-    <button data-section="import">Import/Export</button>
-    <button data-section="diagnostics">Diagnostics</button>
-  </div>
+    <div class="container">
+        <!-- Skip Navigation -->
+        <a href="#main-content" class="sr-only">Skip to main content</a>
+        
+        <!-- Header -->
+        <header class="header">
+            <h1>SilentStacks <span class="version-badge">v2.0 BETA</span></h1>
+            <p>Interlibrary Loan Request Tracking</p>
+        </header>
 
-  <div id="section-add" class="section"> <!-- Add request form --> </div>
-  <div id="section-all" class="section"> <!-- All requests table/card --> </div>
-  <div id="section-import" class="section"> <!-- Bulk paste/import/export --> </div>
-  <div id="section-diagnostics" class="section"> <!-- System diagnostics --> </div>
-</div>
+        <!-- Connection Status -->
+        <div id="connection-status">🌐 Online</div>
 
-<script>
-// SilentStacks v2.0 Full JavaScript Implementation
+        <!-- Navigation -->
+        <nav class="nav-tabs" role="tablist">
+            <button class="nav-tab active" data-section="dashboard" role="tab">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Dashboard
+            </button>
+            <button class="nav-tab" data-section="add-request" role="tab">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                Add Request
+            </button>
+            <button class="nav-tab" data-section="all-requests" role="tab">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                All Requests
+            </button>
+            <button class="nav-tab" data-section="import-export" role="tab">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                </svg>
+                Import/Export
+            </button>
+            <button class="nav-tab" data-section="settings" role="tab">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1l1.7 4 4.3 1.7-1 5 4 .3-1.7 4.3L18 21l-5-1-1.3 4.7L12 23l-1.7-4.3L6 17l1-5-4-.3 1.7-4.3L6 3l5 1z"></path>
+                </svg>
+                Settings
+            </button>
+        </nav>
 
-// === Service Worker Registration ===
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js')
-    .then(reg => console.log('SW registered', reg.scope))
-    .catch(err => console.error('SW registration failed:', err));
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active" role="tabpanel">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Requests</h3>
+                        <p class="stat-number" id="total-requests">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending</h3>
+                        <p class="stat-number" id="pending-requests">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Fulfilled</h3>
+                        <p class="stat-number" id="fulfilled-requests">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Follow-up Needed</h3>
+                        <p class="stat-number" id="followup-requests">0</p>
+                    </div>
+                </div>
+                
+                <h3>Recent Requests</h3>
+                <div id="recent-requests" class="request-list">
+                    <p class="empty-message">No recent requests</p>
+                </div>
+            </section>
+
+            <!-- Add Request Section -->
+            <section id="add-request" class="section" role="tabpanel">
+                <h2>Add New Request</h2>
+                <form id="request-form" class="request-form">
+                    <!-- Progress Indicator -->
+                    <div class="form-progress">
+                        <div class="progress-steps">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="progress-step active" data-step="1">
+                                <span class="step-number">1</span>
+                                <span class="step-label">Identifiers</span>
+                            </div>
+                            <div class="progress-step" data-step="2">
+                                <span class="step-number">2</span>
+                                <span class="step-label">Details</span>
+                            </div>
+                            <div class="progress-step" data-step="3">
+                                <span class="step-number">3</span>
+                                <span class="step-label">Complete</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Identifiers -->
+                    <fieldset class="fieldset-enhanced">
+                        <legend>Identifiers</legend>
+                        
+                        <div class="form-group">
+                            <label for="pmid" class="form-label">PMID (PubMed ID)</label>
+                            <div class="input-with-button">
+                                <input type="text" id="pmid" name="pmid" class="form-control" placeholder="e.g., 23842776">
+                                <button type="button" id="lookup-pmid" class="btn btn-primary">Lookup</button>
+                            </div>
+                            <small class="form-help">Enter PubMed ID for automatic metadata retrieval</small>
+                            <div id="pmid-status" class="lookup-status"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="doi" class="form-label">DOI</label>
+                            <div class="input-with-button">
+                                <input type="text" id="doi" name="doi" class="form-control" placeholder="e.g., 10.1038/nature12373">
+                                <button type="button" id="lookup-doi" class="btn btn-primary">Lookup</button>
+                            </div>
+                            <small class="form-help">CrossRef lookup for bibliographic metadata</small>
+                            <div id="doi-status" class="lookup-status"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="docline" class="form-label">DOCLINE Request Number</label>
+                            <input type="text" id="docline" name="docline" class="form-control" placeholder="e.g., 138ABC123">
+                            <small class="form-help">ILL tracking number</small>
+                        </div>
+                    </fieldset>
+
+                    <!-- Publication Details -->
+                    <fieldset class="fieldset-enhanced">
+                        <legend>Publication Details</legend>
+                        
+                        <div class="form-group">
+                            <label for="title" class="form-label required">Title</label>
+                            <input type="text" id="title" name="title" class="form-control" required>
+                            <small class="form-help">Full title of the publication</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="authors" class="form-label">Authors</label>
+                            <input type="text" id="authors" name="authors" class="form-control" placeholder="Last, First; Last, First">
+                            <small class="form-help">Separated by semicolons</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="journal" class="form-label">Journal</label>
+                            <input type="text" id="journal" name="journal" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="year" class="form-label">Year</label>
+                            <input type="number" id="year" name="year" class="form-control" min="1900" max="2030">
+                        </div>
+                    </fieldset>
+
+                    <!-- Request Details -->
+                    <fieldset class="fieldset-enhanced">
+                        <legend>Request Details</legend>
+                        
+                        <div class="form-group">
+                            <label for="patron-email" class="form-label">Patron Email</label>
+                            <input type="email" id="patron-email" name="patronEmail" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select id="priority" name="priority" class="form-control">
+                                <option value="normal">Normal</option>
+                                <option value="rush">Rush</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status" class="form-label">Status</label>
+                            <select id="status" name="status" class="form-control">
+                                <option value="pending">Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="fulfilled">Fulfilled</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tags" class="form-label">Tags</label>
+                            <input type="text" id="tags" name="tags" class="form-control" placeholder="cardiology, review, systematic">
+                            <small class="form-help">Comma-separated tags</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea id="notes" name="notes" rows="3" class="form-control"></textarea>
+                        </div>
+                    </fieldset>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Request</button>
+                        <button type="button" class="btn btn-secondary" id="clear-form">Clear Form</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- All Requests Section -->
+            <section id="all-requests" class="section" role="tabpanel">
+                <h2>All Requests</h2>
+                
+                <!-- Filters -->
+                <div class="enhanced-filters">
+                    <div class="filter-row">
+                        <input type="text" id="search-requests" placeholder="Search requests..." class="search-input">
+                        <select id="filter-status" class="filter-select">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="fulfilled">Fulfilled</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select id="priority-filter" class="filter-select">
+                            <option value="">All Priorities</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="rush">Rush</option>
+                            <option value="normal">Normal</option>
+                        </select>
+                        <button id="filter-followup" class="btn btn-secondary">Follow-up Needed</button>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="sort-controls">
+                            <span>Sort by:</span>
+                            <button class="sort-btn sort-desc" data-field="createdAt">Date</button>
+                            <button class="sort-btn" data-field="priority">Priority</button>
+                            <button class="sort-btn" data-field="title">Title</button>
+                            <button class="sort-btn" data-field="status">Status</button>
+                        </div>
+                        <div>
+                            <span id="results-count">0 requests</span>
+                            <button id="toggle-view" class="btn btn-secondary btn-small">Table View</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request List (Card View) -->
+                <div id="request-list" class="request-list">
+                    <p class="empty-message">No requests found</p>
+                </div>
+
+                <!-- Table View -->
+                <div id="requests-table-container" class="table-responsive" style="display: none;">
+                    <table class="requests-table">
+                        <thead>
+                            <tr>
+                                <th>Urgency</th>
+                                <th>Docline Number</th>
+                                <th>PMID</th>
+                                <th>Citation</th>
+                                <th>Patron Name</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Import/Export Section -->
+            <section id="import-export" class="section" role="tabpanel">
+                <h2>Import/Export Data</h2>
+                
+                <div class="import-export-grid">
+                    <div class="card">
+                        <h3>Export Data</h3>
+                        <p>Download your ILL requests</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="export-csv" class="btn btn-primary">Export CSV</button>
+                            <button id="export-json" class="btn btn-primary">Export JSON</button>
+                            <button id="export-nlm" class="btn btn-primary">Export NLM</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Import Data</h3>
+                        <p>Upload CSV or JSON file</p>
+                        <input type="file" id="import-file" accept=".csv,.json" style="margin-top: 10px;">
+                        <div id="import-status" class="import-status"></div>
+                    </div>
+                </div>
+                
+                <!-- Bulk Paste -->
+                <div class="bulk-paste-section">
+                    <h3>Bulk Paste PMIDs</h3>
+                    <p>Paste PMIDs (comma, space, or newline separated)</p>
+                    <textarea id="bulk-paste-data" placeholder="Example:&#10;23842776&#10;31234567&#10;28765432"></textarea>
+                    <button id="bulk-paste-btn" class="btn btn-primary">Import PMIDs</button>
+                    <div id="bulk-status" class="import-status"></div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section" role="tabpanel">
+                <h2>Settings</h2>
+                
+                <form id="settings-form">
+                    <div class="form-group">
+                        <label for="followup-days" class="form-label">Follow-up Days</label>
+                        <input type="number" id="followup-days" min="1" max="30" value="5" class="form-control">
+                        <small class="form-help">Mark requests as needing follow-up after this many days</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="theme" class="form-label">Theme</label>
+                        <select id="theme" class="form-control">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="high-contrast">High Contrast</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="api-key" class="form-label">PubMed API Key (Optional)</label>
+                        <input type="text" id="api-key" class="form-control">
+                        <small class="form-help">Higher rate limits for PubMed lookups</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="crossref-email" class="form-label">CrossRef Email (Optional)</label>
+                        <input type="email" id="crossref-email" class="form-control">
+                        <small class="form-help">Polite pool access for DOI lookups</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script>
+// ===== SILENTSTACKS V2.0 BETA COMPLETE JAVASCRIPT =====
+
+// Application State
+const APP_STATE = {
+    settings: {
+        followupDays: 5,
+        theme: 'light',
+        apiKey: '',
+        crossrefEmail: ''
+    },
+    requests: [],
+    tags: new Map(),
+    currentStep: 1,
+    editIndex: null,
+    sortField: 'createdAt',
+    sortDir: 'desc',
+    followupOnly: false,
+    isOnline: navigator.onLine
+};
+
+// API Configuration
+const API_CONFIG = {
+    pubmed: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/',
+    crossref: 'https://api.crossref.org/works/',
+    rateLimits: { pubmed: 500, crossref: 200 }
+};
+
+// ===== INITIALIZATION =====
+function init() {
+    loadData();
+    bindEvents();
+    applyTheme();
+    renderAll();
+    setupConnectionMonitor();
+    console.log('✅ SilentStacks v2.0 Beta initialized');
 }
 
-// === Data Structures ===
-let requests = JSON.parse(localStorage.getItem('silentstacks_requests') || '[]');
-
-// === NLM Citation Export ===
-function parseAuthorsNLM(str) { return str.split(';').map(a => { let p = a.trim().split(','); if (p.length === 2) { return `${p[0]} ${p[1].split(' ').map(n => n[0]).join('')}`; } return a.trim(); }); }
-function formatNLMCitation(r) {
-  let c = ''; const authors = parseAuthorsNLM(r.authors || '');
-  if (authors.length) c += authors.join(', ') + '. ';
-  if (r.title) c += r.title + (/[.!?]$/.test(r.title) ? '' : '.') + ' ';
-  if (r.journal) c += r.journal + '. ';
-  if (r.year) c += r.year;
-  if (r.volume) c += ';' + r.volume;
-  if (r.issue) c += '(' + r.issue + ')';
-  if (r.pages) c += ':' + r.pages;
-  if (r.pmid) c += `. PMID: ${r.pmid}.`;
-  if (r.doi) c += ` doi: ${r.doi}`;
-  return c.trim();
+// ===== DATA PERSISTENCE =====
+function loadData() {
+    try {
+        const saved = localStorage.getItem('silentstacks_data');
+        if (saved) {
+            const data = JSON.parse(saved);
+            Object.assign(APP_STATE.settings, data.settings || {});
+            APP_STATE.requests = data.requests || [];
+            APP_STATE.tags = new Map(data.tags || []);
+        }
+    } catch (e) {
+        console.warn('Failed to load data:', e);
+    }
 }
+
+function saveData() {
+    try {
+        const data = {
+            settings: APP_STATE.settings,
+            requests: APP_STATE.requests,
+            tags: [...APP_STATE.tags]
+        };
+        localStorage.setItem('silentstacks_data', JSON.stringify(data));
+    } catch (e) {
+        console.error('Failed to save data:', e);
+    }
+}
+
+// ===== THEME =====
+function applyTheme() {
+    document.documentElement.setAttribute('data-theme', APP_STATE.settings.theme);
+}
+
+// ===== CONNECTION MONITORING =====
+function setupConnectionMonitor() {
+    const indicator = document.getElementById('connection-status');
+    
+    function updateStatus() {
+        APP_STATE.isOnline = navigator.onLine;
+        if (indicator) {
+            indicator.textContent = APP_STATE.isOnline ? '🌐 Online' : '📴 Offline';
+            indicator.className = APP_STATE.isOnline ? '' : 'offline';
+        }
+    }
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus();
+}
+
+// ===== API FUNCTIONS =====
+async function fetchPubMed(pmid) {
+    const keyParam = APP_STATE.settings.apiKey ? `&api_key=${APP_STATE.settings.apiKey}` : '';
+    const url = `${API_CONFIG.pubmed}esummary.fcgi?db=pubmed&id=${pmid}&retmode=json${keyParam}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.error) throw new Error(data.error);
+    
+    const record = data.result?.[pmid];
+    if (!record) throw new Error('PMID not found');
+    
+    // Try to get MeSH terms from efetch
+    let meshTerms = [];
+    try {
+        const meshUrl = `${API_CONFIG.pubmed}efetch.fcgi?db=pubmed&id=${pmid}&retmode=xml${keyParam}`;
+        const meshResponse = await fetch(meshUrl);
+        const meshText = await meshResponse.text();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(meshText, 'application/xml');
+        meshTerms = Array.from(doc.querySelectorAll('MeshHeading DescriptorName'))
+            .slice(0, 5)
+            .map(node => node.textContent);
+    } catch (e) {
+        console.warn('Failed to fetch MeSH terms:', e);
+    }
+    
+    return {
+        pmid,
+        title: record.title || '',
+        authors: (record.authors || []).map(a => a.name).join('; '),
+        journal: record.fulljournalname || record.source || '',
+        year: (record.pubdate || '').split(' ')[0] || '',
+        doi: record.elocationid || '',
+        mesh: meshTerms
+    };
+}
+
+async function fetchCrossRef(doi) {
+    const cleanDoi = doi.replace(/^(https?:\/\/)?(dx\.)?doi\.org\//, '');
+    const response = await fetch(`${API_CONFIG.crossref}${encodeURIComponent(cleanDoi)}`);
+    
+    if (!response.ok) throw new Error('DOI not found');
+    
+    const data = await response.json();
+    const work = data.message;
+    
+    return {
+        doi: cleanDoi,
+        title: work.title?.[0] || '',
+        authors: (work.author || [])
+            .map(a => `${a.given || ''} ${a.family || ''}`.trim())
+            .join('; '),
+        journal: work['container-title']?.[0] || '',
+        year: work.published?.['date-parts']?.[0]?.[0] || ''
+    };
+}
+
+// ===== FORM HANDLING =====
+function populateForm(data) {
+    const fields = {
+        pmid: data.pmid || '',
+        doi: data.doi || '',
+        docline: data.docline || '',
+        title: data.title || '',
+        authors: data.authors || '',
+        journal: data.journal || '',
+        year: data.year || '',
+        'patron-email': data.patronEmail || '',
+        priority: data.priority || 'normal',
+        status: data.status || 'pending',
+        tags: Array.isArray(data.tags) ? data.tags.join(', ') : (data.tags || ''),
+        notes: data.notes || ''
+    };
+    
+    Object.entries(fields).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+    });
+    
+    // Add MeSH as tags if present
+    if (data.mesh?.length) {
+        const tagsInput = document.getElementById('tags');
+        const existingTags = tagsInput.value ? tagsInput.value.split(',').map(t => t.trim()) : [];
+        const allTags = [...new Set([...existingTags, ...data.mesh])];
+        tagsInput.value = allTags.join(', ');
+    }
+}
+
+async function handlePMIDLookup() {
+    const pmid = document.getElementById('pmid').value.trim();
+    if (!pmid) return;
+    
+    const status = document.getElementById('pmid-status');
+    status.textContent = 'Looking up...';
+    status.className = 'lookup-status loading';
+    
+    try {
+        await new Promise(resolve => setTimeout(resolve, API_CONFIG.rateLimits.pubmed));
+        const data = await fetchPubMed(pmid);
+        populateForm(data);
+        status.textContent = 'Success!';
+        status.className = 'lookup-status success';
+        
+        if (APP_STATE.currentStep === 1) {
+            APP_STATE.currentStep = 2;
+            updateProgressBar();
+        }
+    } catch (error) {
+        status.textContent = error.message;
+        status.className = 'lookup-status error';
+    }
+}
+
+async function handleDOILookup() {
+    const doi = document.getElementById('doi').value.trim();
+    if (!doi) return;
+    
+    const status = document.getElementById('doi-status');
+    status.textContent = 'Looking up...';
+    status.className = 'lookup-status loading';
+    
+    try {
+        await new Promise(resolve => setTimeout(resolve, API_CONFIG.rateLimits.crossref));
+        const data = await fetchCrossRef(doi);
+        populateForm(data);
+        status.textContent = 'Success!';
+        status.className = 'lookup-status success';
+        
+        if (APP_STATE.currentStep === 1) {
+            APP_STATE.currentStep = 2;
+            updateProgressBar();
+        }
+    } catch (error) {
+        status.textContent = error.message;
+        status.className = 'lookup-status error';
+    }
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const request = {
+        id: APP_STATE.editIndex !== null ? APP_STATE.requests[APP_STATE.editIndex].id : Date.now().toString(),
+        createdAt: APP_STATE.editIndex !== null ? APP_STATE.requests[APP_STATE.editIndex].createdAt : new Date().toISOString(),
+        pmid: formData.get('pmid'),
+        doi: formData.get('doi'),
+        docline: formData.get('docline'),
+        title: formData.get('title'),
+        authors: formData.get('authors'),
+        journal: formData.get('journal'),
+        year: formData.get('year'),
+        patronEmail: formData.get('patronEmail'),
+        priority: formData.get('priority') || 'normal',
+        status: formData.get('status') || 'pending',
+        tags: formData.get('tags').split(',').map(t => t.trim()).filter(Boolean),
+        notes: formData.get('notes'),
+        mesh: []
+    };
+    
+    // Update tags map
+    request.tags.forEach(tag => {
+        if (!APP_STATE.tags.has(tag)) {
+            APP_STATE.tags.set(tag, 'default');
+        }
+    });
+    
+    if (APP_STATE.editIndex !== null) {
+        APP_STATE.requests[APP_STATE.editIndex] = request;
+        APP_STATE.editIndex = null;
+    } else {
+        APP_STATE.requests.unshift(request);
+    }
+    
+    saveData();
+    renderAll();
+    e.target.reset();
+    APP_STATE.currentStep = 1;
+    updateProgressBar();
+    
+    showNotification('Request saved successfully!');
+}
+
+// ===== BULK IMPORT =====
+async function handleBulkImport() {
+    const textarea = document.getElementById('bulk-paste-data');
+    const data = textarea.value.trim();
+    if (!data) return;
+    
+    const status = document.getElementById('bulk-status');
+    status.textContent = 'Processing...';
+    status.className = 'import-status loading';
+    
+    const pmids = data.split(/[\s,;]+/).filter(id => /^\d+$/.test(id));
+    
+    if (pmids.length === 0) {
+        status.textContent = 'No valid PMIDs found';
+        status.className = 'import-status error';
+        return;
+    }
+    
+    let imported = 0;
+    
+    for (const pmid of pmids) {
+        try {
+            await new Promise(resolve => setTimeout(resolve, API_CONFIG.rateLimits.pubmed));
+            const data = await fetchPubMed(pmid);
+            
+            const request = {
+                id: Date.now().toString() + Math.random(),
+                createdAt: new Date().toISOString(),
+                pmid: data.pmid,
+                doi: data.doi || '',
+                title: data.title,
+                authors: data.authors,
+                journal: data.journal,
+                year: data.year,
+                mesh: data.mesh || [],
+                tags: data.mesh || [],
+                status: 'pending',
+                priority: 'normal',
+                notes: '',
+                patronEmail: '',
+                docline: ''
+            };
+            
+            request.tags.forEach(tag => {
+                if (!APP_STATE.tags.has(tag)) {
+                    APP_STATE.tags.set(tag, 'default');
+                }
+            });
+            
+            APP_STATE.requests.unshift(request);
+            imported++;
+            
+            status.textContent = `Imported ${imported} of ${pmids.length}...`;
+        } catch (error) {
+            console.warn(`Failed to import PMID ${pmid}:`, error);
+        }
+    }
+    
+    saveData();
+    renderAll();
+    textarea.value = '';
+    
+    status.textContent = `Successfully imported ${imported} requests!`;
+    status.className = 'import-status success';
+}
+
+// ===== EXPORT FUNCTIONS =====
+function exportCSV() {
+    const headers = ['PMID', 'DOI', 'Title', 'Authors', 'Journal', 'Year', 'Status', 'Priority', 'Tags', 'Notes'];
+    const rows = APP_STATE.requests.map(r => [
+        r.pmid || '',
+        r.doi || '',
+        r.title || '',
+        r.authors || '',
+        r.journal || '',
+        r.year || '',
+        r.status || '',
+        r.priority || '',
+        r.tags.join('; '),
+        r.notes || ''
+    ]);
+    
+    const csv = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+    
+    downloadFile(csv, 'silentstacks-export.csv', 'text/csv');
+}
+
+function exportJSON() {
+    const json = JSON.stringify(APP_STATE.requests, null, 2);
+    downloadFile(json, 'silentstacks-export.json', 'application/json');
+}
+
 function exportNLM() {
-  const citations = requests.map(formatNLMCitation).join('\n\n');
-  const blob = new Blob([citations], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `silentstacks-nlm-${new Date().toISOString().split('T')[0]}.txt`;
-  a.click();
+    const citations = APP_STATE.requests.map(formatNLMCitation).join('\n\n');
+    downloadFile(citations, 'silentstacks-nlm.txt', 'text/plain');
 }
 
-// === MeSH Chips ===
-function createMeshChips(terms) {
-  if (!terms || !terms.length) return '';
-  return `<div class="mesh-container">${terms.map(t => `<span class="mesh-chip"><span class="mesh-icon">🏷️</span> ${t}</span>`).join('')}</div>`;
+function formatNLMCitation(r) {
+    let citation = '';
+    
+    if (r.authors) {
+        const authors = r.authors.split(';').map(a => {
+            const parts = a.trim().split(',');
+            if (parts.length === 2) {
+                const lastName = parts[0].trim();
+                const firstNames = parts[1].trim().split(' ');
+                const initials = firstNames.map(n => n[0] || '').join('');
+                return `${lastName} ${initials}`;
+            }
+            return a.trim();
+        });
+        citation += authors.join(', ') + '. ';
+    }
+    
+    if (r.title) {
+        citation += r.title;
+        if (!r.title.endsWith('.')) citation += '.';
+        citation += ' ';
+    }
+    
+    if (r.journal) citation += r.journal + '. ';
+    if (r.year) citation += r.year + '. ';
+    if (r.pmid) citation += `PMID: ${r.pmid}. `;
+    if (r.doi) citation += `doi: ${r.doi}`;
+    
+    return citation.trim();
 }
 
-// === ClinicalTrials.gov Fetch ===
-async function fetchClinicalTrial(nctId) {
-  const url = `https://clinicaltrials.gov/api/v2/studies/${nctId}`;
-  const res = await fetch(url); const data = await res.json();
-  return { nctId, title: data.protocolSection?.identificationModule?.officialTitle || '', status: data.protocolSection?.statusModule?.overallStatus || '' };
+function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
-// === Cross-Population Logic ===
-async function crossPopulateIdentifiers(request) {
-  const enriched = { ...request };
-  if (enriched.pmid && !enriched.doi) {
-    const pubmedData = await fetchPubMed(enriched.pmid);
-    if (pubmedData.doi) enriched.doi = pubmedData.doi;
-  }
-  const nctPattern = /NCT\d{8}/g;
-  const textToSearch = `${enriched.title || ''} ${enriched.notes || ''} ${enriched.abstract || ''}`;
-  const nctMatches = textToSearch.match(nctPattern);
-  if (nctMatches) {
-    enriched.nctId = nctMatches[0];
-    const trialData = await fetchClinicalTrial(enriched.nctId);
-    if (trialData) enriched.trialStatus = trialData.status;
-  }
-  return enriched;
+// ===== RENDERING =====
+function renderAll() {
+    renderStats();
+    renderRequests();
+    renderRecentRequests();
 }
 
-// === Placeholder for PubMed & CrossRef Fetch ===
-async function fetchPubMed(pmid) { return {}; }
-async function fetchCrossRef(doi) { return {}; }
+function renderStats() {
+    const stats = {
+        total: APP_STATE.requests.length,
+        pending: APP_STATE.requests.filter(r => r.status === 'pending').length,
+        fulfilled: APP_STATE.requests.filter(r => r.status === 'fulfilled').length,
+        followup: APP_STATE.requests.filter(needsFollowup).length
+    };
+    
+    Object.keys(stats).forEach(key => {
+        const el = document.getElementById(`${key}-requests`);
+        if (el) el.textContent = stats[key];
+    });
+}
 
-// === UI Bindings ===
-// ... attach event listeners for tabs, import/export, add request, etc.
-</script>
+function renderRecentRequests() {
+    const container = document.getElementById('recent-requests');
+    if (!container) return;
+    
+    const recent = APP_STATE.requests.slice(0, 5);
+    
+    if (recent.length === 0) {
+        container.innerHTML = '<p class="empty-message">No recent requests</p>';
+        return;
+    }
+    
+    container.innerHTML = recent.map(r => `
+        <div class="request-card">
+            <div class="request-title">${r.title || 'Untitled'}</div>
+            <div class="request-meta">
+                ${r.authors || ''} • ${r.journal || ''} (${r.year || ''})
+            </div>
+            <span class="request-status-select status-${r.status}">${r.status.toUpperCase()}</span>
+        </div>
+    `).join('');
+}
+
+function renderRequests() {
+    const container = document.getElementById('request-list');
+    const tableBody = document.getElementById('requests-tbody');
+    
+    if (!container) return;
+    
+    let filtered = getFilteredRequests();
+    
+    // Card view
+    if (filtered.length === 0) {
+        container.innerHTML = '<p class="empty-message">No requests found</p>';
+    } else {
+        container.innerHTML = filtered.map((r, i) => renderRequestCard(r, i)).join('');
+    }
+    
+    // Table view
+    if (tableBody) {
+        tableBody.innerHTML = filtered.map((r, i) => renderTableRow(r, i)).join('');
+    }
+    
+    document.getElementById('results-count').textContent = `${filtered.length} requests`;
+}
+
+function renderRequestCard(r, index) {
+    const originalIndex = APP_STATE.requests.indexOf(r);
+    const tags = r.tags.map(t => {
+        const color = APP_STATE.tags.get(t) || 'default';
+        return `<span class="tag tag-color-${color}" onclick="openTagColorPicker('${t}', this)">${t}</span>`;
+    }).join('');
+    
+    const mesh = (r.mesh || []).map(m => 
+        `<span class="mesh-chip">🏷️ ${m}</span>`
+    ).join('');
+    
+    const priorityBadge = r.priority !== 'normal' ? 
+        `<span class="priority-badge ${r.priority}">${r.priority.toUpperCase()}</span>` : '';
+    
+    return `
+        <div class="request-card ${needsFollowup(r) ? 'needs-followup' : ''}">
+            ${r.priority !== 'normal' ? `<div class="priority-indicator ${r.priority}"></div>` : ''}
+            <div class="request-header">
+                <div class="request-main">
+                    <div class="request-title">${r.title || 'Untitled'} ${priorityBadge}</div>
+                    <div class="request-meta">
+                        ${r.authors || ''} • ${r.journal || ''} (${r.year || ''})
+                        ${r.pmid ? ` • PMID: ${r.pmid}` : ''}
+                        ${r.doi ? ` • DOI: ${r.doi}` : ''}
+                    </div>
+                </div>
+                <div>
+                    <select class="request-status-select status-${r.status}" 
+                            onchange="updateStatus(${originalIndex}, this.value)">
+                        <option value="pending" ${r.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="in-progress" ${r.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="fulfilled" ${r.status === 'fulfilled' ? 'selected' : ''}>Fulfilled</option>
+                        <option value="cancelled" ${r.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            ${tags ? `<div class="request-tags">${tags}</div>` : ''}
+            ${mesh ? `<div class="mesh-container">${mesh}</div>` : ''}
+            ${r.notes ? `<div style="margin-top:10px;color:var(--text-secondary)">📝 ${r.notes}</div>` : ''}
+            <div style="margin-top:10px">
+                <button onclick="editRequest(${originalIndex})" class="btn btn-secondary btn-small">Edit</button>
+                <button onclick="deleteRequest(${originalIndex})" class="btn btn-danger btn-small">Delete</button>
+            </div>
+        </div>
+    `;
+}
+
+function renderTableRow(r, index) {
+    const originalIndex = APP_STATE.requests.indexOf(r);
+    const urgency = r.priority.charAt(0).toUpperCase() + r.priority.slice(1);
+    const citation = `${r.title || ''} ${r.authors ? `by ${r.authors}` : ''} ${r.year ? `(${r.year})` : ''}`;
+    const mesh = (r.mesh || []).map(m => 
+        `<span class="mesh-chip">${m}</span>`
+    ).join('');
+    
+    return `
+        <tr>
+            <td>${urgency}</td>
+            <td>${r.docline || ''}</td>
+            <td>${r.pmid || ''}</td>
+            <td>${citation} ${mesh}</td>
+            <td>${r.patronEmail || ''}</td>
+            <td>
+                <select onchange="updateStatus(${originalIndex}, this.value)">
+                    <option value="pending" ${r.status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="in-progress" ${r.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="fulfilled" ${r.status === 'fulfilled' ? 'selected' : ''}>Fulfilled</option>
+                    <option value="cancelled" ${r.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+            </td>
+        </tr>
+    `;
+}
+
+function getFilteredRequests() {
+    let filtered = [...APP_STATE.requests];
+    
+    // Search filter
+    const searchTerm = document.getElementById('search-requests')?.value.toLowerCase();
+    if (searchTerm) {
+        filtered = filtered.filter(r => 
+            (r.title || '').toLowerCase().includes(searchTerm) ||
+            (r.authors || '').toLowerCase().includes(searchTerm) ||
+            (r.journal || '').toLowerCase().includes(searchTerm) ||
+            (r.pmid || '').includes(searchTerm) ||
+            (r.doi || '').includes(searchTerm) ||
+            r.tags.some(t => t.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    // Status filter
+    const statusFilter = document.getElementById('filter-status')?.value;
+    if (statusFilter) {
+        filtered = filtered.filter(r => r.status === statusFilter);
+    }
+    
+    // Priority filter
+    const priorityFilter = document.getElementById('priority-filter')?.value;
+    if (priorityFilter) {
+        filtered = filtered.filter(r => r.priority === priorityFilter);
+    }
+    
+    // Follow-up filter
+    if (APP_STATE.followupOnly) {
+        filtered = filtered.filter(needsFollowup);
+    }
+    
+    // Sort
+    filtered.sort((a, b) => {
+        let aVal = a[APP_STATE.sortField];
+        let bVal = b[APP_STATE.sortField];
+        
+        if (APP_STATE.sortField === 'createdAt') {
+            aVal = new Date(aVal || 0).getTime();
+            bVal = new Date(bVal || 0).getTime();
+        } else if (APP_STATE.sortField === 'priority') {
+            const order = { urgent: 3, rush: 2, normal: 1 };
+            aVal = order[aVal || 'normal'];
+            bVal = order[bVal || 'normal'];
+        }
+        
+        const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+        return APP_STATE.sortDir === 'desc' ? -comparison : comparison;
+    });
+    
+    return filtered;
+}
+
+function needsFollowup(request) {
+    const days = (Date.now() - new Date(request.createdAt)) / 86400000;
+    return days > APP_STATE.settings.followupDays && request.status === 'pending';
+}
+
+// ===== PROGRESS BAR =====
+function updateProgressBar() {
+    const steps = document.querySelectorAll('.progress-step');
+    const fill = document.querySelector('.progress-fill');
+    
+    steps.forEach((step, i) => {
+        const stepNum = i + 1;
+        step.classList.toggle('active', stepNum === APP_STATE.currentStep);
+        step.classList.toggle('completed', stepNum < APP_STATE.currentStep);
+        
+        const numberEl = step.querySelector('.step-number');
+        if (stepNum < APP_STATE.currentStep) {
+            numberEl.textContent = '✓';
+        } else {
+            numberEl.textContent = stepNum;
+        }
+    });
+    
+    if (fill) {
+        const progress = ((APP_STATE.currentStep - 1) / 2) * 100;
+        fill.style.width = `${progress}%`;
+    }
+}
+
+// ===== TAG COLOR PICKER =====
+window.openTagColorPicker = (tagName, element) => {
+    document.querySelectorAll('.tag-color-picker').forEach(p => p.remove());
+    
+    const picker = document.createElement('div');
+    picker.className = 'tag-color-picker';
+    
+    const colors = ['1', '2', '3', '4', '5', '6', '7', '8', 'default'];
+    const currentColor = APP_STATE.tags.get(tagName) || 'default';
+    
+    picker.innerHTML = colors.map(c => `
+        <div class="color-option color-${c} ${currentColor === c ? 'selected' : ''}" 
+             onclick="setTagColor('${tagName}', '${c}')"></div>
+    `).join('');
+    
+    element.parentNode.style.position = 'relative';
+    element.parentNode.appendChild(picker);
+    
+    setTimeout(() => picker.classList.add('active'), 10);
+    
+    setTimeout(() => {
+        document.addEventListener('click', function closeHandler(e) {
+            if (!picker.contains(e.target)) {
+                picker.classList.remove('active');
+                setTimeout(() => picker.remove(), 200);
+                document.removeEventListener('click', closeHandler);
+            }
+        });
+    }, 100);
+};
+
+window.setTagColor = (tagName, color) => {
+    APP_STATE.tags.set(tagName, color);
+    saveData();
+    renderRequests();
+    document.querySelector('.tag-color-picker')?.remove();
+};
+
+// ===== GLOBAL FUNCTIONS =====
+window.updateStatus = (index, status) => {
+    APP_STATE.requests[index].status = status;
+    saveData();
+    renderStats();
+};
+
+window.editRequest = (index) => {
+    APP_STATE.editIndex = index;
+    populateForm(APP_STATE.requests[index]);
+    document.querySelector('[data-section="add-request"]').click();
+};
+
+window.deleteRequest = (index) => {
+    if (confirm('Delete this request?')) {
+        APP_STATE.requests.splice(index, 1);
+        saveData();
+        renderAll();
+    }
+};
+
+// ===== UTILITY FUNCTIONS =====
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background: ${type === 'error' ? '#dc3545' : '#28a745'};
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// ===== EVENT BINDING =====
+function bindEvents() {
+    // Navigation
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.section).classList.add('active');
+        });
+    });
+
+    // Forms
+    document.getElementById('request-form')?.addEventListener('submit', handleFormSubmit);
+    document.getElementById('settings-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        APP_STATE.settings.followupDays = parseInt(formData.get('followup-days'));
+        APP_STATE.settings.theme = formData.get('theme');
+        APP_STATE.settings.apiKey = formData.get('api-key');
+        APP_STATE.settings.crossrefEmail = formData.get('crossref-email');
+        saveData();
+        applyTheme();
+        renderAll();
+        showNotification('Settings saved!');
+    });
+
+    // Buttons
+    document.getElementById('lookup-pmid')?.addEventListener('click', handlePMIDLookup);
+    document.getElementById('lookup-doi')?.addEventListener('click', handleDOILookup);
+    document.getElementById('clear-form')?.addEventListener('click', () => {
+        document.getElementById('request-form').reset();
+        APP_STATE.editIndex = null;
+        APP_STATE.currentStep = 1;
+        updateProgressBar();
+    });
+    
+    document.getElementById('bulk-paste-btn')?.addEventListener('click', handleBulkImport);
+    document.getElementById('export-csv')?.addEventListener('click', exportCSV);
+    document.getElementById('export-json')?.addEventListener('click', exportJSON);
+    document.getElementById('export-nlm')?.addEventListener('click', exportNLM);
+    
+    document.getElementById('toggle-view')?.addEventListener('click', () => {
+        const list = document.getElementById('request-list');
+        const table = document.getElementById('requests-table-container');
+        const btn = document.getElementById('toggle-view');
+        
+        if (list.style.display === 'none') {
+            list.style.display = '';
+            table.style.display = 'none';
+            btn.textContent = 'Table View';
+        } else {
+            list.style.display = 'none';
+            table.style.display = '';
+            btn.textContent = 'Card View';
+        }
+    });
+
+    // Filters
+    document.getElementById('search-requests')?.addEventListener('input', renderRequests);
+    document.getElementById('filter-status')?.addEventListener('change', renderRequests);
+    document.getElementById('priority-filter')?.addEventListener('change', renderRequests);
+    
+    document.getElementById('filter-followup')?.addEventListener('click', () => {
+        APP_STATE.followupOnly = !APP_STATE.followupOnly;
+        const btn = document.getElementById('filter-followup');
+        btn.textContent = APP_STATE.followupOnly ? 'Show All' : 'Follow-up Needed';
+        renderRequests();
+    });
+
+    // Sort buttons
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const field = btn.dataset.field;
+            
+            if (APP_STATE.sortField === field) {
+                APP_STATE.sortDir = APP_STATE.sortDir === 'desc' ? 'asc' : 'desc';
+            } else {
+                APP_STATE.sortField = field;
+                APP_STATE.sortDir = 'desc';
+            }
+            
+            document.querySelectorAll('.sort-btn').forEach(b => {
+                b.classList.remove('sort-asc', 'sort-desc');
+            });
+            btn.classList.add(`sort-${APP_STATE.sortDir}`);
+            
+            renderRequests();
+        });
+    });
+
+    // Progress steps
+    document.querySelectorAll('.progress-step').forEach((step, i) => {
+        step.addEventListener('click', () => {
+            APP_STATE.currentStep = i + 1;
+            updateProgressBar();
+        });
+    });
+
+    // Load settings
+    const settingsForm = document.getElementById('settings-form');
+    if (settingsForm) {
+        document.getElementById('followup-days').value = APP_STATE.settings.followupDays;
+        document.getElementById('theme').value = APP_STATE.settings.theme;
+        document.getElementById('api-key').value = APP_STATE.settings.apiKey;
+        document.getElementById('crossref-email').value = APP_STATE.settings.crossrefEmail;
+    }
+}
+
+// ===== START APPLICATION =====
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+    </script>
 </body>
 </html>
