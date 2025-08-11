@@ -1,0 +1,6 @@
+notes
+Populate documentation/Agent_Package/RUN_SUMMARY.json using RUN_SUMMARY.stub.json as the shape.
+
+Generate documentation/Agent_Package/INTAKE_RUN_<YYYYMMDD-HHmm>.md from INTAKE_TEMPLATE.md, filling every field from the JSON + GAP_REPORT.
+
+Link the new intake file in RELEASE_NOTES.md under “Run Artifacts.”
