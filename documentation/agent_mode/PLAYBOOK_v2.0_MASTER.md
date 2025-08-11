@@ -1,8 +1,4 @@
-Perfect—here’s a **cleaned, consolidated, and idiot-proof** version of your playbook with duplicates removed, typos fixed, and all the extras (build/packaging, table rules, cards/MeSH, APIs/security) folded in. Paste this over your current file:
 
-`documentation/Agent_Package/PLAYBOOK_v2.0_MASTER.md`
-
-````markdown
 # SilentStacks – Master Playbook (v1.2 → v2.0)
 
 **Repo URL:** https://github.com/patrick1981/SilentStacksTest  
@@ -326,16 +322,4 @@ Rules:
 
 ---
 
-## 9) Agent Start Prompt (paste into Agent Mode)
 
-> You are the lead developer for SilentStacks v2.0.
-> Work in this repo: **[https://github.com/patrick1981/SilentStacksTest](https://github.com/patrick1981/SilentStacksTest)** (branch `feature/v2.0-monolith`).
-> Follow `documentation/Agent_Package/PLAYBOOK_v2.0_MASTER.md` **exactly**.
-> Acknowledge the **Baseline Declaration**, then perform **Baseline Verification** (0 structural diffs) and attach the 5 screenshots to `RELEASE_NOTES.md`.
-> Build **`dist/SilentStacks_v2_monolith.html`** with all CSS/JS inlined (no CDNs).
-> Implement the full v2.0 scope, enforce table headings/order and PMID-only bulk rules, render cards & MeSH chips as specified, sanitize input, respect rate-limits, and support offline queueing.
-> Produce **`SilentStacks_Release.zip`** (monolith + screenshots + `RELEASE_NOTES.md` + `GAP_REPORT.md`).
-> Update QuickStart/TechMaintenance/DevelopersGuide with a **dated delta** and bump `CHANGELOG.md`.
-> **Pause for approval** before any DOM/CSS edits; include diffs + screenshots.
-
-```
