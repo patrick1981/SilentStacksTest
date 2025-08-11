@@ -30,11 +30,17 @@
 - On Save: citation stored in NLM format; MeSH & tags preserved: ☐ Verified
 
 ## Bulk Operations
-- Bulk PMID paste/upload enriches same as Add form: ☐ Verified
-- Blanks ignored; PMIDs validated; CT.gov only when NCT present: ☐ Verified
-- Bulk urgency/status updates apply to selected records: ☐ Verified
-- DOCLINE uniqueness enforced (single + bulk): ☐ Verified
-- Column headings (exact): `Urgency | DOCLINE Number | Citation | Patron E-mail | Status | Date Stamp`: ☐ Verified
+- Rich CSV/JSON import maps known headings and preserves extras: ☐ Verified  
+- Rich import triggers enrichment when PMID present; falls back to DOI/NCT: ☐ Verified  
+- Minimal import accepts headerless PMIDs (paste/CSV) and enriches automatically: ☐ Verified  
+- Invalid/empty tokens ignored; no blank records: ☐ Verified  
+- Merge does not overwrite non-blank with blanks: ☐ Verified
+
+## Post-Import Workflow
+- User can filter to newly imported items and bulk update urgency/status: ☐ Verified  
+- Bulk updates apply to selected rows; aria-live confirms: ☐ Verified  
+- User can open individual items to fill missing fields; uniqueness enforced: ☐ Verified  
+- Filters/sorts consistent in table & cards; selection persists when toggling views: ☐ Verified
 
 ## Search/Filter/Sort
 - All fields sortable; sorting stable: ☐ Verified
@@ -50,6 +56,12 @@
 
 ## Import/Export
 - JSON, CSV, NLM export works; blanks as empty strings (CSV) or omitted/empty (JSON): ☐ Verified
+
+## Bugs / Shortcomings from Previous Run (must be resolved)
+- Add Request form shows NCT content & CT.gov enrichment when PMID has NCT: ☐ Verified  
+- Imported items with NCT enriched with CT.gov data: ☐ Verified  
+- Table View button displays content with current dataset and filters: ☐ Verified  
+- MeSH major/minor headings appear as selectable/taggable chips: ☐ Verified
 
 ## Documentation & Code Quality
 - QuickStart / TechMaintenance / DevelopersGuide updated: ☐ Yes / ☐ No
