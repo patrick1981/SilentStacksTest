@@ -1,31 +1,38 @@
 # GAP REPORT — SilentStacks v2.0
 
-**Run date:** <!-- agent fills -->
-**Commit/Build:** <!-- agent fills -->
+**Run date:** <!-- fill -->
+**Commit/Build:** <!-- fill -->
 
 ## Summary
-- ✅ Completed this run:
-  - <!-- feature bullets -->
-- ⚠️ Partial:
-  - <!-- bullets with notes -->
-- ❌ Missing:
-  - <!-- bullets with owner/date -->
+- ✅ Completed: <!-- list -->
+- ⚠️ Partial: <!-- list -->
+- ❌ Missing: <!-- list -->
 
-## Failing/Skipped Acceptance Tests
-- <!-- test name → reason → next action -->
+## Observed Failures vs Expected
+- PMID lookup → NCT not populated.
+- No field for NCT Title.
+- No MeSH headings displaying as selectable tags.
 
 ## Baseline Compliance
-- DOM diff vs v1.2 reference: ☐ None / ☐ Differences (attach diff)
-- CSS selector compatibility (tablist/panels/inputs/buttons): ☐ OK / ☐ Issues
-- Screenshots attached (Dashboard/Add/All/Import-Export/Settings): ☐ Yes / ☐ No
-- Theme default = Light; Dark/HC opt-in only: ☐ Verified
+- DOM diff: ☐ None / ☐ Differences.
+- CSS selector check: ☐ OK / ☐ Issues.
+- Screenshots: ☐ Yes / ☐ No.
+- Theme default Light: ☐ Verified.
 
-## Import/Export Rules
-- Bulk PMID paste ignores blanks; PubMed enrichment; CT.gov when NCT present: ☐ Verified
-- Table headers **exact**: Urgency | Docline Number | PMID | Citation | Patron Name | Status: ☐ Yes / ☐ No
-- Exports: blanks as empty strings (CSV) or empty/omitted (JSON): ☐ Verified
+## Import/Export
+- Bulk paste ignores blanks; enriches with PubMed; CT.gov on NCT: ☐ Verified.
+- Table headers exact: ☐ Yes / ☐ No.
+- Exports blanks as empty strings: ☐ Verified.
 
-## Docs & Comments
-- QuickStart / TechMaintenance / DevelopersGuide updated: ☐ Yes / ☐ No
-- “What changed in this build” sections appended (dated): ☐ Yes / ☐ No
-- JSDoc coverage (exported functions): ☐ OK / ☐ Missing (list)
+## Security
+- Input sanitization: ☐ OK / ☐ Missing.
+- Output escaping: ☐ OK / ☐ Missing.
+- API injection prevention: ☐ OK / ☐ Missing.
+
+## Docs
+- All updated: ☐ Yes / ☐ No.
+- "What changed" sections: ☐ Yes / ☐ No.
+- JSDoc coverage: ☐ OK / ☐ Missing.
+
+## Baseline Regressions
+- CRUD operations (edit single, bulk update/delete): **Fail** — non-functional in current build (regression from v1.2).
