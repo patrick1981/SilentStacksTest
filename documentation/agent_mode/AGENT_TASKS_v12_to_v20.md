@@ -81,3 +81,17 @@
 
 * Provide diff and screenshots for any changes.
 * Propose minimal options for DOM changes with mockups; pause for approval.
+## Documentation & Code Quality (must-do each run)
+1. Ensure docs exist and are current: 
+   - `documentation/QuickStart.md`
+   - `documentation/TechMaintenance.md`
+   - `documentation/DevelopersGuide.md`
+2. Append a **“What changed in this build”** section to all three with a concise delta.
+3. Update links to docs in `RELEASE_NOTES.md`; bump `CHANGELOG.md`.
+4. Enforce comments:
+   - JSDoc for all exported/public functions.
+   - Rationale comments above non-obvious blocks (rate limits, merge, queue).
+5. Fail the run if:
+   - Docs missing or not updated.
+   - Public functions lack JSDoc.
+
