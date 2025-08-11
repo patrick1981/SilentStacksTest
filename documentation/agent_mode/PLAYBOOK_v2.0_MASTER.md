@@ -1,5 +1,3 @@
-
-````markdown
 # SilentStacks – Master Playbook (v1.2 → v2.0)
 
 ## Baseline Declaration (Read First)
