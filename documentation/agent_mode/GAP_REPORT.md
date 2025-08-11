@@ -1,20 +1,35 @@
-# Gap Report
 
-Legend: ✅ Implemented | ⚠️ Partial | ❌ Missing | ⏳ Planned
+---
+
+# Gap Report (drop-in template)
+
+**Save as:** `GAP_REPORT.md` (the agent should update this every run)
+
+```markdown
+# GAP REPORT — SilentStacks v2.0
+
+**Run date:** <!-- agent fills -->
+**Commit/Build:** <!-- agent fills -->
 
 ## Summary
-Features complete: 0 | Partial: 0 | Missing: 0
+- ✅ Completed this run:
+  - <!-- feature bullets -->
+- ⚠️ Partial:
+  - <!-- bullets with notes -->
+- ❌ Missing:
+  - <!-- bullets with owner/date -->
 
-## Detail
-- Bulk Paste IDs: ❌
-- Bulk Upload (TXT/JSON): ❌
-- Cross-population PMID↔DOI↔NCT: ❌
-- MeSH auto-tagging: ❌
-- NLM citation export: ❌
-- Import/Export CSV+JSON: ❌
-- Status/Priority fields: ❌
-- Tag chips + color coding: ❌
-- Tabbed navigation: ❌
-- Offline-first (SW + cache): ❌
-- WCAG 2.2 AAA checks: ❌
-- Themes (Light/Dark/HC): ❌
+## Failing/Skipped Acceptance Tests
+- <!-- list test name → reason → next action -->
+
+## UI Contract Compliance
+- DOM/CSS diff: <!-- none / summary + link to diff -->
+- Screenshots attached: Dashboard / Add / All / Import-Export / Settings
+
+## Docs & Comments
+- QuickStart / TechMaintenance / DevelopersGuide: updated (Y/N)
+- JSDoc coverage for exported functions: <!-- % or N/A -->
+- “What changed in this build” sections appended (Y/N)
+
+## Risks / Decisions
+- <!-- short bullets, links to issues -->
