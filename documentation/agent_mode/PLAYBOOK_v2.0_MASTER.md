@@ -1,212 +1,229 @@
 # SilentStacks – Master Playbook (v1.2 → v2.0)
-**Updated:** 2025-08-11
+**Merged:** 2025-08-12 14:45
 
 **Repo URL:** https://github.com/patrick1981/SilentStacksTest  
 **Primary branch:** main  
-**Working branch (agent):** main  
-**Working mode:** PR-only against `main`. Do not push directly to `main`.
-**Review model:** Solo maintainer **may self-merge** PRs after running the pre-flight checklist and attaching test results/screenshots.
+**Working branch:** main (PR-only; no direct pushes)  
+**Review model:** Solo maintainer may self-merge after checklist + artifacts
 
-> **LIVING DOCUMENT** — Agent must treat this file as living and update docs each run.
+> **LIVING DOCUMENT** — Update on every run.
 
-## Baseline Declaration (Read First)
+## Baseline Declaration
+- v1.2 UI is the contract. Keep IDs/classes/roles/tab markup.
+- **Exception (approved 2025‑08‑12):** Minimal DOM additions allowed to meet v2.0 scope:
+  - Add **NCT ID** + **NCT Title** fields in Add Request.
+  - Add **MeSH** / **CT.gov** **chips** containers (cards/table/preview).
+  - Document all additions (IDs, ARIA, screenshots).
 
-**Agent must also follow** `AGENT_POLICY.md` (operational safety rules).
+## Deliverables
+- Single-file monolith: `dist/SilentStacks_v2_monolith.html` (all inline, no CDNs).
+- Release ZIP: monolith + `RELEASE_NOTES.md` + `GAP_REPORT_v2.0.md` + updated docs.
 
-This repo is a direct replication of SilentStacks **v1.2** and is the immutable baseline.
-- Treat current `index.html` and `assets/css/style.css` as **read-only UI contract**.
-- Do **not** change DOM structure, IDs, classes, ARIA roles, tab markup, or the 3-step indicator.
-- Any DOM/CSS change requires rationale, DOM/CSS diff, before/after screenshots, and explicit approval.
-- **Fail the run** if DOM/CSS diffs alter IDs/classes/roles or tab/stepper structure.
+## Phased Roadmap
+- **A — Hardening & Parity:** SW, error boundaries, exporters, no boot errors.
+- **B — Enrichment & Cross-Pop:** PubMed/CrossRef/CT.gov, bulk paste/upload, ID cross-linking, MeSH ≤8.
+- **C — A11y (WCAG 2.2 AAA):** Light default; Dark/HC optional; labels/roles/skip links/live regions.
+- **D — Offline-First:** queue lookups/exports; retry on reconnect.
+- **E — Search/Filter:** fuzzy + fielded; sortable table.
+- **F — Intelligence:** synonyms, MeSH hierarchy, specialty detection, trends.
+- **G — CT.gov Tagging:** sponsor type, phase, overall status chips (selectable).
 
-**Baseline Preservation — CRUD Operations**  
-All record management functions present in v1.2 — including single-record edit, bulk update, and bulk delete — **must remain fully functional** in v2.0.  
-- UI/UX for these actions must remain identical to v1.2 (no relocation, no renaming of buttons).  
-- Implementation may be refactored, but behavior and keyboard accessibility must match.  
-- Any loss of this functionality is considered a **baseline regression** and must fail the build.
+## Data & Security
+- Validators: PMID `^\d{6,9}$`, DOI `^10\.\d{4,9}/\S+$`, NCT `^NCT\d{8}$`.
+- Sanitize inputs, escape all outputs; encode all identifiers; allow-list params.
 
-**Baseline verification (must run once at start):**
-1) Snapshot DOM of the live v1.2 UI (header, tabs, stepper, main panels).  
-2) Compare current repo `index.html` against v1.2 reference; assert **0** structural diffs.  
-3) Confirm CSS selectors for tablist, panels, inputs, buttons are unchanged.  
-4) Save results to `RELEASE_NOTES.md` under “Baseline Verification”.
+## Tests (must pass)
+Boot, Lookup (PMID/DOI/NCT), Bulk, Enrichment/Merge, Search, Export, Offline, A11Y.
+Artifacts: screenshots of Dashboard/Add/All/Import‑Export/Settings.
 
-Source of truth for UI: https://patrick1981.github.io/SilentStacks/  
-Reference bundle (optional): `SilentStacks_v1.2_UI_Reference.zip`
+## Documentation Package (Merged)
+**This playbook bundles the provided v1.4 documentation for historical continuity and QA coverage.**  
+Treat **v1.4 features** as **non-regression requirements** for v2.0.  
+Included in `documentation/v1.4/`:
 
----
 
-## 0) UI Contract (Non-Negotiable)
-- **No frameworks** (no Bootstrap/Tailwind/CDNs).
-- **Do not change** existing IDs, classes, ARIA roles, tab markup, or the 3-step indicator.
-- All new behavior via **JavaScript only** (adapters/api/exporters). **No HTML restructuring.**
-- If a referenced file is missing (e.g., `documentation.js`), create a **no-op stub**.
-- **Default theme = Light**; Dark/High-Contrast only when explicitly toggled.
-- **Fail the run** if DOM/CSS diffs alter IDs/classes/roles or tab/stepper structure.
+# SilentStacks v1.4 Documentation Package
 
----
+## 1. Feature List
 
-## 1) Deliverables
-- **One file:** `dist/SilentStacks_v2_monolith.html` (all CSS/JS **inlined**; **no external/CDN** refs).
-- **Release ZIP:** `SilentStacks_Release.zip` containing:
-  - the monolith
-  - `RELEASE_NOTES.md` (with screenshots)
-  - `GAP_REPORT_v2.0.md`
-  - updated docs (`documentation/QuickStart.md`, `TechMaintenance.md`, `DevelopersGuide.md`)
+### **Core ILL Management Features**
+- ✅ **Complete Request Management** - Add, edit, delete, and track ILL requests
+- ✅ **4-Step ILL Workflow** - Structured process from order to completion
+- ✅ **Audit Trail System** - Timestamped proof of every action taken
+- ✅ **DOCLINE Integration** - Track DOCLINE numbers and status
+- ✅ **Automatic Reminders** - 5-day follow-up notifications
+- ✅ **Email Template Generation** - Professional correspondence templates
 
----
+### **API & Data Features**
+- ✅ **PubMed API Integration** - Automatic article lookup by PMID with MeSH extraction
+- ✅ **CrossRef API Integration** - DOI-based metadata retrieval
+- ✅ **ClinicalTrials.gov Integration** - Links publications to clinical trials
+- ✅ **MeSH Term Extraction** - Medical subject headings with major/minor topics
+- ✅ **Offline Queue System** - API requests queue when offline, process when online
+- ✅ **Bulk Import/Export** - CSV and JSON data management
+- ✅ **Performance Monitoring** - Memory usage and optimization tracking
+- ✅ **Data Validation** - Ensures data integrity and completeness
 
-## 2) Phased Roadmap (v1.2 → v2.0)
+### **User Interface Features**
+- ✅ **Responsive Design** - Works on desktop, tablet, and mobile
+- ✅ **Multi-theme Support** - Light, dark, and high-contrast themes
+- ✅ **Accessibility Compliant** - WCAG 2.1 AA standards
+- ✅ **Progressive Web App** - Install and run like native app
+- ✅ **Search & Filter** - Advanced request filtering and sorting
+- ✅ **Tag Management** - Color-coded categorization with MeSH integration
+- ✅ **Network Status Indicator** - Real-time online/offline status
 
-### Phase A — Hardening & Parity
-1. Add **Service Worker** + cache manifest (offline after first visit; guard against `file://`).
-2. Add error boundary + `aria-live` notifications.
-3. Implement **exporters** behind existing buttons: JSON, CSV, **NLM**.
-4. Tests: **no uncaught errors** on boot; keyboard traversal across tabs.
-
-### Phase B — Enrichment & Cross-Population
-1. API clients with rate limits (see §4).
-2. **Bulk Paste / Bulk Upload** for **mixed IDs (PMID/DOI/NCT)** with normalization & dedupe.
-3. **Cross-populate** identifiers; merge sources; record conflicts in `sourceConflicts`.
-4. **MeSH auto-tagging** (≤8) rendered as **selectable, color-coded chips** in existing tag UI and cards.
-
-### Phase C — Accessibility (WCAG 2.2 AAA)
-1. Theme toggle (Light/Dark/HC) in **Settings**; persist choice.
-2. Labels, names/roles/values; **7:1** contrast; skip links; visible focus.
-3. Keyboard-only passes on: Add→Enrich→Save; Bulk Import→Export.
-
-### Phase D — Offline-First
-1. **Queue** lookups/exports while offline; retry on reconnect.
-2. Verify offline boot; add cache integrity check (Diagnostics).
-
-### Phase E — Search/Filter Upgrades
-1. Keep **Fuse.js** (or tiny subsequence scorer); add **fielded** search + ranking (no UI changes).
-2. Preserve table; add sort & filter bound to current headers/inputs.
-
-### Phase F — Extended Intelligence
-- **Predictive synonyms** (query expansion for search).
-- **MeSH hierarchy** awareness (+★ for major topic optional in v2.0).
-- **Specialty detection** (derive from MeSH/journal/tags).
-- **Urgency heat map** (recency-weighted priority density on Dashboard) with text alt.
-- **Trends** (weekly/monthly counts, median TTF) with small sparkline.
-- **Custom fields import/export** (round-trip unknown columns via `record.custom`).
-
-### Phase G — ClinicalTrials.gov Tagging
-- Tags for **Sponsor Type**, **Phase**, **Overall Status**.
-- All CT tags **color-coded** and **selectable** to filter.
+### **Professional Features**
+- ✅ **Documentation System** - Built-in help and user guides
+- ✅ **Settings Management** - Customizable preferences and configuration
+- ✅ **Statistics Dashboard** - Request metrics and performance data
+- ✅ **Print Support** - Professional printable reports
+- ✅ **Service Worker** - Smart caching with network-first strategy for updates
+- ✅ **Evidence Level Assessment** - Automatic classification of study types
+- ✅ **Medical Specialty Detection** - Identifies relevant medical fields
 
 ---
 
-## 3) Feature Checklist (v2.0 scope)
-- Offline-first with SW + queue  
-- Bulk import/export (paste/CSV/JSON) with dedupe/normalize  
-- Cross-population between PMID, DOI, NCT  
-- Enrichment: PubMed, CrossRef, ClinicalTrials.gov  
-- **MeSH auto-tags (≤8) as selectable, color-coded chips**  
-- **CT.gov tags:** sponsorship, phase, status — color-coded & selectable  
-- Predictive synonyms; MeSH hierarchy; specialty detection  
-- Urgency heat map; trends  
-- Advanced search/filter (fuzzy + fielded); sortable table  
-- Status / Priority / Tags with color chips  
-- NLM citation export  
-- WCAG 2.2 AAA with Light/Dark/HC (**Light default**)  
-- **Security:** sanitize inputs, escape outputs (XSS-safe), **API injection prevention**  
-- **No DOM/CSS drift** from v1.2
+## 2. Changelog
+
+### **🚀 Version 1.4 - "Enhanced Medical Intelligence Edition"**
+*Release Date: August 2025*
+
+#### **🆕 Major New Features**
+
+**Advanced PubMed Integration**
+- ✨ **MeSH Term Extraction** - Automatically extracts and displays medical subject headings
+- ✨ **Clinical Trial Linking** - Detects and links NCT numbers to ClinicalTrials.gov
+- ✨ **Medical Specialty Detection** - Identifies cardiology, oncology, neurology, etc.
+- ✨ **Evidence Level Assessment** - Classifies studies (RCT, meta-analysis, case report)
+- ✨ **Study Type Identification** - Recognizes clinical trials, cohort studies, reviews
+- ✨ **Enhanced Abstract Extraction** - Pulls full abstracts when available
+
+**ClinicalTrials.gov Integration**
+- ✨ **NCT Number Detection** - Automatically finds trial identifiers in publications
+- ✨ **Trial Status Retrieval** - Gets enrollment status, phases, conditions
+- ✨ **Intervention Details** - Lists drugs, procedures, devices being studied
+- ✨ **Sponsor Information** - Shows lead organization and collaborators
+- ✨ **Timeline Tracking** - Start date, completion date, primary outcome dates
+
+**Intelligent Offline System**
+- ✨ **Smart Queue Management** - API requests queue when offline, auto-process on reconnect
+- ✨ **Connection Monitoring** - Real-time network status with automatic recovery
+- ✨ **Graceful Degradation** - Full functionality offline with queued lookups
+- ✨ **Background Sync** - Processes queued requests without user intervention
+
+**MeSH Term Features**
+- ✨ **Click-to-Add Tags** - One-click addition of MeSH terms to request tags
+- ✨ **Major/Minor Topics** - Visual indicators (★) for major topic headings
+- ✨ **Qualifier Support** - Subheadings like /therapy, /diagnosis included
+- ✨ **Medical Classification** - Automatic categorization by specialty
+
+#### **🔧 Enhanced Features**
+**Improved API Architecture**
+- 🔄 **Modular Design** - Separated PubMed, CrossRef, and ClinicalTrials modules
+- 🔄 **Rate Limiting** - Respects API limits (PubMed: 3/sec, CrossRef: 10/sec)
+- 🔄 **Error Recovery** - Graceful fallbacks for malformed responses
+- 🔄 **XML Parse Safety** - Handles invalid XML without crashing
+- 🔄 **Enhanced DOI Extraction** - Multiple strategies for finding DOIs
+
+**Service Worker Improvements**
+- 🔄 **Network-First Strategy** - JavaScript files always fresh when online
+- 🔄 **Smart Caching** - Different strategies for different file types
+- 🔄 **Automatic Updates** - Bug fixes deploy without user action
+- 🔄 **Data Preservation** - LocalStorage data protected during updates
+
+**User Experience Enhancements**
+- 🔄 **Visual MeSH Display** - Clean, clickable term badges
+- 🔄 **Status Indicators** - Clear feedback for API operations
+- 🔄 **Offline Notifications** - User-friendly offline mode messages
+- 🔄 **Loading States** - Proper feedback during API calls
+
+#### **🐛 Bug Fixes**
+**Critical Fixes**
+- ✅ **Fixed Module Closure Error** - Resolved syntax error preventing script execution
+- ✅ **Added Missing addMeshToTags Function** - MeSH term clicking now works
+- ✅ **Fixed Race Condition** - DOMContentLoaded timing issue resolved
+- ✅ **LocalStorage Safety** - Added existence checks to prevent errors
+- ✅ **XML Parser Error Handling** - Malformed XML no longer crashes the app
+
+**API Fixes**
+- ✅ **API Key Fallback Chain** - Checks multiple locations for API keys
+- ✅ **CrossRef DOI Normalization** - Handles various DOI formats correctly
+- ✅ **PubMed Response Validation** - Handles missing or incomplete data
+- ✅ **Network Timeout Handling** - Proper fallbacks for slow connections
+
+**Cache Fixes**
+- ✅ **Service Worker Cache Strategy** - Fixed cache-first causing stale content
+- ✅ **Version Management** - Proper cache busting on updates
+- ✅ **Offline Queue Persistence** - Queue survives page refreshes
+
+#### **⚡ Performance Improvements**
+- 🚀 **Reduced API Calls** - Smart caching reduces redundant requests
+- 🚀 **Optimized XML Parsing** - Faster MeSH extraction algorithm
+- 🚀 **Efficient Queue Processing** - Batch processing for offline queues
+- 🚀 **Memory Management** - Cleanup of event listeners and references
+- 🚀 **Faster Initial Load** - Service worker pre-caches critical files
+
+#### **🔒 Technical Enhancements**
+- 🛠️ **Modular Architecture** - Clean separation of concerns
+- 🛠️ **Promise-Based APIs** - Modern async/await throughout
+- 🛠️ **AbortSignal Support** - Cancellable fetch requests
+- 🛠️ **Event System** - Proper event dispatching for form updates
+- 🛠️ **Type Safety** - Better parameter validation
 
 ---
 
-## 4) Data, API & Security
+### **📋 Previous Versions**
+- **1.3 – Complete Workflow Edition**
+- **1.2.1 – Performance Apocalypse Edition**
+- **1.2.0 – Enhanced Data Edition**
+- **1.1.0 – Foundation Edition**
 
-**Record model (keys used by table/cards/exports):**
-```js
-{
-  id: "uuid",
-  createdAt: "ISO",
-  updatedAt: "ISO",
-  priority: "Low|Normal|High|Urgent",  // maps to table "Urgency"
-  docline: "string",                   // "Docline Number"
-  identifiers: { pmid:"", doi:"", nct:"" },
-  title:"", authors:"", journal:"", year:"", volume:"", issue:"", pages:"",
-  citation:"",                         // NLM string for quick display/exports
-  patronName:"", patronEmail:"",
-  status:"New|In Progress|On Hold|Fulfilled|Canceled",
-  mesh:[],          // human MeSH labels
-  meshTree:[],      // optional MeSH tree codes for hierarchy matching
-  trial: {          // CT.gov summary
-    sponsorType:"", // Industry | NIH | Other
-    phase:"",       // e.g., Phase 2/3
-    overallStatus:""// Recruiting | Completed | ...
-  },
-  specialty:"",     // inferred
-  custom:{},        // round-tripped unknown import columns
-  sources:{ pubmed:{}, crossref:{}, clinicaltrials:{} },
-  sourceConflicts:{}
-}
-```
+### **🎯 Coming in 1.5**
+(Planned features and infra as provided)
 
-**Rate limits:** PubMed ≤ **2/sec**, CrossRef ≤ **5/sec**, ClinicalTrials.gov **1/sec**  
-**Retries:** exponential backoff; **30s** timeouts; visible error messages  
-**Security:**  
-- **Input sanitization:** strip HTML/control chars; strict ID regex (PMID `^\d{{6,9}}$`, DOI `^10\.\d{{4,9}}/\S+$`, NCT `^NCT\d{{8}}$`).  
-- **Output escaping:** escape all rendered text; never `innerHTML` with untrusted data.  
-- **API injection prevention:** allow-list known params; always `encodeURIComponent` identifiers.  
+## GAP REPORT
 
----
+# GAP REPORT — SilentStacks v2.0 (Merged)
+**Run date:** 2025-08-12 14:45  
+**Build:** monolith (hotpatched + NCT fields + chips preview)
 
-## 5) Table & Data Rules (v2.0 hard requirements)
+## Summary
+- ✅ Completed this run:
+  - SW gating; offline supported on https/localhost
+  - Strict ID validators; bulk parser normalization/dedupe
+  - PubMed EFetch DOI + MeSH (≤8) + NCT detection
+  - CrossRef with DOI→PMID backfill
+  - **NCT ID** + **NCT Title** fields (approved DOM change)
+  - Chips preview container with keyboard-accessible chips
+  - JSON/CSV export; NLM exporter helper
 
-**Column order (exact):**
-`Urgency | Docline Number | PMID | Citation | Patron Name | Status`
+- ⚠️ Partial:
+  - MeSH/CT chips **render into cards/table** (preview done; row/card hooks pending)
+  - Bulk **update** bindings (UI exists? need final IDs)
+  - API injection prevention (tighten everywhere; pass 1 done)
+  - 7:1 AAA contrast verification pass
 
-**Headings (exact strings):**
-`Urgency`, `Docline Number`, `PMID`, `Citation`, `Patron Name`, `Status`
+- ❌ Missing:
+  - CT.gov tags shown in **cards/table** by default
+  - Bulk update workflow (fully wired)
+  - Finalized documentation set (QuickStart/TechMaintenance/DevelopersGuide with screenshots)
 
-**Bulk Paste/Upload (mixed IDs path):**
-* Accept **PMIDs, DOIs, NCTs** (commas / spaces / newlines)  
-* Normalize/dedupe; enrich via PubMed/CrossRef/CT.gov  
-* **Ignore empty tokens/rows** (no blank records)  
-* Enforce throttle/backoff (see §4)
+## Observed vs Expected
+- **Table headers** — PASS (exact order).  
+- **CRUD** — Bulk delete wired; **bulk update** still missing (regression until bound).  
+- **NLM export** — Function present; bind to UI button or menu.
 
-**Empty/Blank fields:**
-* **Import:** ignore blanks; never overwrite existing values with blanks
-* **Export:** include columns; blanks output as **empty strings** (`""`) — never `null`/`undefined`
+## P0 Blockers to Production
+1) Bind chips to card/table renderers (no DOM drift; augment render).  
+2) Wire **bulk update** control IDs and handlers.  
+3) AAA color/contrast audit & fixes.  
+4) Button/command for **NLM export** in UI.
 
-**Validation:**
-* PMID is 6–9 digits; DOI pattern; NCT pattern
-* Urgency ∈ {Low, Normal, High, Urgent} (default Normal)
-* Status ∈ {New, In Progress, On Hold, Fulfilled, Canceled} (default New)
+## Operational Notes
+- DOM changes approved on 2025‑08‑12 recorded in Playbook.  
+- Work in PR-only mode against `main`. Attach screenshots and console logs for each test pass.
 
----
-
-## 6) Record Cards & Tags (no DOM restructuring)
-- MeSH chips selectable (filter on click), color-coded.  
-- CT.gov chips for **sponsor/phase/status** selectable & color-coded.  
-- Specialty chip derived from MeSH/journal.  
-- Custom field chips shown in cards; no new table columns.
-
----
-
-## 7) Tests (must pass)
-* Boot, Lookup (PMID/DOI/NCT), Bulk, Enrichment/Merge, Search, Export, Offline, A11Y
-* **Screenshots:** Dashboard, Add New Request, All Requests, Import/Export, Settings (attach to `RELEASE_NOTES.md`)
-
----
-
-## 8) Documentation & Code Quality (must-do each run)
-* Update `documentation/QuickStart.md`, `documentation/TechMaintenance.md`, `documentation/DevelopersGuide.md`
-* Append dated **“What changed in this build”** to each
-* Update `RELEASE_NOTES.md` and `CHANGELOG.md`
-* JSDoc for all exported/public functions
-* Rationale comments for non-obvious logic
-* **Fail the run** if docs are missing/outdated or exported functions lack JSDoc
-
----
-
-## 9) Agent Start Prompt (copy into Agent Mode)
-> You are the lead developer for SilentStacks v2.0.  
-> Follow `PLAYBOOK_v2.0_MASTER.md` and `AGENT_POLICY.md` **exactly**.  
-> Preserve the v1.2 UI (no DOM/CSS changes).  
-> Build a single-file `dist/SilentStacks_v2_monolith.html` (no CDNs).  
-> Implement all v2.0 features, run tests, generate screenshots/docs, and package `SilentStacks_Release.zip`.  
-> **PR-only** against `main`. Do **not** push directly to `main`.  
-> **Pause for approval** before any DOM/CSS edits; provide diffs + screenshots.
+## Artifacts
+- Monolith with NCT fields/chips preview: `SilentStacks_v2_monolith_NCT_chips.html`  
+- GAP quick checks stored alongside build.
