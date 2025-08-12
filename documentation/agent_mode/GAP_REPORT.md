@@ -1,45 +1,44 @@
-# GAP REPORT — SilentStacks v2.0
-**Run date:** 2025-08-11
-**Commit/Build:** <!-- agent fills -->
+
+# GAP REPORT — SilentStacks v2.0 (Merged)
+**Run date:** 2025-08-12 14:45  
+**Build:** monolith (hotpatched + NCT fields + chips preview)
 
 ## Summary
 - ✅ Completed this run:
-  - <!-- feature bullets -->
+  - SW gating; offline supported on https/localhost
+  - Strict ID validators; bulk parser normalization/dedupe
+  - PubMed EFetch DOI + MeSH (≤8) + NCT detection
+  - CrossRef with DOI→PMID backfill
+  - **NCT ID** + **NCT Title** fields (approved DOM change)
+  - Chips preview container with keyboard-accessible chips
+  - JSON/CSV export; NLM exporter helper
+
 - ⚠️ Partial:
-  - <!-- bullets with notes -->
+  - MeSH/CT chips **render into cards/table** (preview done; row/card hooks pending)
+  - Bulk **update** bindings (UI exists? need final IDs)
+  - API injection prevention (tighten everywhere; pass 1 done)
+  - 7:1 AAA contrast verification pass
+
 - ❌ Missing:
-  - <!-- bullets with owner/date -->
+  - CT.gov tags shown in **cards/table** by default
+  - Bulk update workflow (fully wired)
+  - Finalized documentation set (QuickStart/TechMaintenance/DevelopersGuide with screenshots)
 
-## Observed Failures vs Expected
-- PMID lookup → NCT not populated.
-- No field or display for NCT Title.
-- No MeSH headings displaying as **selectable** tags.
-- CRUD operations (single edit, bulk update/delete) missing if not present → **Baseline regression**.
+## Observed vs Expected
+- **Table headers** — PASS (exact order).  
+- **CRUD** — Bulk delete wired; **bulk update** still missing (regression until bound).  
+- **NLM export** — Function present; bind to UI button or menu.
 
-## Baseline Compliance
-- DOM diff vs v1.2 reference: ☐ None / ☐ Differences (attach diff)
-- CSS selector compatibility (tablist/panels/inputs/buttons): ☐ OK / ☐ Issues
-- CRUD operations from v1.2 preserved: ☐ Pass / ☐ **Fail (regression)**
-- Screenshots attached (Dashboard/Add/All/Import-Export/Settings): ☐ Yes / ☐ No
-- Theme default = Light; Dark/HC opt-in only: ☐ Verified
+## P0 Blockers to Production
+1) Bind chips to card/table renderers (no DOM drift; augment render).  
+2) Wire **bulk update** control IDs and handlers.  
+3) AAA color/contrast audit & fixes.  
+4) Button/command for **NLM export** in UI.
 
-## Import/Export Rules
-- Bulk paste accepts **PMID/DOI/NCT**, normalizes & dedupes; enrichment applied; CT.gov when NCT present: ☐ Verified
-- Table headers **exact**: Urgency | Docline Number | PMID | Citation | Patron Name | Status: ☐ Yes / ☐ No
-- Exports: blanks as empty strings (CSV) or empty/omitted (JSON): ☐ Verified
+## Operational Notes
+- DOM changes approved on 2025‑08‑12 recorded in Playbook.  
+- Work in PR-only mode against `main`. Attach screenshots and console logs for each test pass.
 
-## Security
-- Input sanitization (strip HTML/control chars; strict ID regex): ☐ OK / ☐ Missing
-- Output escaping (no untrusted innerHTML): ☐ OK / ☐ Missing
-- API injection prevention (allow-list params; encoded identifiers): ☐ OK / ☐ Missing
-
-## Operational Safeguards
-- Working mode: **PR-only against `main`**.  
-- Agent must follow `AGENT_POLICY.md` (in repo root).
-
-## Docs & Comments
-- QuickStart / TechMaintenance / DevelopersGuide updated: ☐ Yes / ☐ No
-- “What changed in this build” sections appended (dated): ☐ Yes / ☐ No
-- JSDoc coverage (exported functions): ☐ OK / ☐ Missing (list)
-
-- Review model: **Self-merge allowed** after checklist and test artifacts.
+## Artifacts
+- Monolith with NCT fields/chips preview: `SilentStacks_v2_monolith_NCT_chips.html`  
+- GAP quick checks stored alongside build.
