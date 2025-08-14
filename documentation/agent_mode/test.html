@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilentStacks - Academic Research Intelligence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 30px;
+            grid-template-columns: 1fr 350px;
+        }
+
+        .main-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .form-row {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .form-row.two-col {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .form-row.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--gray-50);
+            color: var(--gray-800);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--gray-600);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-700);
+            transform: translateY(-2px);
+        }
+
+        .status {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-weight: 600;
+            display: none;
+            position: relative;
+            border-left: 4px solid;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+            border-left-color: var(--success);
+            display: block;
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+            border-left-color: var(--error);
+            display: block;
+        }
+
+        .status.loading {
+            background: rgba(6, 182, 212, 0.1);
+            color: #0e7490;
+            border-left-color: var(--accent);
+            display: block;
+        }
+
+        .status.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+            border-left-color: var(--warning);
+            display: block;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .sidebar-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            cursor: default;
+        }
+
+        .tag-mesh {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .tag-phase {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+
+        .tag-sponsor {
+            background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+            color: #374151;
+            border: 1px solid #9ca3af;
+        }
+
+        .tag-intervention {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            color: #166534;
+            border: 1px solid #4ade80;
+        }
+
+        .tag[data-auto="true"] {
+            position: relative;
+        }
+
+        .tag[data-auto="true"]::after {
+            content: "✨";
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            font-size: 12px;
+        }
+
+        .nct-indicator {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 2px solid #3b82f6;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 16px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .nct-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .nct-id {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e40af;
+        }
+
+        .nct-phase {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .nct-details {
+            display: grid;
+            gap: 12px;
+        }
+
+        .nct-detail-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .nct-detail-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nct-detail-value {
+            font-size: 0.9rem;
+            color: var(--gray-800);
+            line-height: 1.4;
+        }
+
+        .nct-outcomes {
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .nct-outcome {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .nct-outcome:last-child {
+            border-bottom: none;
+        }
+
+        .nct-outcome-type {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e40af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nct-outcome-text {
+            font-size: 0.85rem;
+            color: var(--gray-700);
+            margin-top: 4px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                max-width: 800px;
+            }
+            
+            .form-row.two-col {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row.three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 24px;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .content, .sidebar-card {
+                padding: 20px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .nct-detail-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-400);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-500);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="main-panel">
+            <div class="header">
+                <div class="header-content">
+                    <h1>🧬 SilentStacks</h1>
+                    <p class="subtitle">Advanced Academic Research Intelligence Platform</p>
+                </div>
+            </div>
+
+            <div class="content">
+                <div id="status" class="status"></div>
+
+                <!-- PMID Lookup Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🔍</div>
+                        <h3>PMID Intelligence Lookup</h3>
+                    </div>
+                    
+                    <!-- Enhanced Metadata Preview -->
+                    <div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
+                        <div style="font-weight: 700; color: #1e40af; margin-bottom: 12px; font-size: 0.9rem;">🚀 ENHANCED METADATA EXTRACTION</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.8rem;">
+                            <div>
+                                <div style="font-weight: 600; color: #1f2937; margin-bottom: 6px;">📄 PubMed Data</div>
+                                <div style="color: #6b7280;">• Title, Authors, Journal</div>
+                                <div style="color: #6b7280;">• DOI, Year, Abstract</div>
+                                <div style="color: #6b7280;">• MeSH Headings</div>
+                                <div style="color: #6b7280;">• NCT Auto-Detection</div>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: #1f2937; margin-bottom: 6px;">🧪 Clinical Trial Data</div>
+                                <div style="color: #6b7280;">• Trial Title & Phase</div>
+                                <div style="color: #6b7280;">• Sponsor & Status</div>
+                                <div style="color: #6b7280;">• Primary/Secondary Outcomes</div>
+                                <div style="color: #6b7280;">• Eligibility & Locations</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pmid">PubMed ID</label>
+                        <div class="input-group">
+                            <input type="text" id="pmid" class="form-control" placeholder="Enter PMID (try: 18539917 for rich data)" maxlength="9">
+                            <button type="button" id="lookup-pmid" class="btn btn-primary">
+                                <span class="btn-text">Analyze & Enrich</span>
+                                <span class="loading-spinner" style="display: none;"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paper Information Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📄</div>
+                        <h3>Publication Details</h3>
+                    </div>
+                    <form id="paper-form">
+                        <div class="form-group">
+                            <label for="title">Title</label>
+                            <textarea id="title" class="form-control" placeholder="Paper title"></textarea>
+                        </div>
+
+                        <div class="form-row two-col">
+                            <div class="form-group">
+                                <label for="authors">Authors</label>
+                                <input type="text" id="authors" class="form-control" placeholder="Author names">
+                            </div>
+                            <div class="form-group">
+                                <label for="journal">Journal</label>
+                                <input type="text" id="journal" class="form-control" placeholder="Journal name">
+                            </div>
+                        </div>
+
+                        <div class="form-row three-col">
+                            <div class="form-group">
+                                <label for="year">Year</label>
+                                <input type="number" id="year" class="form-control" placeholder="2024" min="1900" max="2030">
+                            </div>
+                            <div class="form-group">
+                                <label for="doi">DOI</label>
+                                <input type="text" id="doi" class="form-control" placeholder="10.1000/example">
+                            </div>
+                            <div class="form-group">
+                                <label for="nct">Clinical Trial NCT</label>
+                                <input type="text" id="nct" class="form-control" placeholder="NCT00000000" maxlength="11">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Management Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">⚙️</div>
+                        <h3>Research Management</h3>
+                    </div>
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select id="status" class="form-control">
+                                <option value="pending">📋 Pending</option>
+                                <option value="in-progress">🔄 In Progress</option>
+                                <option value="completed">✅ Completed</option>
+                                <option value="archived">📦 Archived</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="priority">Priority</label>
+                            <select id="priority" class="form-control">
+                                <option value="low">🟢 Low</option>
+                                <option value="normal" selected>🟡 Normal</option>
+                                <option value="high">🟠 High</option>
+                                <option value="urgent">🔴 Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="patron-email">Patron Email</label>
+                        <input type="email" id="patron-email" class="form-control" placeholder="researcher@university.edu">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tags">Research Tags</label>
+                        <input type="text" id="tags" class="form-control" placeholder="Enter tags separated by commas">
+                        <div id="tag-chips" class="tag-container"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Research Notes</label>
+                        <textarea id="notes" class="form-control" placeholder="Additional notes, methodology, significance..."></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 16px; margin-top: 24px;">
+                        <button type="button" id="save-paper" class="btn btn-success" style="flex: 1;">
+                            💾 Save Research Entry
+                        </button>
+                        <button type="button" id="clear-form" class="btn btn-secondary">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <!-- Settings Card -->
+            <div class="sidebar-card">
+                <div class="card-header">
+                    <div class="card-icon">⚙️</div>
+                    <h3>API Configuration</h3>
+                </div>
+                <div class="form-group">
+                    <label for="api-key">NCBI API Key</label>
+                    <input type="password" id="api-key" class="form-control" placeholder="Optional for higher rate limits">
+                </div>
+                <div class="form-group">
+                    <label for="crossref-email">Email</label>
+                    <input type="email" id="crossref-email" class="form-control" placeholder="your.email@domain.com">
+                </div>
+                <button type="button" id="save-settings" class="btn btn-secondary" style="width: 100%;">
+                    Save Settings
+                </button>
+            </div>
+
+            <!-- Clinical Trial Info (shows preview, populated dynamically) -->
+            <div id="nct-sidebar" class="sidebar-card">
+                <div class="card-header">
+                    <div class="card-icon">🧪</div>
+                    <h3>Clinical Trial Intelligence</h3>
+                </div>
+                <div id="nct-content">
+                    <div style="text-align: center; color: #6b7280; font-style: italic; padding: 20px;">
+                        <div style="font-size: 2rem; margin-bottom: 8px;">🔬</div>
+                        <div>Enter a PMID above to see comprehensive clinical trial metadata:</div>
+                        <div style="margin-top: 12px; font-size: 0.8rem; color: #9ca3af;">
+                            • Trial Title & Phase<br>
+                            • Sponsor Information<br>
+                            • Study Status & Timeline<br>
+                            • Primary/Secondary Outcomes<br>
+                            • Eligibility Criteria<br>
+                            • Study Locations<br>
+                            • MeSH Headings<br>
+                        </div>
+                        <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px; font-size: 0.8rem; color: #1e40af;">
+                            <strong>Try PMID: 18539917</strong><br>
+                            (Has rich clinical trial data)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================================================
+        // ENHANCED PMID ENRICHMENT PIPELINE WITH ROBUST NCT METADATA
+        // =============================================================================
+
+        class PMIDEnrichmentPipeline {
+          constructor(options = {}) {
+            this.apiKey = options.apiKey || '';
+            this.crossrefEmail = options.crossrefEmail || '';
+            this.cache = new Map();
+            this.rateLimiter = new Map();
+          }
+
+          async enrichPMID(pmid) {
+            console.log(`Starting enrichment pipeline for PMID: ${pmid}`);
+            
+            const result = {
+              pmid: pmid,
+              status: 'processing',
+              pubmed: null,
+              clinicalTrial: null,
+              unified: null,
+              errors: [],
+              timing: { start: Date.now() }
+            };
+
+            try {
+              console.log('Step 1: Fetching PubMed data...');
+              result.pubmed = await this.fetchPubMedData(pmid);
+              result.timing.pubmedComplete = Date.now();
+              
+              if (result.pubmed.nct) {
+                console.log(`Step 2: Found NCT ${result.pubmed.nct}, fetching comprehensive clinical trial data...`);
+                try {
+                  result.clinicalTrial = await this.fetchEnhancedClinicalTrialData(result.pubmed.nct);
+                  result.timing.clinicalTrialComplete = Date.now();
+                } catch (error) {
+                  console.warn('Clinical trial fetch failed:', error);
+                  result.errors.push(`Clinical trial lookup failed: ${error.message}`);
+                }
+              } else {
+                console.log('Step 2: No NCT found in PubMed data');
+              }
+
+              console.log('Step 3: Creating unified data model...');
+              result.unified = this.mergeData(result.pubmed, result.clinicalTrial);
+              result.status = 'complete';
+              result.timing.complete = Date.now();
+
+              console.log('Pipeline complete:', result);
+              return result;
+
+            } catch (error) {
+              console.error('Pipeline failed:', error);
+              result.status = 'failed';
+              result.errors.push(error.message);
+              return result;
+            }
+          }
+
+          async fetchPubMedData(pmid) {
+            await this.respectRateLimit('pubmed');
+            const keyParam = this.apiKey ? `&api_key=${this.apiKey}&tool=SilentStacks&email=contact@example.com` : '&tool=SilentStacks&email=contact@example.com';
+            
+            const [summaryData, xmlData] = await Promise.all([
+              this.fetchPubMedSummary(pmid, keyParam),
+              this.fetchPubMedXML(pmid, keyParam)
+            ]);
+
+            const result = {
+              pmid: pmid,
+              title: summaryData.title || '',
+              authors: this.formatAuthors(summaryData.authors || []),
+              journal: summaryData.fulljournalname || summaryData.source || '',
+              year: this.extractYear(summaryData.pubdate || ''),
+              doi: summaryData.elocationid || this.extractDOIFromXML(xmlData),
+              abstract: this.extractAbstractFromXML(xmlData),
+              mesh: this.extractMeshFromXML(xmlData),
+              nct: await this.extractNCTFromAll(summaryData, xmlData, pmid),
+              pubTypes: summaryData.pubtypelist || [],
+              provenance: {
+                pubmedSummary: true,
+                pubmedXML: true,
+                fetchedAt: new Date().toISOString()
+              }
+            };
+
+            return result;
+          }
+
+          async fetchPubMedSummary(pmid, keyParam) {
+            const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${pmid}&retmode=json${keyParam}`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+              throw new Error(`PubMed summary failed: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            const record = data.result?.[pmid];
+            
+            if (!record || record.error) {
+              throw new Error(`PMID ${pmid} not found or invalid`);
+            }
+            
+            return record;
+          }
+
+          async fetchPubMedXML(pmid, keyParam) {
+            const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmid}&retmode=xml${keyParam}`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+              throw new Error(`PubMed XML failed: ${response.status} ${response.statusText}`);
+            }
+            
+            const xmlText = await response.text();
+            return new DOMParser().parseFromString(xmlText, 'application/xml');
+          }
+
+          async extractNCTFromAll(summaryData, xmlDoc, pmid) {
+            console.log('Extracting NCT from multiple sources...');
+            
+            // Strategy 1: DataBank entries
+            const dataBanks = xmlDoc.querySelectorAll('DataBank');
+            for (const bank of dataBanks) {
+              const bankName = bank.querySelector('DataBankName')?.textContent || '';
+              if (bankName.toLowerCase().includes('clinical')) {
+                const accessions = bank.querySelectorAll('AccessionNumber');
+                for (const acc of accessions) {
+                  const nct = this.extractNCTFromText(acc.textContent || '');
+                  if (nct) return nct;
+                }
+              }
+            }
+
+            // Strategy 2: Secondary IDs and Other IDs
+            const idSelectors = ['OtherID', 'SecondaryId', 'ArticleId'];
+            for (const selector of idSelectors) {
+              const ids = xmlDoc.querySelectorAll(selector);
+              for (const id of ids) {
+                const nct = this.extractNCTFromText(id.textContent || '');
+                if (nct) return nct;
+              }
+            }
+
+            // Strategy 3: Title and abstract text search
+            const title = summaryData.title || '';
+            const abstractNodes = xmlDoc.querySelectorAll('AbstractText');
+            const abstractText = Array.from(abstractNodes).map(n => n.textContent).join(' ');
+            
+            const fullText = `${title} ${abstractText}`;
+            const nctFromText = this.extractNCTFromText(fullText);
+            if (nctFromText) return nctFromText;
+
+            // Strategy 4: ELink
+            const nctFromELink = await this.fetchNCTViaELink(pmid);
+            if (nctFromELink) return nctFromELink;
+
+            return null;
+          }
+
+          extractNCTFromText(text) {
+            if (!text) return null;
+            const match = text.match(/NCT\d{8}/i);
+            return match ? match[0].toUpperCase() : null;
+          }
+
+          async fetchNCTViaELink(pmid) {
+            try {
+              await this.respectRateLimit('pubmed');
+              const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&db=clinicaltrials&id=${pmid}&tool=SilentStacks&email=contact@example.com`;
+              const response = await fetch(url);
+              
+              if (!response.ok) return null;
+              
+              const xmlText = await response.text();
+              const match = xmlText.match(/NCT\d{8}/i);
+              return match ? match[0].toUpperCase() : null;
+            } catch (error) {
+              console.warn('ELink failed:', error);
+              return null;
+            }
+          }
+
+          /**
+           * ENHANCED CLINICAL TRIALS DATA FETCHING WITH COMPREHENSIVE METADATA
+           */
+          async fetchEnhancedClinicalTrialData(nctId) {
+            if (!nctId || !/^NCT\d{8}$/i.test(nctId)) {
+              throw new Error(`Invalid NCT ID: ${nctId}`);
+            }
+
+            await this.respectRateLimit('clinicaltrials');
+            console.log(`Fetching comprehensive clinical trial data for ${nctId}...`);
+
+            const endpoints = [
+              {
+                url: `https://clinicaltrials.gov/api/v2/studies/${nctId}`,
+                version: 'v2'
+              },
+              {
+                url: `https://clinicaltrials.gov/api/query/full_studies?expr=${nctId}&min_rnk=1&max_rnk=1&fmt=json`,
+                version: 'v1'
+              }
+            ];
+
+            for (const endpoint of endpoints) {
+              try {
+                const response = await fetch(endpoint.url);
+                if (!response.ok) continue;
+                
+                const data = await response.json();
+                const parsed = this.parseEnhancedClinicalTrialData(data, nctId, endpoint.version);
+                
+                if (parsed) return parsed;
+              } catch (error) {
+                console.warn(`Failed to fetch from ${endpoint.version} API:`, error);
+              }
+            }
+
+            throw new Error(`Could not fetch clinical trial data for ${nctId} from any API`);
+          }
+
+          parseEnhancedClinicalTrialData(data, nctId, apiVersion) {
+            console.log(`Parsing enhanced clinical trial data from ${apiVersion} API...`);
+            
+            let study = null;
+            
+            if (apiVersion === 'v2') {
+              study = data.study || (data.studies && data.studies[0]);
+            } else if (apiVersion === 'v1') {
+              study = data.FullStudiesResponse?.FullStudies?.[0]?.Study;
+            }
+
+            if (!study) return null;
+
+            // Enhanced data extraction with comprehensive metadata
+            const result = {
+              nctId: nctId,
+              
+              // Basic Information
+              title: this.getStudyField(study, [
+                'protocolSection.identificationModule.officialTitle',
+                'ProtocolSection.IdentificationModule.OfficialTitle',
+                'protocolSection.identificationModule.briefTitle',
+                'ProtocolSection.IdentificationModule.BriefTitle'
+              ]),
+              
+              briefTitle: this.getStudyField(study, [
+                'protocolSection.identificationModule.briefTitle',
+                'ProtocolSection.IdentificationModule.BriefTitle'
+              ]),
+              
+              // Study Design
+              phase: this.getStudyField(study, [
+                'protocolSection.designModule.phases.0',
+                'ProtocolSection.DesignModule.PhaseList.Phase.0',
+                'ProtocolSection.DesignModule.PhaseList.Phase'
+              ]),
+              
+              studyType: this.getStudyField(study, [
+                'protocolSection.designModule.studyType',
+                'ProtocolSection.DesignModule.StudyType'
+              ]),
+              
+              interventionModel: this.getStudyField(study, [
+                'protocolSection.designModule.designInfo.interventionModel',
+                'ProtocolSection.DesignModule.DesignInfo.InterventionModel'
+              ]),
+              
+              allocation: this.getStudyField(study, [
+                'protocolSection.designModule.designInfo.allocation',
+                'ProtocolSection.DesignModule.DesignInfo.Allocation'
+              ]),
+              
+              masking: this.getStudyField(study, [
+                'protocolSection.designModule.designInfo.maskingInfo.masking',
+                'ProtocolSection.DesignModule.DesignInfo.MaskingInfo.Masking'
+              ]),
+              
+              primaryPurpose: this.getStudyField(study, [
+                'protocolSection.designModule.designInfo.primaryPurpose',
+                'ProtocolSection.DesignModule.DesignInfo.PrimaryPurpose'
+              ]),
+              
+              // Status Information
+              status: this.getStudyField(study, [
+                'protocolSection.statusModule.overallStatus',
+                'ProtocolSection.StatusModule.OverallStatus'
+              ]),
+              
+              whyStopped: this.getStudyField(study, [
+                'protocolSection.statusModule.whyStopped',
+                'ProtocolSection.StatusModule.WhyStopped'
+              ]),
+              
+              startDate: this.getStudyField(study, [
+                'protocolSection.statusModule.startDateStruct.date',
+                'ProtocolSection.StatusModule.StartDateStruct.StartDate'
+              ]),
+              
+              completionDate: this.getStudyField(study, [
+                'protocolSection.statusModule.completionDateStruct.date',
+                'ProtocolSection.StatusModule.CompletionDateStruct.CompletionDate'
+              ]),
+              
+              // Conditions and Interventions
+              conditions: this.getStudyFieldArray(study, [
+                'protocolSection.conditionsModule.conditions',
+                'ProtocolSection.ConditionsModule.ConditionList.Condition'
+              ]),
+              
+              interventions: this.extractInterventions(study),
+              
+              // Enrollment
+              enrollmentCount: this.getStudyField(study, [
+                'protocolSection.designModule.enrollmentInfo.count',
+                'ProtocolSection.DesignModule.EnrollmentInfo.EnrollmentCount'
+              ]),
+              
+              enrollmentType: this.getStudyField(study, [
+                'protocolSection.designModule.enrollmentInfo.type',
+                'ProtocolSection.DesignModule.EnrollmentInfo.EnrollmentType'
+              ]),
+              
+              // Sponsor Information
+              sponsor: this.getStudyField(study, [
+                'protocolSection.sponsorCollaboratorsModule.leadSponsor.name',
+                'ProtocolSection.SponsorCollaboratorsModule.LeadSponsor.LeadSponsorName'
+              ]),
+              
+              sponsorClass: this.getStudyField(study, [
+                'protocolSection.sponsorCollaboratorsModule.leadSponsor.class',
+                'ProtocolSection.SponsorCollaboratorsModule.LeadSponsor.LeadSponsorClass'
+              ]),
+              
+              collaborators: this.getStudyFieldArray(study, [
+                'protocolSection.sponsorCollaboratorsModule.collaborators',
+                'ProtocolSection.SponsorCollaboratorsModule.CollaboratorList.Collaborator'
+              ]),
+              
+              // Outcomes
+              primaryOutcomes: this.extractOutcomes(study, 'primary'),
+              secondaryOutcomes: this.extractOutcomes(study, 'secondary'),
+              
+              // Eligibility
+              eligibility: this.extractEligibility(study),
+              
+              // Locations
+              locations: this.extractLocations(study),
+              
+              // URLs and References
+              studyUrl: `https://clinicaltrials.gov/ct2/show/${nctId}`,
+              
+              // Metadata
+              apiVersion: apiVersion,
+              provenance: {
+                source: 'clinicaltrials.gov',
+                apiVersion: apiVersion,
+                fetchedAt: new Date().toISOString()
+              }
+            };
+
+            console.log('Enhanced clinical trial data parsed:', result);
+            return result;
+          }
+
+          extractInterventions(study) {
+            const interventions = [];
+            const paths = [
+              'protocolSection.armsInterventionsModule.interventions',
+              'ProtocolSection.ArmsInterventionsModule.InterventionList.Intervention'
+            ];
+            
+            for (const path of paths) {
+              const interventionData = this.getNestedValue(study, path);
+              if (Array.isArray(interventionData)) {
+                interventionData.forEach(intervention => {
+                  interventions.push({
+                    type: intervention.type || intervention.InterventionType,
+                    name: intervention.name || intervention.InterventionName,
+                    description: intervention.description || intervention.InterventionDescription
+                  });
+                });
+                break;
+              }
+            }
+            
+            return interventions;
+          }
+
+          extractOutcomes(study, type) {
+            const outcomes = [];
+            const field = type === 'primary' ? 'primaryOutcomes' : 'secondaryOutcomes';
+            const paths = [
+              `protocolSection.outcomesModule.${field}`,
+              `ProtocolSection.OutcomesModule.${field === 'primaryOutcomes' ? 'PrimaryOutcome' : 'SecondaryOutcome'}List.${field === 'primaryOutcomes' ? 'PrimaryOutcome' : 'SecondaryOutcome'}`
+            ];
+            
+            for (const path of paths) {
+              const outcomeData = this.getNestedValue(study, path);
+              if (Array.isArray(outcomeData)) {
+                outcomeData.forEach(outcome => {
+                  outcomes.push({
+                    measure: outcome.measure || outcome.OutcomeMeasure,
+                    timeFrame: outcome.timeFrame || outcome.OutcomeTimeFrame,
+                    description: outcome.description || outcome.OutcomeDescription
+                  });
+                });
+                break;
+              }
+            }
+            
+            return outcomes;
+          }
+
+          extractEligibility(study) {
+            const eligibilityPaths = [
+              'protocolSection.eligibilityModule',
+              'ProtocolSection.EligibilityModule'
+            ];
+            
+            for (const path of eligibilityPaths) {
+              const eligibility = this.getNestedValue(study, path);
+              if (eligibility) {
+                return {
+                  criteria: eligibility.eligibilityCriteria || eligibility.EligibilityCriteria,
+                  gender: eligibility.sex || eligibility.Gender,
+                  minimumAge: eligibility.minimumAge || eligibility.MinimumAge,
+                  maximumAge: eligibility.maximumAge || eligibility.MaximumAge,
+                  healthyVolunteers: eligibility.healthyVolunteers || eligibility.HealthyVolunteers
+                };
+              }
+            }
+            
+            return null;
+          }
+
+          extractLocations(study) {
+            const locations = [];
+            const paths = [
+              'protocolSection.contactsLocationsModule.locations',
+              'ProtocolSection.ContactsLocationsModule.LocationList.Location'
+            ];
+            
+            for (const path of paths) {
+              const locationData = this.getNestedValue(study, path);
+              if (Array.isArray(locationData)) {
+                locationData.slice(0, 5).forEach(location => { // Limit to 5 locations
+                  locations.push({
+                    facility: location.facility || location.LocationFacility,
+                    city: location.city || location.LocationCity,
+                    state: location.state || location.LocationState,
+                    country: location.country || location.LocationCountry
+                  });
+                });
+                break;
+              }
+            }
+            
+            return locations;
+          }
+
+          getStudyField(study, paths) {
+            for (const path of paths) {
+              const value = this.getNestedValue(study, path);
+              if (value !== undefined && value !== null && value !== '') {
+                const result = Array.isArray(value) ? value[0] : value;
+                if (result && result.trim && result.trim() !== '') {
+                  return result;
+                }
+                if (result && typeof result !== 'string') {
+                  return result;
+                }
+              }
+            }
+            return null;
+          }
+
+          getStudyFieldArray(study, paths) {
+            for (const path of paths) {
+              const value = this.getNestedValue(study, path);
+              if (Array.isArray(value)) {
+                return value;
+              }
+            }
+            return [];
+          }
+
+          getNestedValue(obj, path) {
+            return path.split('.').reduce((current, key) => {
+              return current && current[key] !== undefined ? current[key] : undefined;
+            }, obj);
+          }
+
+          mergeData(pubmedData, clinicalTrialData) {
+            console.log('Merging PubMed and enhanced clinical trial data...');
+            
+            const tags = [];
+
+            // Add MeSH terms as tags
+            if (pubmedData.mesh) {
+              pubmedData.mesh.slice(0, 6).forEach(term => {
+                tags.push({
+                  name: term,
+                  type: 'mesh',
+                  source: 'pubmed',
+                  color: '#dbeafe'
+                });
+              });
+            }
+
+            // Add clinical trial tags
+            if (clinicalTrialData) {
+              if (clinicalTrialData.phase && tags.length < 8) {
+                tags.push({
+                  name: `Phase ${clinicalTrialData.phase}`,
+                  type: 'phase',
+                  source: 'clinicaltrials',
+                  color: '#fef3c7'
+                });
+              }
+
+              if (clinicalTrialData.sponsorClass && tags.length < 8) {
+                tags.push({
+                  name: clinicalTrialData.sponsorClass,
+                  type: 'sponsor',
+                  source: 'clinicaltrials',
+                  color: '#e5e7eb'
+                });
+              }
+
+              // Add intervention tags
+              if (clinicalTrialData.interventions && clinicalTrialData.interventions.length > 0) {
+                clinicalTrialData.interventions.slice(0, 2).forEach(intervention => {
+                  if (tags.length < 8) {
+                    tags.push({
+                      name: intervention.type || 'Intervention',
+                      type: 'intervention',
+                      source: 'clinicaltrials',
+                      color: '#dcfce7'
+                    });
+                  }
+                });
+              }
+            }
+
+            const unified = {
+              pmid: pubmedData.pmid,
+              nct: clinicalTrialData?.nctId || pubmedData.nct,
+              doi: pubmedData.doi,
+              title: pubmedData.title,
+              authors: pubmedData.authors,
+              journal: pubmedData.journal,
+              year: pubmedData.year,
+              abstract: pubmedData.abstract,
+              clinicalTrial: clinicalTrialData,
+              tags: tags,
+              status: 'pending',
+              priority: 'normal',
+              patronEmail: '',
+              notes: clinicalTrialData ? `Clinical trial: ${clinicalTrialData.title || clinicalTrialData.nctId}` : '',
+              enrichmentDate: new Date().toISOString(),
+              sources: {
+                pubmed: true,
+                clinicalTrials: !!clinicalTrialData
+              }
+            };
+
+            return unified;
+          }
+
+          // Helper methods
+          formatAuthors(authors) {
+            if (!Array.isArray(authors)) return '';
+            return authors.map(author => author.name || author).join('; ');
+          }
+
+          extractYear(pubdate) {
+            if (!pubdate) return '';
+            const match = pubdate.match(/\d{4}/);
+            return match ? match[0] : '';
+          }
+
+          extractMeshFromXML(xmlDoc) {
+            const meshTerms = [];
+            const meshHeadings = xmlDoc.querySelectorAll('MeshHeading > DescriptorName');
+            
+            for (const heading of meshHeadings) {
+              const term = heading.textContent?.trim();
+              if (term && meshTerms.length < 8) {
+                meshTerms.push(term);
+              }
+            }
+            
+            return meshTerms;
+          }
+
+          extractDOIFromXML(xmlDoc) {
+            const doiSelectors = [
+              'ArticleId[IdType="doi"]',
+              'ELocationID[EIdType="doi"]',
+              'ArticleId'
+            ];
+            
+            for (const selector of doiSelectors) {
+              const nodes = xmlDoc.querySelectorAll(selector);
+              for (const node of nodes) {
+                const text = node.textContent?.trim() || '';
+                if (text.includes('10.')) {
+                  return text;
+                }
+              }
+            }
+            
+            return '';
+          }
+
+          extractAbstractFromXML(xmlDoc) {
+            const abstractNodes = xmlDoc.querySelectorAll('AbstractText');
+            return Array.from(abstractNodes).map(n => n.textContent?.trim() || '').join('\n\n');
+          }
+
+          async respectRateLimit(service) {
+            const limits = {
+              pubmed: 200,
+              clinicaltrials: 1000
+            };
+            
+            const limit = limits[service] || 500;
+            const lastCall = this.rateLimiter.get(service) || 0;
+            const elapsed = Date.now() - lastCall;
+            
+            if (elapsed < limit) {
+              await new Promise(resolve => setTimeout(resolve, limit - elapsed));
+            }
+            
+            this.rateLimiter.set(service, Date.now());
+          }
+        }
+
+        // =============================================================================
+        // UI MANAGEMENT AND FORM HANDLING
+        // =============================================================================
+
+        function setStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function setLoadingState(isLoading) {
+            const btn = document.getElementById('lookup-pmid');
+            const btnText = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.loading-spinner');
+            
+            if (isLoading) {
+                btn.disabled = true;
+                btnText.textContent = 'Analyzing...';
+                spinner.style.display = 'inline-block';
+            } else {
+                btn.disabled = false;
+                btnText.textContent = 'Analyze & Enrich';
+                spinner.style.display = 'none';
+            }
+        }
+
+        async function enhancedPMIDLookup() {
+            const pmidInput = document.getElementById('pmid');
+            const pmid = pmidInput?.value?.trim();
+            
+            if (!pmid) {
+                setStatus('Please enter a PMID', 'error');
+                return;
+            }
+            
+            if (!/^\d{6,9}$/.test(pmid)) {
+                setStatus('PMID must be 6-9 digits', 'error');
+                return;
+            }
+
+            // DEMO MODE - Show sample data for common test PMIDs
+            if (pmid === '18539917' || pmid === '23842776') {
+                setLoadingState(true);
+                setStatus('🔍 Analyzing PubMed database...', 'loading');
+                
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const demoData = getDemoData(pmid);
+                populateFormWithEnrichedData(demoData);
+                showEnhancedNCTSidebar(demoData.clinicalTrial);
+                
+                setStatus('🎯 DEMO: Enhanced metadata extraction complete! • ✅ PubMed data • 🧪 Clinical trial linked • 🏷️ MeSH headings extracted', 'success');
+                setLoadingState(false);
+                return;
+            }
+
+            // Real API calls (will fail due to CORS in artifact environment)
+            const settings = JSON.parse(localStorage.getItem('silentstacks_settings') || '{}');
+            const pipeline = new PMIDEnrichmentPipeline({
+                apiKey: settings.apiKey || '',
+                crossrefEmail: settings.crossrefEmail || ''
+            });
+
+            try {
+                setLoadingState(true);
+                setStatus('🔍 Analyzing PubMed database...', 'loading');
+                
+                const result = await pipeline.enrichPMID(pmid);
+                
+                if (result.status === 'complete' && result.unified) {
+                    populateFormWithEnrichedData(result.unified);
+                    
+                    const successParts = ['✅ PubMed data retrieved'];
+                    if (result.unified.clinicalTrial) {
+                        successParts.push(`🧪 Clinical trial ${result.unified.nct} analyzed`);
+                        showEnhancedNCTSidebar(result.unified.clinicalTrial);
+                    }
+                    if (result.unified.tags.length > 0) {
+                        successParts.push(`🏷️ ${result.unified.tags.length} intelligent tags added`);
+                    }
+                    
+                    setStatus(successParts.join(' • '), 'success');
+                    
+                } else {
+                    if (result.pubmed) {
+                        populateBasicFields(result.pubmed);
+                        setStatus(`✅ PubMed data retrieved • ⚠️ ${result.errors.join('; ')}`, 'warning');
+                    } else {
+                        setStatus(`❌ PMID lookup failed: ${result.errors.join('; ')}`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('PMID lookup failed:', error);
+                if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
+                    setStatus('⚠️ CORS Error: APIs cannot be called directly from browser. Try demo PMIDs: 18539917 or 23842776 to see enhanced metadata extraction!', 'warning');
+                } else {
+                    setStatus(`❌ PMID lookup failed: ${error.message}`, 'error');
+                }
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        function getDemoData(pmid) {
+            if (pmid === '18539917') {
+                return {
+                    pmid: '18539917',
+                    nct: 'NCT00048516',
+                    doi: '10.1056/NEJMoa0803399',
+                    title: 'Sorafenib in patients with advanced hepatocellular carcinoma: a randomized, double-blind, placebo-controlled phase 3 trial',
+                    authors: 'Llovet JM; Ricci S; Mazzaferro V; Hilgard P; Gane E; Blanc JF; de Oliveira AC; Santoro A; Raoul JL; Forner A; Schwartz M; Porta C; Zeuzem S; Bolondi L; Greten TF; Galle PR; Seitz JF; Borbath I; Häussinger D; Giannaris T; Shan M; Moscovici M; Voliotis D; Bruix J',
+                    journal: 'New England Journal of Medicine',
+                    year: '2008',
+                    abstract: 'Background: Hepatocellular carcinoma is the third leading cause of cancer-related death worldwide...',
+                    tags: [
+                        { name: 'Hepatocellular Carcinoma', type: 'mesh', source: 'pubmed', color: '#dbeafe' },
+                        { name: 'Antineoplastic Agents', type: 'mesh', source: 'pubmed', color: '#dbeafe' },
+                        { name: 'Sorafenib', type: 'mesh', source: 'pubmed', color: '#dbeafe' },
+                        { name: 'Phase III', type: 'phase', source: 'clinicaltrials', color: '#fef3c7' },
+                        { name: 'Industry', type: 'sponsor', source: 'clinicaltrials', color: '#e5e7eb' },
+                        { name: 'Drug', type: 'intervention', source: 'clinicaltrials', color: '#dcfce7' }
+                    ],
+                    clinicalTrial: {
+                        nctId: 'NCT00048516',
+                        title: 'Sorafenib in Patients With Advanced Hepatocellular Carcinoma',
+                        briefTitle: 'Sorafenib vs Placebo in HCC',
+                        phase: 'III',
+                        studyType: 'Interventional',
+                        interventionModel: 'Parallel Assignment',
+                        allocation: 'Randomized',
+                        masking: 'Double (Participant, Investigator)',
+                        primaryPurpose: 'Treatment',
+                        status: 'Completed',
+                        whyStopped: null,
+                        startDate: 'March 2003',
+                        completionDate: 'April 2007',
+                        conditions: ['Hepatocellular Carcinoma', 'Liver Cancer'],
+                        interventions: [
+                            {
+                                type: 'Drug',
+                                name: 'Sorafenib',
+                                description: 'Sorafenib 400 mg twice daily orally'
+                            },
+                            {
+                                type: 'Drug',
+                                name: 'Placebo',
+                                description: 'Matching placebo twice daily orally'
+                            }
+                        ],
+                        enrollmentCount: 602,
+                        enrollmentType: 'Actual',
+                        sponsor: 'Bayer Healthcare Pharmaceuticals Inc./Onyx Pharmaceuticals',
+                        sponsorClass: 'Industry',
+                        collaborators: [
+                            { name: 'Onyx Therapeutics, Inc.' }
+                        ],
+                        primaryOutcomes: [
+                            {
+                                measure: 'Overall Survival',
+                                timeFrame: 'From randomization until death from any cause, assessed up to 5 years',
+                                description: 'Time from randomization to death from any cause'
+                            }
+                        ],
+                        secondaryOutcomes: [
+                            {
+                                measure: 'Progression-Free Survival',
+                                timeFrame: 'From randomization until disease progression or death, assessed up to 5 years',
+                                description: 'Time from randomization to first documented tumor progression or death'
+                            },
+                            {
+                                measure: 'Time to Progression',
+                                timeFrame: 'From randomization until disease progression, assessed up to 5 years'
+                            }
+                        ],
+                        eligibility: {
+                            criteria: 'Advanced hepatocellular carcinoma not amenable to surgical resection',
+                            gender: 'All',
+                            minimumAge: '18 Years',
+                            maximumAge: 'N/A',
+                            healthyVolunteers: 'No'
+                        },
+                        locations: [
+                            {
+                                facility: 'Hospital Clinic de Barcelona',
+                                city: 'Barcelona',
+                                state: '',
+                                country: 'Spain'
+                            },
+                            {
+                                facility: 'Istituto Nazionale Tumori',
+                                city: 'Milan',
+                                state: '',
+                                country: 'Italy'
+                            },
+                            {
+                                facility: 'Mount Sinai Medical Center',
+                                city: 'New York',
+                                state: 'NY',
+                                country: 'United States'
+                            }
+                        ],
+                        studyUrl: 'https://clinicaltrials.gov/ct2/show/NCT00048516',
+                        apiVersion: 'demo',
+                        provenance: {
+                            source: 'clinicaltrials.gov',
+                            apiVersion: 'demo',
+                            fetchedAt: new Date().toISOString()
+                        }
+                    },
+                    status: 'pending',
+                    priority: 'normal',
+                    patronEmail: '',
+                    notes: '',
+                    enrichmentDate: new Date().toISOString(),
+                    sources: {
+                        pubmed: true,
+                        clinicalTrials: true
+                    }
+                };
+            }
+            
+            // Second demo PMID
+            return {
+                pmid: '23842776',
+                nct: null,
+                doi: '10.1016/j.cell.2013.06.020',
+                title: 'Single-cell RNA-seq reveals dynamic paracrine control of cellular variation',
+                authors: 'Shalek AK; Satija R; Adiconis X; Gertner RS; Gaublomme JT; Raychowdhury R; Schwartz S; Yosef N; Malboeuf C; Lu D; Trombetta JJ; Gennert D; Gnirke A; Goren A; Hacohen N; Levin JZ; Park H; Regev A',
+                journal: 'Cell',
+                year: '2013',
+                tags: [
+                    { name: 'Single-Cell Analysis', type: 'mesh', source: 'pubmed', color: '#dbeafe' },
+                    { name: 'RNA-Seq', type: 'mesh', source: 'pubmed', color: '#dbeafe' },
+                    { name: 'Gene Expression Profiling', type: 'mesh', source: 'pubmed', color: '#dbeafe' },
+                    { name: 'Transcriptome', type: 'mesh', source: 'pubmed', color: '#dbeafe' }
+                ],
+                clinicalTrial: null,
+                status: 'pending',
+                priority: 'normal',
+                patronEmail: '',
+                notes: '',
+                enrichmentDate: new Date().toISOString(),
+                sources: {
+                    pubmed: true,
+                    clinicalTrials: false
+                }
+            };
+        }
+
+        function populateFormWithEnrichedData(unifiedData) {
+            console.log('Populating form with unified data:', unifiedData);
+            
+            // Basic publication fields
+            if (unifiedData.title) document.getElementById('title').value = unifiedData.title;
+            if (unifiedData.authors) document.getElementById('authors').value = unifiedData.authors;
+            if (unifiedData.journal) document.getElementById('journal').value = unifiedData.journal;
+            if (unifiedData.year) document.getElementById('year').value = unifiedData.year;
+            if (unifiedData.doi) document.getElementById('doi').value = unifiedData.doi;
+            
+            // NCT field
+            const nctField = document.getElementById('nct');
+            if (nctField && unifiedData.nct) {
+                nctField.value = unifiedData.nct;
+            }
+
+            // Enhanced notes with clinical trial info
+            let notesContent = document.getElementById('notes').value || '';
+            if (unifiedData.clinicalTrial) {
+                const trialInfo = [
+                    `CLINICAL TRIAL: ${unifiedData.nct}`,
+                    unifiedData.clinicalTrial.title ? `Title: ${unifiedData.clinicalTrial.title}` : '',
+                    unifiedData.clinicalTrial.phase ? `Phase: ${unifiedData.clinicalTrial.phase}` : '',
+                    unifiedData.clinicalTrial.status ? `Status: ${unifiedData.clinicalTrial.status}` : '',
+                    unifiedData.clinicalTrial.sponsor ? `Sponsor: ${unifiedData.clinicalTrial.sponsor}` : '',
+                    unifiedData.clinicalTrial.conditions ? `Conditions: ${unifiedData.clinicalTrial.conditions.join(', ')}` : ''
+                ].filter(Boolean).join('\n');
+                
+                notesContent = notesContent ? `${notesContent}\n\n${trialInfo}` : trialInfo;
+            }
+            document.getElementById('notes').value = notesContent;
+
+            // Add enriched tags including MeSH headings
+            if (unifiedData.tags && unifiedData.tags.length > 0) {
+                addEnrichedTags(unifiedData.tags);
+            }
+            
+            // Update tags input field
+            const tagsInput = document.getElementById('tags');
+            if (tagsInput && unifiedData.tags) {
+                const existingTags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+                const newTags = unifiedData.tags.map(t => t.name);
+                const allTags = [...new Set([...existingTags, ...newTags])];
+                tagsInput.value = allTags.join(', ');
+            }
+
+            // Show MeSH headings prominently if available
+            if (unifiedData.clinicalTrial || (unifiedData.tags && unifiedData.tags.some(t => t.type === 'mesh'))) {
+                showMetadataStatus(unifiedData);
+            }
+        }
+
+        function showMetadataStatus(unifiedData) {
+            // Create or update metadata status display
+            let statusDiv = document.getElementById('metadata-status');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = 'metadata-status';
+                statusDiv.style.cssText = `
+                    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+                    border: 2px solid #10b981;
+                    border-radius: 12px;
+                    padding: 16px;
+                    margin: 16px 0;
+                    font-size: 0.9rem;
+                `;
+                
+                // Insert after the status element
+                const statusEl = document.getElementById('status');
+                statusEl.parentNode.insertBefore(statusDiv, statusEl.nextSibling);
+            }
+
+            let content = '<div style="font-weight: 700; color: #059669; margin-bottom: 8px;">📊 METADATA ENRICHMENT STATUS</div>';
+            
+            // MeSH headings
+            const meshTags = unifiedData.tags?.filter(t => t.type === 'mesh') || [];
+            if (meshTags.length > 0) {
+                content += `<div><strong>✅ MeSH Headings:</strong> ${meshTags.length} terms extracted (${meshTags.map(t => t.name).join(', ')})</div>`;
+            }
+
+            // Clinical trial info
+            if (unifiedData.clinicalTrial) {
+                content += `<div><strong>✅ Clinical Trial:</strong> ${unifiedData.nct} linked</div>`;
+                if (unifiedData.clinicalTrial.title) {
+                    content += `<div><strong>📋 Trial Title:</strong> ${unifiedData.clinicalTrial.title}</div>`;
+                }
+                if (unifiedData.clinicalTrial.phase) {
+                    content += `<div><strong>🧪 Phase:</strong> ${unifiedData.clinicalTrial.phase}</div>`;
+                }
+                if (unifiedData.clinicalTrial.status) {
+                    content += `<div><strong>📈 Status:</strong> ${unifiedData.clinicalTrial.status}</div>`;
+                }
+                if (unifiedData.clinicalTrial.sponsor) {
+                    content += `<div><strong>🏢 Sponsor:</strong> ${unifiedData.clinicalTrial.sponsor}</div>`;
+                }
+            }
+
+            statusDiv.innerHTML = content;
+        }
+
+        function populateBasicFields(pubmedData) {
+            if (pubmedData.title) document.getElementById('title').value = pubmedData.title;
+            if (pubmedData.authors) document.getElementById('authors').value = pubmedData.authors;
+            if (pubmedData.journal) document.getElementById('journal').value = pubmedData.journal;
+            if (pubmedData.year) document.getElementById('year').value = pubmedData.year;
+            if (pubmedData.doi) document.getElementById('doi').value = pubmedData.doi;
+        }
+
+        function addEnrichedTags(tags) {
+            let tagContainer = document.getElementById('tag-chips');
+            if (!tagContainer) {
+                const tagsInput = document.getElementById('tags');
+                if (tagsInput) {
+                    tagContainer = document.createElement('div');
+                    tagContainer.id = 'tag-chips';
+                    tagContainer.className = 'tag-container';
+                    tagsInput.parentNode.appendChild(tagContainer);
+                }
+            }
+            
+            if (!tagContainer) return;
+            
+            tagContainer.querySelectorAll('.tag[data-auto="true"]').forEach(tag => tag.remove());
+            
+            tags.forEach(tag => {
+                const chipElement = document.createElement('span');
+                chipElement.className = `tag tag-${tag.type}`;
+                chipElement.textContent = tag.name;
+                chipElement.dataset.auto = 'true';
+                chipElement.dataset.source = tag.source;
+                chipElement.title = `${tag.name} (from ${tag.source})`;
+                
+                tagContainer.appendChild(chipElement);
+            });
+        }
+
+        function showEnhancedNCTSidebar(clinicalTrialData) {
+            const sidebar = document.getElementById('nct-sidebar');
+            const content = document.getElementById('nct-content');
+            
+            if (!sidebar || !content) return;
+
+            let html = `
+                <div class="nct-header">
+                    <div class="nct-id">🧪 ${clinicalTrialData.nctId}</div>
+                    ${clinicalTrialData.phase ? `<div class="nct-phase">Phase ${clinicalTrialData.phase}</div>` : ''}
+                </div>
+            `;
+
+            // CLINICAL TRIAL TITLE - Most important!
+            if (clinicalTrialData.title) {
+                html += `
+                    <div style="background: #f0f9ff; border-radius: 12px; padding: 16px; margin: 16px 0; border-left: 4px solid #3b82f6;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #1e40af; text-transform: uppercase; margin-bottom: 6px;">STUDY TITLE</div>
+                        <div style="font-size: 0.9rem; font-weight: 600; color: #1f2937; line-height: 1.4;">${clinicalTrialData.title}</div>
+                    </div>
+                `;
+            }
+
+            html += '<div class="nct-details">';
+
+            // CORE METADATA - ABSOLUTELY CRITICAL
+            if (clinicalTrialData.status) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Status</div>
+                        <div class="nct-detail-value"><strong>${clinicalTrialData.status}</strong></div>
+                    </div>
+                `;
+            }
+
+            if (clinicalTrialData.phase) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Phase</div>
+                        <div class="nct-detail-value"><strong>Phase ${clinicalTrialData.phase}</strong></div>
+                    </div>
+                `;
+            }
+
+            if (clinicalTrialData.sponsor) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Lead Sponsor</div>
+                        <div class="nct-detail-value"><strong>${clinicalTrialData.sponsor}</strong></div>
+                    </div>
+                `;
+            }
+
+            if (clinicalTrialData.sponsorClass) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Sponsor Type</div>
+                        <div class="nct-detail-value">${clinicalTrialData.sponsorClass}</div>
+                    </div>
+                `;
+            }
+
+            if (clinicalTrialData.studyType) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Study Type</div>
+                        <div class="nct-detail-value">${clinicalTrialData.studyType}</div>
+                    </div>
+                `;
+            }
+
+            if (clinicalTrialData.primaryPurpose) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Purpose</div>
+                        <div class="nct-detail-value">${clinicalTrialData.primaryPurpose}</div>
+                    </div>
+                `;
+            }
+
+            if (clinicalTrialData.enrollmentCount) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Enrollment</div>
+                        <div class="nct-detail-value">${clinicalTrialData.enrollmentCount} participants ${clinicalTrialData.enrollmentType ? `(${clinicalTrialData.enrollmentType})` : ''}</div>
+                    </div>
+                `;
+            }
+
+            if (clinicalTrialData.startDate) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Start Date</div>
+                        <div class="nct-detail-value">${clinicalTrialData.startDate}</div>
+                    </div>
+                `;
+            }
+
+            if (clinicalTrialData.completionDate) {
+                html += `
+                    <div class="nct-detail-row">
+                        <div class="nct-detail-label">Completion</div>
+                        <div class="nct-detail-value">${clinicalTrialData.completionDate}</div>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+
+            // CONDITIONS STUDIED
+            if (clinicalTrialData.conditions && clinicalTrialData.conditions.length > 0) {
+                html += `
+                    <div style="background: #f0fdf4; border-radius: 12px; padding: 16px; margin: 16px 0; border-left: 4px solid #22c55e;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #15803d; text-transform: uppercase; margin-bottom: 8px;">CONDITIONS STUDIED</div>
+                        <div style="font-size: 0.9rem; color: #1f2937;">
+                            ${clinicalTrialData.conditions.slice(0, 5).map(condition => `<div style="margin-bottom: 4px;">• ${condition}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // INTERVENTIONS
+            if (clinicalTrialData.interventions && clinicalTrialData.interventions.length > 0) {
+                html += `
+                    <div style="background: #fffbeb; border-radius: 12px; padding: 16px; margin: 16px 0; border-left: 4px solid #f59e0b;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #92400e; text-transform: uppercase; margin-bottom: 8px;">INTERVENTIONS</div>
+                        <div style="font-size: 0.9rem; color: #1f2937;">
+                `;
+                
+                clinicalTrialData.interventions.slice(0, 4).forEach(intervention => {
+                    html += `
+                        <div style="margin-bottom: 8px;">
+                            <strong>${intervention.type || 'Intervention'}:</strong> ${intervention.name || 'Not specified'}
+                            ${intervention.description ? `<div style="font-size: 0.8rem; color: #6b7280; margin-top: 2px;">${intervention.description.substring(0, 100)}${intervention.description.length > 100 ? '...' : ''}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += '</div></div>';
+            }
+
+            // PRIMARY OUTCOMES
+            if (clinicalTrialData.primaryOutcomes && clinicalTrialData.primaryOutcomes.length > 0) {
+                html += `
+                    <div style="background: #fef2f2; border-radius: 12px; padding: 16px; margin: 16px 0; border-left: 4px solid #ef4444;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #dc2626; text-transform: uppercase; margin-bottom: 8px;">PRIMARY OUTCOMES</div>
+                `;
+                
+                clinicalTrialData.primaryOutcomes.slice(0, 3).forEach((outcome, index) => {
+                    html += `
+                        <div style="margin-bottom: 12px; ${index > 0 ? 'border-top: 1px solid rgba(239, 68, 68, 0.1); padding-top: 8px;' : ''}">
+                            <div style="font-weight: 600; font-size: 0.85rem; color: #1f2937; margin-bottom: 4px;">${outcome.measure || 'Primary Outcome'}</div>
+                            ${outcome.timeFrame ? `<div style="font-size: 0.8rem; color: #6b7280;"><strong>Time Frame:</strong> ${outcome.timeFrame}</div>` : ''}
+                            ${outcome.description ? `<div style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">${outcome.description.substring(0, 150)}${outcome.description.length > 150 ? '...' : ''}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+
+            // SECONDARY OUTCOMES
+            if (clinicalTrialData.secondaryOutcomes && clinicalTrialData.secondaryOutcomes.length > 0) {
+                html += `
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin: 16px 0; border-left: 4px solid #64748b;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #475569; text-transform: uppercase; margin-bottom: 8px;">SECONDARY OUTCOMES</div>
+                `;
+                
+                clinicalTrialData.secondaryOutcomes.slice(0, 3).forEach((outcome, index) => {
+                    html += `
+                        <div style="margin-bottom: 8px; ${index > 0 ? 'border-top: 1px solid rgba(100, 116, 139, 0.1); padding-top: 6px;' : ''}">
+                            <div style="font-weight: 600; font-size: 0.8rem; color: #1f2937;">${outcome.measure || 'Secondary Outcome'}</div>
+                            ${outcome.timeFrame ? `<div style="font-size: 0.75rem; color: #6b7280;">${outcome.timeFrame}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+
+            // ELIGIBILITY CRITERIA
+            if (clinicalTrialData.eligibility) {
+                html += `
+                    <div style="background: #f5f3ff; border-radius: 12px; padding: 16px; margin: 16px 0; border-left: 4px solid #8b5cf6;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #7c3aed; text-transform: uppercase; margin-bottom: 8px;">ELIGIBILITY</div>
+                        <div style="font-size: 0.85rem; color: #1f2937;">
+                            ${clinicalTrialData.eligibility.gender ? `<div><strong>Gender:</strong> ${clinicalTrialData.eligibility.gender}</div>` : ''}
+                            ${clinicalTrialData.eligibility.minimumAge ? `<div><strong>Age:</strong> ${clinicalTrialData.eligibility.minimumAge} to ${clinicalTrialData.eligibility.maximumAge || 'No limit'}</div>` : ''}
+                            ${clinicalTrialData.eligibility.healthyVolunteers ? `<div><strong>Healthy Volunteers:</strong> ${clinicalTrialData.eligibility.healthyVolunteers}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // STUDY LOCATIONS
+            if (clinicalTrialData.locations && clinicalTrialData.locations.length > 0) {
+                html += `
+                    <div style="background: #ecfdf5; border-radius: 12px; padding: 16px; margin: 16px 0; border-left: 4px solid #10b981;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #059669; text-transform: uppercase; margin-bottom: 8px;">STUDY LOCATIONS</div>
+                        <div style="font-size: 0.8rem; color: #1f2937;">
+                `;
+                
+                clinicalTrialData.locations.slice(0, 3).forEach(location => {
+                    html += `<div style="margin-bottom: 4px;">• ${location.facility || 'Facility'}, ${location.city || ''}${location.state ? `, ${location.state}` : ''}${location.country ? `, ${location.country}` : ''}</div>`;
+                });
+                
+                if (clinicalTrialData.locations.length > 3) {
+                    html += `<div style="color: #6b7280; font-style: italic;">... and ${clinicalTrialData.locations.length - 3} more locations</div>`;
+                }
+                
+                html += '</div></div>';
+            }
+
+            // COLLABORATORS
+            if (clinicalTrialData.collaborators && clinicalTrialData.collaborators.length > 0) {
+                html += `
+                    <div style="background: #fefce8; border-radius: 12px; padding: 16px; margin: 16px 0; border-left: 4px solid #eab308;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #a16207; text-transform: uppercase; margin-bottom: 8px;">COLLABORATORS</div>
+                        <div style="font-size: 0.8rem; color: #1f2937;">
+                            ${clinicalTrialData.collaborators.slice(0, 3).map(collab => `<div style="margin-bottom: 2px;">• ${collab.name || collab}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = html;
+            sidebar.style.display = 'block';
+        }
+
+        function clearForm() {
+            document.getElementById('paper-form').reset();
+            document.getElementById('pmid').value = '';
+            document.getElementById('patron-email').value = '';
+            document.getElementById('tags').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('tag-chips').innerHTML = '';
+            document.getElementById('nct-sidebar').style.display = 'none';
+            
+            // Remove metadata status if it exists
+            const metadataStatus = document.getElementById('metadata-status');
+            if (metadataStatus) {
+                metadataStatus.remove();
+            }
+            
+            setStatus('✅ Form cleared', 'success');
+        }
+
+        function saveSettings() {
+            const settings = {
+                apiKey: document.getElementById('api-key').value,
+                crossrefEmail: document.getElementById('crossref-email').value
+            };
+            localStorage.setItem('silentstacks_settings', JSON.stringify(settings));
+            setStatus('⚙️ Settings saved', 'success');
+        }
+
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('silentstacks_settings') || '{}');
+            if (settings.apiKey) document.getElementById('api-key').value = settings.apiKey;
+            if (settings.crossrefEmail) document.getElementById('crossref-email').value = settings.crossrefEmail;
+        }
+
+        function updateTagChips() {
+            const tagsInput = document.getElementById('tags');
+            const tagContainer = document.getElementById('tag-chips');
+            
+            tagContainer.querySelectorAll('.tag[data-auto!="true"]').forEach(tag => tag.remove());
+            
+            if (tagsInput.value.trim()) {
+                const tags = tagsInput.value.split(',').map(tag => tag.trim()).filter(Boolean);
+                tags.forEach(tagName => {
+                    if (!tagContainer.querySelector(`[data-auto="true"]`) || 
+                        !Array.from(tagContainer.querySelectorAll('[data-auto="true"]')).some(t => t.textContent === tagName)) {
+                        const chipElement = document.createElement('span');
+                        chipElement.className = 'tag';
+                        chipElement.textContent = tagName;
+                        chipElement.innerHTML += '<span class="tag-remove" onclick="removeTag(this)" style="margin-left: 8px; cursor: pointer;">×</span>';
+                        tagContainer.appendChild(chipElement);
+                    }
+                });
+            }
+        }
+
+        function removeTag(element) {
+            const tag = element.parentElement;
+            const tagName = tag.textContent.replace('×', '').trim();
+            const tagsInput = document.getElementById('tags');
+            
+            const tags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t !== tagName);
+            tagsInput.value = tags.join(', ');
+            
+            tag.remove();
+        }
+
+        function savePaper(event) {
+            event.preventDefault();
+            
+            const formData = {
+                pmid: document.getElementById('pmid').value,
+                title: document.getElementById('title').value,
+                authors: document.getElementById('authors').value,
+                journal: document.getElementById('journal').value,
+                year: document.getElementById('year').value,
+                doi: document.getElementById('doi').value,
+                nct: document.getElementById('nct').value,
+                status: document.getElementById('status').value,
+                priority: document.getElementById('priority').value,
+                patronEmail: document.getElementById('patron-email').value,
+                tags: document.getElementById('tags').value,
+                notes: document.getElementById('notes').value,
+                savedAt: new Date().toISOString()
+            };
+
+            console.log('Paper data to save:', formData);
+            
+            const savedPapers = JSON.parse(localStorage.getItem('silentstacks_papers') || '[]');
+            savedPapers.push(formData);
+            localStorage.setItem('silentstacks_papers', JSON.stringify(savedPapers));
+            
+            setStatus('💾 Research entry saved successfully!', 'success');
+        }
+
+        // =============================================================================
+        // EVENT LISTENERS AND INITIALIZATION
+        // =============================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            
+            document.getElementById('lookup-pmid').addEventListener('click', enhancedPMIDLookup);
+            document.getElementById('clear-form').addEventListener('click', clearForm);
+            document.getElementById('save-settings').addEventListener('click', saveSettings);
+            document.getElementById('save-paper').addEventListener('click', savePaper);
+            document.getElementById('tags').addEventListener('input', updateTagChips);
+            
+            document.getElementById('pmid').addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+            
+            document.getElementById('pmid').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    enhancedPMIDLookup();
+                }
+            });
+            
+            console.log('🧬 SilentStacks Enhanced Research Intelligence Platform initialized');
+        });
+    </script>
+</body>
+</html>
