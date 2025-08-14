@@ -1,162 +1,164 @@
-# SilentStacks Changelog
+# SilentStacks – Master Playbook (v1.2 → v2.0)
+**Merged:** 2025-08-12 14:45
 
-## Version 1.5.0 (January 2025) - "Complete Clinical Integration"
+**Repo URL:** https://github.com/patrick1981/SilentStacksTest  
+**Primary branch:** main  
+**Working branch:** main (PR-only; no direct pushes)  
+**Review model:** Solo maintainer may self-merge after checklist + artifacts
 
-### 🎉 Major Features Added
-- **Complete MeSH Headings Integration**: Restored full Medical Subject Headings with major/minor topic indicators
-- **Enhanced Clinical Trials Discovery**: Automatic NCT number extraction and ClinicalTrials.gov API integration
-- **Advanced PMID Processing**: Multi-strategy clinical trial detection from abstracts and data banks
-- **Publication Type Classification**: Identifies randomized controlled trials and clinical studies
+> **LIVING DOCUMENT** — Update on every run.
 
-### 🐛 Critical Bug Fixes
-- **FIXED**: Export declaration errors in integrated documentation
-- **FIXED**: Missing `getFilteredRequests()` function in SearchFilter module
-- **FIXED**: Bulk paste textarea element not found errors
-- **FIXED**: SearchFilter `initFuse` undefined errors
-- **FIXED**: Module loading duplication and initialization issues
-- **FIXED**: All console JavaScript errors resolved
+## Baseline Declaration
+- v1.2 UI is the contract. Keep IDs/classes/roles/tab markup.
+- **Exception (approved 2025‑08‑12):** Minimal DOM additions allowed to meet v2.0 scope:
+  - Add **NCT ID** + **NCT Title** fields in Add Request.
+  - Add **MeSH** / **CT.gov** **chips** containers (cards/table/preview).
+  - Document all additions (IDs, ARIA, screenshots).
 
-### ⚡ Performance Improvements
-- Enhanced API retry logic with exponential backoff
-- Improved error handling for network timeouts
-- Better memory management for large datasets
-- Rate limiting compliance for PubMed API calls
+## Deliverables
+- Single-file monolith: `dist/SilentStacks_v2_monolith.html` (all inline, no CDNs).
+- Release ZIP: monolith + `RELEASE_NOTES.md` + `GAP_REPORT_v2.0.md` + updated docs.
 
-### 🎨 UI/UX Enhancements
-- MeSH terms display with clickable tags and major topic highlighting
-- Clinical trials cards with enhanced details (phases, sponsors, enrollment)
-- Auto-filled form field highlighting with visual feedback
-- Improved loading states and progress indicators
+## Phased Roadmap
+- **A — Hardening & Parity:** SW, error boundaries, exporters, no boot errors.
+- **B — Enrichment & Cross-Pop:** PubMed/CrossRef/CT.gov, bulk paste/upload, ID cross-linking, MeSH ≤8.
+- **C — A11y (WCAG 2.2 AAA):** Light default; Dark/HC optional; labels/roles/skip links/live regions.
+- **D — Offline-First:** queue lookups/exports; retry on reconnect.
+- **E — Search/Filter:** fuzzy + fielded; sortable table.
+- **F — Intelligence:** synonyms, MeSH hierarchy, specialty detection, trends.
+- **G — CT.gov Tagging:** sponsor type, phase, overall status chips (selectable).
 
-### 🔬 Medical Research Features
-- **Publication Type Detection**: Identifies clinical trials, RCTs, meta-analyses
-- **Clinical Trial Linking**: Connects PMIDs to ClinicalTrials.gov records
-- **Enhanced Medical Classification**: Study types, evidence levels, phases
-- **Sponsor and Enrollment Data**: Complete clinical trial metadata
+## Data & Security
+- Validators: PMID `^\d{6,9}$`, DOI `^10\.\d{4,9}/\S+$`, NCT `^NCT\d{8}$`.
+- Sanitize inputs, escape all outputs; encode all identifiers; allow-list params.
 
----
+## Tests (must pass)
+Boot, Lookup (PMID/DOI/NCT), Bulk, Enrichment/Merge, Search, Export, Offline, A11Y.
+Artifacts: screenshots of Dashboard/Add/All/Import‑Export/Settings.
 
-## Version 1.4.0 (December 2024) - "Bulk Operations Overhaul"
-
-### 🚀 New Features
-- **Working CSV Upload**: Fixed non-functional CSV file processing
-- **PMID Batch Processing**: Bulk import with automatic metadata fetching
-- **Enhanced Export Format**: DOCLINE-first CSV export for institutional compatibility
-- **Bulk Update Operations**: Select multiple requests for status/priority updates
-
-### 🔧 Fixes
-- **FIXED**: CSV upload button functionality
-- **FIXED**: Bulk imported requests now appear immediately in All Requests
-- **FIXED**: Export headers reordered to match institutional requirements
-- **FIXED**: Progress tracking for large batch operations
-- **FIXED**: Memory leaks during bulk processing
-
-### 📊 Data Management
-- **DOCLINE Integration**: Enhanced support for DOCLINE + PMID workflows
-- **Batch Validation**: Input validation for CSV and text imports
-- **Error Reporting**: Detailed success/failure reporting for bulk operations
-- **Technology Agnostic**: Pure CSV format removes Excel dependencies
-
-### 🎯 Workflow Improvements
-- Real-time progress tracking during bulk imports
-- Enhanced error messages with specific line/row indicators
-- Confirmation dialogs for bulk operations
-- Status indicators for all bulk processes
+## Documentation Package (Merged)
+**This playbook bundles the provided v1.4 documentation for historical continuity and QA coverage.**  
+Treat **v1.4 features** as **non-regression requirements** for v2.0.  
+Included in `documentation/v1.4/`:
 
 ---
 
-## Version 1.3.0 (November 2024) - "Search & Sort Revolution"
+## Bulk Paste & Bulk Upload Requirements (v2.0)
 
-### ✨ Major Functionality Restored
-- **FIXED**: Sort buttons now functional with visual indicators (↑↓)
-- **FIXED**: Delete operations (both individual and bulk) working properly
-- **FIXED**: Select All checkbox functionality restored
-- **ENHANCED**: Fuse.js integration for fuzzy search capabilities
+### Source of Truth
+- **Single Request Engine:** `test.html` logic defines the enrichment flow for PMID → DOI/NCT → MeSH.
+- **Bulk Flows:** Must reuse the same enrichment pipeline for each identifier.
 
-### 🔍 Search Enhancements
-- **Advanced Search**: Full-text search across all request fields
-- **Smart Filtering**: Status and priority filtering with search preservation
-- **Relevance Scoring**: Search results ranked by relevance percentage
-- **Search History**: Query persistence during navigation
+### Supported Inputs
+- **Bulk Paste:** mixed tokens (PMID, DOI, NCT) in any order.
+- **Bulk Upload:** `.txt`, `.csv`, `.json`.
 
-### 🗑️ Delete Operations
-- **Individual Delete**: Single request deletion with confirmation
-- **Bulk Delete**: Multi-select deletion with batch confirmation
-- **Selection Tracking**: Proper checkbox state management
-- **UI Feedback**: Clear selection counts and status indicators
+### Token Recognition (case/format tolerant)
+- PMID: `\b\d{6,9}\b`
+- DOI: `\b10\.[^\s"']+\b`
+- NCT: `\bNCT\d{8}\b` (i)
 
-### 📈 Sorting System
-- **Multi-Field Sorting**: Date, Priority, Title, Journal, Status
-- **Visual Indicators**: Clear sort direction arrows
-- **Sort Persistence**: Maintains sort state during searches
-- **Priority Logic**: Intelligent priority ordering (Urgent → Rush → Normal → Low)
+### CSV Parsing Rules
+1. If headings present, use recognized columns (tolerant):  
+   - PMIDs: `pmid`, `pubmed id`, `pm_id`  
+   - DOIs: `doi`  
+   - NCTs: `nct`, `nct id`, `clinicaltrials id`
+2. If none found, fallback to regex across all cells.
+3. Mixed-type in one file supported.
 
----
+### TXT & JSON
+- TXT: delimiter-agnostic via regex; dedupe; preserve order.
+- JSON: accept `{ pmids:[], dois:[], ncts:[] }` or an array of objects with `pmid/doi/nct` keys.
 
-## Version 1.2.1 (October 2024) - "Stability Foundation"
-
-### 🛠️ Core Infrastructure
-- **Enhanced Data Manager**: Improved request storage and retrieval
-- **API Rate Limiting**: PubMed API compliance implementation
-- **Error Recovery**: Better handling of network failures
-- **Memory Optimization**: Reduced browser storage usage
-
-### 🔒 Data Integrity
-- **Request Validation**: Enhanced form validation for all fields
-- **Data Persistence**: Improved localStorage management
-- **Backup Systems**: Automatic data backup before operations
-- **Conflict Resolution**: Better handling of duplicate requests
-
-### 🌐 Cross-Platform
-- **Mobile Responsiveness**: Improved tablet and mobile layouts
-- **Browser Compatibility**: Enhanced support for all major browsers
-- **Offline Handling**: Better behavior when network is unavailable
-- **Performance**: Faster load times and smoother interactions
+### Processing Contract (per item)
+- Route by type, enrich fully (PMID→PubMed→(DOI?)→(NCT?)→MeSH; DOI→CrossRef→(PMID?)→(NCT?)→MeSH; NCT→CT.gov→(article?)→MeSH).
+- Populate UI via selector map; prepend a Requests row.
+- Announce progress in `#ss-live`; rate limit ~2/sec; continue on errors.
 
 ---
 
-## Migration Guide: v1.2.1 → v1.5
+# Appendix — Selector Map & Integration Contracts (AI-Compatible)
 
-### Required Updates
-1. **JavaScript Modules** (4 files):
-   - `assets/js/integrated-documentation.js`
-   - `assets/js/modules/search-filter.js`
-   - `assets/js/modules/bulk-operations.js`
-   - `assets/js/modules/api-integration.js`
+> Update selectors only. Do not alter engine logic.
 
-2. **HTML Updates**:
-   - Replace bulk operations tab content with fixed element IDs
+```json
+{
+  "$schema": "https://example.com/silentstacks/selector-map.schema.json",
+  "version": "2.0",
+  "notes": "Update ONLY selectors to match the current UI. Leave keys intact.",
+  "buttons": {
+    "lookup_pmid": "#lookup-pmid",
+    "lookup_doi": "#lookup-doi",
+    "lookup_nct": "#lookup-nct",
+    "bulk_paste": "#bulk-paste-btn",
+    "bulk_upload": "#bulk-upload-btn"
+  },
+  "inputs": {
+    "pmid": "#pmid",
+    "doi": "#doi",
+    "nct": "#nct",
+    "title": "#title",
+    "authors": "#authors",
+    "journal": "#journal",
+    "year": "#year",
+    "volume": "#volume",
+    "pages": "#pages",
+    "tags_text": "#tags",
+    "patron": "#patron-email",
+    "status": "#status",
+    "priority": "#priority",
+    "docline": "#docline"
+  },
+  "clinical_trials": {
+    "phase": "#gl-phase",
+    "status": "#gl-ct-status",
+    "sponsor": "#gl-sponsor",
+    "nct_title": "#gl-nct-title, #nct-title"
+  },
+  "chips": {
+    "mesh": "#gl-chips, #mesh-chips, #nct-suggestion-chips"
+  },
+  "bulk": {
+    "paste_textarea": "#bulk-paste-data",
+    "upload_input": "#bulk-upload"
+  },
+  "table": {
+    "requests_tbody": "#requests-table tbody"
+  },
+  "status_regions": {
+    "live": "#ss-live",
+    "pmid": "#pmid-status",
+    "doi": "#doi-status",
+    "nct": "#nct-status"
+  }
+}
+```
 
-3. **CSS Additions**:
-   - Add bulk operations CSS to `enhanced-components.css`
-   - Add MeSH headings CSS to `enhanced-components.css`
-
-### Breaking Changes
-- **Removed**: Excel file support (technology-agnostic approach)
-- **Changed**: Export CSV format now DOCLINE-first
-- **Updated**: All element IDs in bulk operations for consistency
-
-### New Requirements
-- **MeSH Display Elements**: Add MeSH section to form HTML
-- **Clinical Trials Section**: Add clinical trials display area
-- **Status Indicators**: Enhanced status elements for API feedback
+**Adapter outcomes (idempotent):** Single request fills biblio + DOI/NCT, populates trial fields, merges MeSH, renders chips, adds Requests row, sets status (“Done • NCT linked” on trial). Bulk flows reuse same pipeline per item.
 
 ---
 
-## Testing Checklist
+## 📜 SilentStacks Changelog — v1.2 → v2.0
 
-### v1.5 Verification
-- [ ] **PMID 16979104**: Should return complete metadata + MeSH + clinical trials
-- [ ] **MeSH Headings**: Displayed with major topic indicators (*)
-- [ ] **Clinical Trials**: ClinicalTrials.gov integration working
-- [ ] **Sort Functions**: All sort buttons working with visual feedback
-- [ ] **Delete Functions**: Individual and bulk delete operational
-- [ ] **Bulk Import**: PMID batch processing with metadata fetch
-- [ ] **CSV Upload**: File upload with progress tracking
-- [ ] **No Console Errors**: All JavaScript errors resolved
+### v1.2.0 – Enhanced Data Edition (Production Baseline)
+- Add Request (PMID/DOI), PubMed enrichment, CrossRef DOI, manual NCT fields.
+- MeSH (≤8) in text field; Requests table; validators & security.
+- Basic bulk paste/upload groundwork.
 
-### Performance Benchmarks
-- **Small Batch (5 PMIDs)**: ~15 seconds with full metadata
-- **Medium Batch (20 PMIDs)**: ~60 seconds with rate limiting
-- **Large Dataset (100+ requests)**: Smooth sorting and searching
-- **Mobile Performance**: Responsive on tablets and phones
+### v1.2.1 – Performance Apocalypse Edition
+- Reduced redundant API calls; faster boot; early rate limiting; listener cleanup.
+
+### v1.3 – Complete Workflow Edition
+- CRUD polish; CSV/JSON export; NLM export (alpha); audit trail; a11y upgrades.
+
+### v1.4 – Enhanced Medical Intelligence Edition
+- ClinicalTrials.gov integration (auto NCT + trial metadata).
+- MeSH chips, specialty detection, evidence levels.
+- Offline queueing, background sync, improved SW; multi-theme.
+- Robust error recovery; optimized parsing.
+
+### v2.0.0 – Monolithic Offline-First Edition (In Progress)
+- Single-file build; **PMID↔DOI↔NCT** full pipeline; CT.gov tagging.
+- Bulk paste/upload (TXT/CSV/JSON), mixed-type aware.
+- NLM export wired; v1.2 UI with approved new fields/chips.
+- SW caching + queued calls; WCAG AAA.
