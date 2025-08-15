@@ -3,504 +3,1173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SilentStacks - ILL Request Tracking</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://eutils.ncbi.nlm.nih.gov https://api.crossref.org https://clinicaltrials.gov; base-uri 'none'; form-action 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    <title>SilentStacks v2.0 - ILL Management System</title>
     
-    <!-- FIXED: Correct CSS file path -->
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="icon" type="image/x-icon" href="logo/favicon.ico">
-<link rel="icon" type="image/png" sizes="16x16" href="logo/favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="logo/favicon-32x32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="logo/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="logo/android-chrome-192x192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="logo/android-chrome-512x512.png">
-    
-    <!-- Local Dependencies for Offline Support -->
-    <script src="assets/js/lib/fuse.min.js"></script>
-    <script src="assets/js/lib/papaparse.min.js"></script>
-    <script src="assets/js/offline-manager.js"></script>
-    <!--<script src="assets/js/documentation.js"></script>-->
-    
-</head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-    <div class="header-content">
-        <div class="logo-container">
-           <!-- <img src="logo/silentstacks-logo.svg" alt="SilentStacks Logo" class="app-logo">-->
-            <div class="header-text">
-                <h1>SilentStacks <span class="version-badge">V 1.2</span></h1>
-                <p>Interlibrary Loan Request Tracking</p>
-            </div>
-        </div>
+    <!-- Font Preloading for Performance -->
+    <link rel="preload" href="fonts/main-regular.woff" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="fonts/main-bold.woff" as="font" type="font/woff" crossorigin>
+    <style>
+        /* Font Face Declarations */
+        @font-face {
+            font-family: 'SilentStacks';
+            src: url('fonts/main-regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
         
-        <!-- Online/Offline Status Indicator -->
-        <div class="status-indicator-container">
-            <div  class="online-indicator">
-                <span class="status-dot"></span>
-                <span class="status-text">Online</span>
+        @font-face {
+            font-family: 'SilentStacks';
+            src: url('fonts/main-bold.woff') format('woff');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        :root {
+            --font-stack: 'SilentStacks', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --primary: #333;
+            --light-gray: #666;
+            --border-gray: #ccc;
+            --bg-white: #fff;
+            --bg-light: #f9f9f9;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --transition: all 0.2s ease;
+        }
+        [data-theme="dark"] {
+            --primary: #f8fafc;
+            --light-gray: #cbd5e1;
+            --border-gray: #475569;
+            --bg-white: #1e293b;
+            --bg-light: #0f172a;
+        }
+        [data-theme="high-contrast"] {
+            --primary: #000;
+            --light-gray: #000;
+            --border-gray: #000;
+            --bg-white: #fff;
+            --bg-light: #f0f0f0;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: var(--font-stack);
+            background: var(--bg-light);
+            color: var(--primary);
+            line-height: 1.6;
+        }
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px;
+            background: var(--bg-white);
+            border-right: 1px solid var(--border-gray);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            transform: translateX(-100%);
+            transition: var(--transition);
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        @media (min-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                transform: translateX(0);
+            }
+        }
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-gray);
+        }
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+        .nav-tabs {
+            flex: 1;
+            padding: 16px 0;
+        }
+        .nav-tab {
+            display: block;
+            padding: 12px 24px;
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        .nav-tab:hover {
+            background: var(--bg-light);
+            color: var(--primary);
+        }
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        .sidebar-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-gray);
+            font-size: 0.85rem;
+            color: var(--light-gray);
+        }
+        .nav-toggle {
+            display: block;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 200;
+            background: var(--bg-white);
+            border: 1px solid var(--border-gray);
+            padding: 8px;
+            cursor: pointer;
+        }
+        @media (min-width: 1024px) {
+            .nav-toggle {
+                display: none;
+            }
+        }
+        .main-content {
+            flex: 1;
+            margin-left: 0;
+            transition: var(--transition);
+        }
+        @media (min-width: 1024px) {
+            .main-content {
+                margin-left: 260px;
+            }
+        }
+        .content-header {
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border-gray);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+        .content-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .content-body {
+            padding: 32px;
+            max-width: 1200px;
+        }
+        .form-container {
+            background: var(--bg-white);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .form-section h2 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            color: var(--primary);
+        }
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--light-gray);
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid var(--border-gray);
+            background: transparent;
+            padding: 12px 0;
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-family: var(--font-stack);
+            transition: var(--transition);
+            outline: none;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-bottom: 2px solid var(--primary);
+        }
+        .form-group input.valid {
+            border-bottom-color: var(--success);
+        }
+        .form-group input.invalid {
+            border-bottom-color: var(--error);
+        }
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .form-row {
+            display: grid;
+            gap: 24px;
+        }
+        .form-row.cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+        .form-row.cols-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+        .input-with-button {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        .input-with-button input {
+            flex: 1;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-stack);
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover {
+            background: var(--bg-white);
+            color: var(--primary);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: var(--bg-white);
+            color: var(--primary);
+            border-color: var(--border-gray);
+        }
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .btn-success {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        .btn-success:hover {
+            background: var(--bg-white);
+            color: var(--success);
+            border-color: var(--success);
+        }
+        .btn-danger {
+            background: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+        .btn-danger:hover {
+            background: var(--bg-white);
+            color: var(--error);
+            border-color: var(--error);
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+        .status {
+            padding: 12px 0;
+            margin: 12px 0;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .status.success {
+            color: var(--success);
+        }
+        .status.error {
+            color: var(--error);
+        }
+        .status.loading {
+            color: var(--light-gray);
+        }
+        .view-toggle {
+            display: flex;
+            border: 1px solid var(--border-gray);
+            overflow: hidden;
+        }
+        .view-toggle button {
+            padding: 8px 16px;
+            border: none;
+            background: var(--bg-white);
+            color: var(--light-gray);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+        .view-toggle button.active {
+            background: var(--primary);
+            color: white;
+        }
+        .table-container {
+            background: var(--bg-white);
+            border: 1px solid var(--border-gray);
+            overflow-x: auto;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th {
+            background: var(--bg-light);
+            padding: 16px;
+            text-align: left;
+            font-weight: 500;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border-gray);
+        }
+        .table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-gray);
+            color: var(--primary);
+        }
+        .table tr:hover {
+            background: var(--bg-light);
+        }
+        .table th button {
+            background: none;
+            border: none;
+            color: inherit;
+            font-weight: inherit;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+        .request-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-gray);
+            padding: 24px;
+        }
+        .request-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .request-id {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--light-gray);
+        }
+        .request-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .request-meta {
+            font-size: 0.875rem;
+            color: var(--light-gray);
+            margin-bottom: 16px;
+        }
+        .request-meta div {
+            margin-bottom: 4px;
+        }
+        .request-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--primary);
+            border: 1px solid var(--border-gray);
+        }
+        .status-badge.order {
+            background: #fffbeb;
+            color: #92400e;
+            border-color: #fbbf24;
+        }
+        .status-badge.received {
+            background: #eff6ff;
+            color: #1e40af;
+            border-color: #3b82f6;
+        }
+        .status-badge.processing {
+            background: #fef3c7;
+            color: #d97706;
+            border-color: #f59e0b;
+        }
+        .status-badge.completed {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #22c55e;
+        }
+        .status-badge.cancelled {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+        .priority-badge {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid var(--border-gray);
+        }
+        .priority-badge.low {
+            background: #f0fdf4;
+            color: #166534;
+        }
+        .priority-badge.normal {
+            background: var(--bg-light);
+            color: var(--light-gray);
+        }
+        .priority-badge.high {
+            background: #fffbeb;
+            color: #92400e;
+        }
+        .priority-badge.urgent {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        .mesh-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .mesh-tag {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: 12px;
+            border: 1px solid;
+        }
+        .mesh-tag:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .mesh-tag-mesh {
+            background: #f0f9ff;
+            color: #1e40af;
+            border-color: #93c5fd;
+        }
+        .mesh-tag-trial {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fbbf24;
+        }
+        .mesh-tag-condition {
+            background: #fce7f3;
+            color: #be185d;
+            border-color: #f9a8d4;
+        }
+        .mesh-tag-intervention {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #4ade80;
+        }
+        .mesh-tag-phase {
+            background: #ede9fe;
+            color: #7c3aed;
+            border-color: #c4b5fd;
+        }
+        .mesh-tag-sponsor {
+            background: #f3f4f6;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+        .search-filters {
+            background: var(--bg-white);
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-gray);
+        }
+        .search-bar {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .search-input {
+            padding-left: 40px;
+        }
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--light-gray);
+        }
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .bulk-actions {
+            background: var(--bg-white);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-gray);
+            display: none;
+            align-items: center;
+            gap: 16px;
+        }
+        .bulk-actions.show {
+            display: flex;
+        }
+        .bulk-actions-text {
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+        .checkbox-cell input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--bg-white);
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--border-gray);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--light-gray);
+        }
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 24px;
+            background: var(--bg-white);
+            border: 1px solid var(--border-gray);
+        }
+        .workflow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+        }
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--border-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--light-gray);
+            background: var(--bg-white);
+        }
+        .step-circle.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        .step-circle.completed {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        .step-label {
+            font-size: 0.875rem;
+            color: var(--light-gray);
+        }
+        @media (max-width: 768px) {
+            .content-header {
+                padding: 16px;
+            }
+            .content-body {
+                padding: 16px;
+            }
+            .form-container {
+                padding: 24px 16px;
+            }
+            .form-row.cols-2,
+            .form-row.cols-3 {
+                grid-template-columns: 1fr;
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .input-with-button {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .workflow-steps {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+        .hidden { 
+            display: none !important; 
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border-gray);
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            to { 
+                transform: rotate(360deg); 
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-text">SilentStacks</div>
             </div>
-        </div>
-    </div>
-        <!-- Navigation -->
-        <nav class="nav-tabs">
-            <button class="nav-tab active" data-section="dashboard">
-                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                Dashboard
-            </button>
-            <button class="nav-tab" data-section="add-request">
-                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-                Add Request
-            </button>
-            <button class="nav-tab" data-section="all-requests">
-                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                All Requests
-            </button>
-            <button class="nav-tab" data-section="import-export">
-                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10,9 9,9 8,9"></polyline>
-                </svg>
-                Import/Export
-            </button>
-            <button class="nav-tab" data-section="settings">
-                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="m12 1 1.68 4.02L18 6.7l-1.02 4.98L21 12l-4.02 1.68L15.3 18l-4.98-1.02L12 21l-1.68-4.02L6 15.3l1.02-4.98L3 12l4.02-1.68L8.7 6l4.98 1.02z"></path>
-                </svg>
-                Settings
-            </button>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+                <button class="nav-tab" data-tab="add-request">Add Request</button>
+                <button class="nav-tab" data-tab="manage-requests">Manage Requests</button>
+                <button class="nav-tab" data-tab="bulk-operations">Bulk Operations</button>
+                <button class="nav-tab" data-tab="settings">Settings</button>
+                <button class="nav-tab" data-tab="help">Help</button>
+            </div>
+            <div class="sidebar-footer">
+                <div>SilentStacks v2.0</div>
+                <div id="networkStatus">● Online</div>
+            </div>
         </nav>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Dashboard Section -->
-            <section id="dashboard" class="section active">
-                <h2>Dashboard</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total Requests</h3>
-                        <p class="stat-number" id="total-requests">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Pending</h3>
-                        <p class="stat-number" id="pending-requests">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Fulfilled</h3>
-                        <p class="stat-number" id="fulfilled-requests">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Follow-up Needed</h3>
-                        <p class="stat-number" id="followup-requests">0</p>
+            <div id="ss-live" aria-live="polite" class="sr-only"></div>
+
+            <div class="tab-content active" id="dashboard">
+                <div class="content-header">
+                    <h1 class="page-title">Dashboard</h1>
+                    <div class="content-actions">
+                        <button class="btn" onclick="showTab('add-request')">New Request</button>
                     </div>
                 </div>
-                
-                <h3>Recent Requests</h3>
-                <div id="recent-requests" class="request-list">
-                    <p class="empty-message">No recent requests</p>
-                </div>
-            </section>
-
-            <!-- Add Request Section -->
-            <section id="add-request" class="section">
-                <h2>Add New Request</h2>
-                <form id="request-form" class="request-form">
-                    <!-- Progress Indicator -->
-                    <div class="form-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
-                        <div class="progress-steps">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 33%"></div>
-                            </div>
-                            <div class="progress-step active" data-step="1" data-target="identifiers-section">
-                                <span class="step-number">1</span>
-                                <span class="step-label">Identifiers</span>
-                            </div>
-                            <div class="progress-step" data-step="2" data-target="details-section">
-                                <span class="step-number">2</span>
-                                <span class="step-label">Details</span>
-                            </div>
-                            <div class="progress-step" data-step="3" data-target="request-section">
-                                <span class="step-number">3</span>
-                                <span class="step-label">Complete</span>
-                            </div>
+                <div class="content-body">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalRequests">0</div>
+                            <div class="stat-label">Total Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="pendingRequests">0</div>
+                            <div class="stat-label">Pending Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="inProgressRequests">0</div>
+                            <div class="stat-label">In Progress Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="completedRequests">0</div>
+                            <div class="stat-label">Completed Requests</div>
                         </div>
                     </div>
-
-                    <!-- Identifiers -->
-                    <fieldset class="fieldset-enhanced" id="identifiers-section">
-                        <legend>Identifiers</legend>
-                        
-                        <div class="form-group">
-                            <label for="pmid" class="form-label optional">
-                                PMID (PubMed ID) 
-                                <span class="field-priority preferred">Preferred</span>
-                            </label>
-                            <div class="input-with-button enhanced">
-                                <input type="text" id="pmid" name="pmid" class="form-control identifier-field" 
-                                       placeholder="e.g., 23842776" pattern="[0-9]+" 
-                                       aria-describedby="pmid-help">
-                                <button type="button" id="lookup-pmid" class="btn btn-primary lookup-btn">
-                                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="11" cy="11" r="8"></circle>
-                                        <path d="m21 21-4.35-4.35"></path>
-                                    </svg>
-                                    Lookup
-                                </button>
-                            </div>
-                            <small id="pmid-help" class="form-help">Enter PubMed ID for automatic title, author, and journal retrieval</small>
-                            
-                            <!-- FIXED: Status message moved here for PMID -->
-                            <div id="pmid-status" class="lookup-status"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="doi" class="form-label optional">
-                                DOI (Digital Object Identifier) 
-                                <span class="field-priority optional">Alternative</span>
-                            </label>
-                            <div class="input-with-button enhanced">
-                                <input type="text" id="doi" name="doi" class="form-control identifier-field" 
-                                       placeholder="e.g., 10.1038/nature12373" 
-                                       aria-describedby="doi-help">
-                                <button type="button" id="lookup-doi" class="btn btn-primary lookup-btn">
-                                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                    </svg>
-                                    Lookup
-                                </button>
-                            </div>
-                            <small id="doi-help" class="form-help">CrossRef lookup for bibliographic metadata</small>
-                            
-                            <!-- FIXED: Status message moved here for DOI -->
-                            <div id="doi-status" class="lookup-status"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="docline" class="form-label optional">DOCLINE Request Number</label>
-                            <input type="text" id="docline" name="docline" class="form-control tracking-field" 
-                                   placeholder="e.g., 138ABC123" aria-describedby="docline-help">
-                            <small id="docline-help" class="form-help">ILL tracking number for existing DOCLINE requests</small>
-                        </div>
-                    </fieldset>
-
-                    <!-- Publication Details -->
-                    <fieldset class="fieldset-enhanced" id="details-section">
-                        <legend>Publication Details</legend>
-                        
-                        <div class="form-group">
-                            <label for="title" class="form-label required">Publication Title</label>
-                            <input type="text" id="title" name="title" class="form-control title-field" 
-                                   required aria-describedby="title-help" 
-                                   placeholder="Complete title of the requested publication">
-                            <small id="title-help" class="form-help required">Full title as it appears in the source publication</small>
-                            <div class="field-validation-icon"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="authors" class="form-label optional">Author(s)</label>
-                            <input type="text" id="authors" name="authors" class="form-control author-field" 
-                                   placeholder="Smith, J.; Johnson, A.; et al." 
-                                   aria-describedby="authors-help">
-                            <small id="authors-help" class="form-help">Author names in Last, First Initial format separated by semicolons</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="journal" class="form-label optional">Journal/Publication Source</label>
-                            <input type="text" id="journal" name="journal" class="form-control journal-field" 
-                                   placeholder="Journal of Medical Research" 
-                                   aria-describedby="journal-help">
-                            <small id="journal-help" class="form-help">Full journal name, book title, or publication source</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="year" class="form-label optional">Publication Year</label>
-                            <input type="number" id="year" name="year" class="form-control year-field" 
-                                   min="1900" max="2030" placeholder="2024" 
-                                   aria-describedby="year-help">
-                            <small id="year-help" class="form-help">4-digit publication year</small>
-                        </div>
-                    </fieldset>
-
-                    <!-- Request Details -->
-                    <fieldset class="fieldset-enhanced" id="request-section">
-                        <legend>Request Details</legend>
-                        
-                        <div class="form-group">
-                            <label for="patron-email" class="form-label optional">Patron Email</label>
-                            <input type="email" id="patron-email" name="patronEmail" class="form-control" 
-                                   placeholder="patron@example.com" 
-                                   aria-describedby="email-help">
-                            <small id="email-help" class="form-help">Contact email for the requesting patron</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="priority" class="form-label required">Request Priority</label>
-                            <select id="priority" name="priority" class="form-control priority-select" required aria-describedby="priority-help">
-                                <option value="">Select Priority...</option>
-                                <option value="urgent">Urgent - Critical Patient Care</option>
-                                <option value="rush">Rush - Expedited Timeline</option>
-                                <option value="normal">Normal - Standard Processing</option>
-                            </select>
-                            <small id="priority-help" class="form-help required">Priority determines processing timeline and resource allocation</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="status" class="form-label optional">Request Status</label>
-                            <select id="status" name="status" class="form-control request-status-select" aria-describedby="status-help">
-                                <option value="pending">Pending - Awaiting Processing</option>
-                                <option value="in-progress">In Progress - Actively Working</option>
-                                <option value="fulfilled">Fulfilled - Successfully Completed</option>
-                                <option value="cancelled">Cancelled - Request Withdrawn</option>
-                            </select>
-                            <small id="status-help" class="form-help">Current status of the ILL request</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="tags" class="form-label optional">Subject Tags</label>
-                            <input type="text" id="tags" name="tags" class="form-control" 
-                                   placeholder="e.g., cardiology, review, systematic" 
-                                   aria-describedby="tags-help">
-                            <small id="tags-help" class="form-help">Enter tags separated by commas. Click tags in request cards to change their colors.</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="notes" class="form-label optional">Additional Notes</label>
-                            <textarea id="notes" name="notes" rows="3" class="form-control" 
-                                      placeholder="Any special instructions or notes..." 
-                                      aria-describedby="notes-help"></textarea>
-                            <small id="notes-help" class="form-help">Internal notes about this request</small>
-                        </div>
-                    </fieldset>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="16"></line>
-                                <line x1="8" y1="12" x2="16" y2="12"></line>
-                            </svg>
-                            Save Request
-                        </button>
-                        <button type="button" class="btn btn-secondary" id="clear-form">
-                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M3 6h18l-2 13H5L3 6z"></path>
-                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Clear Form
-                        </button>
-                    </div>
-                </form>
-
-                <!-- REMOVED: Old lookup status - now inline with each lookup -->
-            </section>
-
-            <!-- Enhanced All Requests Section -->
-            <section id="all-requests" class="section">
-                <h2>All Requests</h2>
-                
-                <!-- Enhanced Filters -->
-                <div class="enhanced-filters">
-                    <div class="filter-row">
-                        <input type="text" id="search-requests" placeholder="Search requests..." class="search-input">
-                        <select id="filter-status" class="filter-select">
-                            <option value="">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="fulfilled">Fulfilled</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                        <select id="priority-filter" class="filter-select priority-filter">
-                            <option value="">All Priorities</option>
-                            <option value="urgent">Urgent</option>
-                            <option value="rush">Rush</option>
-                            <option value="normal">Normal</option>
-                        </select>
-                        <select id="date-range" class="filter-select">
-                            <option value="">All Time</option>
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                            <option value="month">This Month</option>
-                            <option value="overdue">Overdue</option>
-                        </select>
-                        <button id="filter-followup" class="btn btn-secondary">
-                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-                                <line x1="12" y1="9" x2="12" y2="13"></line>
-                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                            </svg>
-                            Follow-up Needed
-                        </button>
-                    </div>
-                    
-                    <!-- Sort and Results -->
-                    <div class="filter-row">
-                        <div class="sort-controls">
-                            <span class="sort-label">Sort by:</span>
-                            <button class="sort-btn sort-desc" data-field="createdAt">📅 Date</button>
-                            <button class="sort-btn" data-field="priority">🚨 Priority</button>
-                            <button class="sort-btn" data-field="title">📄 Title</button>
-                            <button class="sort-btn" data-field="journal">📚 Journal</button>
-                            <button class="sort-btn" data-field="status">📊 Status</button>
-                        </div>
-                        <div class="results-info">
-                            <span id="results-count">0 requests</span>
-                            <label class="select-all-label">
-                                <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)"> Select All
-                            </label>
-                            <!-- FIXED: Added btn-danger class -->
-                            <button onclick="deleteSelectedRequests()" class="btn btn-danger btn-small" id="delete-selected-btn" style="display: none;">
-                                🗑️ Delete Selected
-                            </button>
+                    <div class="form-container">
+                        <h2>Recent Requests</h2>
+                        <div id="recentRequests">
+                            <p style="color: var(--light-gray);">No recent requests</p>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Request List -->
-                <div id="request-list" class="request-list">
-                    <p class="empty-message">No requests found</p>
+            <div class="tab-content" id="add-request">
+                <div class="content-header">
+                    <h1 class="page-title">Add New Request</h1>
                 </div>
-            </section>
-
-            <!-- Import/Export Section -->
-            <section id="import-export" class="section">
-                <h2>Import/Export Data</h2>
-                
-                <div class="import-export-grid">
-                    <!-- Export Card -->
-                    <div class="card">
-                        <h3>
-                            <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14,2 14,8 20,8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10,9 9,9 8,9"></polyline>
-                            </svg>
-                            Export Data
-                        </h3>
-                        <p>Download your ILL requests as CSV or JSON</p>
-                        <div class="button-group">
-                            <button id="export-csv" class="btn btn-primary">
-                                <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14,2 14,8 20,8"></polyline>
-                                </svg>
-                                Export as CSV
-                            </button>
-                            <button id="export-json" class="btn btn-primary">
-                                <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14,2 14,8 20,8"></polyline>
-                                </svg>
-                                Export as JSON
-                            </button>
+                <div class="content-body">
+                    <div class="workflow-steps">
+                        <div class="workflow-step">
+                            <div class="step-circle active">1</div>
+                            <div class="step-label">Order</div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">Received</div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">Processing</div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-circle">4</div>
+                            <div class="step-label">Completed</div>
                         </div>
                     </div>
 
-                    <!-- Import Card -->
-                    <div class="card">
-                        <h3>
-                            <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14,2 14,8 20,8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10,9 9,9 8,9"></polyline>
-                            </svg>
-                            Import Data
-                        </h3>
-                        <p>Upload CSV or JSON file with ILL requests</p>
-                        <input type="file" id="import-file" accept=".csv,.json" class="file-input">
-                        <div id="import-status" class="import-status"></div>
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Research Intelligence Lookup</h2>
+                            <div class="form-row cols-3">
+                                <div class="form-group">
+                                    <label for="pmid">PubMed ID</label>
+                                    <div class="input-with-button">
+                                        <input type="text" id="pmid" placeholder="Enter PMID" maxlength="9">
+                                        <button type="button" id="lookup-pmid" class="btn">
+                                            <span class="btn-text">Lookup</span>
+                                            <span class="spinner hidden"></span>
+                                        </button>
+                                    </div>
+                                    <div id="pmid-status" class="status hidden"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="doi">DOI</label>
+                                    <div class="input-with-button">
+                                        <input type="text" id="doi" placeholder="10.1000/example">
+                                        <button type="button" id="lookup-doi" class="btn">
+                                            <span class="btn-text">Lookup</span>
+                                            <span class="spinner hidden"></span>
+                                        </button>
+                                    </div>
+                                    <div id="doi-status" class="status hidden"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="nct">Clinical Trial NCT</label>
+                                    <div class="input-with-button">
+                                        <input type="text" id="nct" placeholder="NCT00000000" maxlength="11">
+                                        <button type="button" id="lookup-nct" class="btn">
+                                            <span class="btn-text">Lookup</span>
+                                            <span class="spinner hidden"></span>
+                                        </button>
+                                    </div>
+                                    <div id="nct-status" class="status hidden"></div>
+                                </div>
+                            </div>
+                            <div id="gl-chips" class="mesh-container hidden"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Publication Details</h2>
+                            <form id="requestForm">
+                                <div class="form-group">
+                                    <label for="title">Title</label>
+                                    <textarea id="title" rows="3" placeholder="Article title" required></textarea>
+                                </div>
+                                <div class="form-row cols-2">
+                                    <div class="form-group">
+                                        <label for="authors">Authors</label>
+                                        <input type="text" id="authors" placeholder="Author names">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="journal">Journal</label>
+                                        <input type="text" id="journal" placeholder="Journal name">
+                                    </div>
+                                </div>
+                                <div class="form-row cols-3">
+                                    <div class="form-group">
+                                        <label for="year">Year</label>
+                                        <input type="number" id="year" placeholder="2024" min="1900" max="2030">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="volume">Volume</label>
+                                        <input type="text" id="volume" placeholder="Volume">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pages">Pages</label>
+                                        <input type="text" id="pages" placeholder="Pages">
+                                    </div>
+                                </div>
+                                <div class="form-row cols-3">
+                                    <div class="form-group">
+                                        <label for="gl-nct-title">NCT Title</label>
+                                        <input type="text" id="gl-nct-title" placeholder="Clinical trial title">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="gl-phase">Phase</label>
+                                        <input type="text" id="gl-phase" placeholder="Phase">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="gl-ct-status">CT Status</label>
+                                        <input type="text" id="gl-ct-status" placeholder="Clinical trial status">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="gl-sponsor">Sponsor</label>
+                                    <input type="text" id="gl-sponsor" placeholder="Study sponsor">
+                                </div>
+                                <div class="form-row cols-2">
+                                    <div class="form-group">
+                                        <label for="patron-email">Patron Email</label>
+                                        <input type="email" id="patron-email" placeholder="researcher@university.edu" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="docline">DOCLINE Number</label>
+                                        <input type="text" id="docline" placeholder="DOC123456">
+                                    </div>
+                                </div>
+                                <div class="form-row cols-2">
+                                    <div class="form-group">
+                                        <label for="priority">Urgency</label>
+                                        <select id="priority">
+                                            <option value="low">Low</option>
+                                            <option value="normal" selected>Normal</option>
+                                            <option value="high">High</option>
+                                            <option value="urgent">Urgent</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="status">Fill Status</label>
+                                        <select id="status">
+                                            <option value="order" selected>Order</option>
+                                            <option value="received">Received</option>
+                                            <option value="processing">Processing</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tags">Tags</label>
+                                    <input type="text" id="tags" placeholder="Enter tags separated by commas">
+                                </div>
+                                <div class="form-group">
+                                    <label for="notes">Notes</label>
+                                    <textarea id="notes" rows="4" placeholder="Additional notes..."></textarea>
+                                </div>
+                                <div class="form-row cols-2">
+                                    <button type="submit" class="btn btn-success">Save Request</button>
+                                    <button type="button" id="clearForm" class="btn btn-secondary">Clear Form</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- Bulk Paste Section -->
-                <div class="bulk-paste-section">
-                    <h3>
-                        <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                        </svg>
-                        Bulk Paste Data
-                    </h3>
-                    <p class="bulk-paste-help">Paste CSV data directly from your clipboard (Excel, Google Sheets, etc.)</p>
-                    <textarea id="bulk-paste-data" placeholder="Paste CSV data here with headers like: PMID, Title, Authors, Journal, Year, Priority..."></textarea>
-                    <p class="bulk-paste-help"><strong>Supported headers:</strong> PMID/pmid, DOI/doi, Title/title, Authors/authors, Journal/journal, Year/year, Priority/priority, Notes/notes</p>
-                    <button id="bulk-paste-btn" class="btn btn-primary">
-                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14,2 14,8 20,8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10,9 9,9 8,9"></polyline>
-                        </svg>
-                        Import Pasted Data
-                    </button>
+            </div>
+
+            <div class="tab-content" id="manage-requests">
+                <div class="content-header">
+                    <h1 class="page-title">Manage Requests</h1>
+                    <div class="content-actions">
+                        <div class="view-toggle">
+                            <button class="active" data-view="table">Table</button>
+                            <button data-view="cards">Cards</button>
+                        </div>
+                        <button class="btn" onclick="showTab('add-request')">New Request</button>
+                    </div>
                 </div>
-            </section>
-
-            <!-- Settings Section -->
-            <section id="settings" class="section">
-                <h2>Settings</h2>
-                
-                <form id="settings-form" class="settings-form">
-                    <div class="form-group">
-                        <label for="followup-days">Follow-up Days</label>
-                        <input type="number" id="followup-days" min="1" max="30" value="5">
-                        <small>Mark requests as needing follow-up after this many days</small>
+                <div class="bulk-actions" id="bulkActions">
+                    <span class="bulk-actions-text" id="bulkActionsText">0 selected</span>
+                    <button class="btn btn-sm btn-secondary" id="bulkEdit">Edit Selected</button>
+                    <button class="btn btn-sm btn-danger" id="bulkDelete">Delete Selected</button>
+                    <button class="btn btn-sm btn-secondary" id="bulkCancel">Cancel</button>
+                </div>
+                <div class="content-body">
+                    <div class="search-filters">
+                        <div class="search-bar">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="searchInput" class="search-input" placeholder="Search requests...">
+                        </div>
+                        <div class="filters-row">
+                            <div class="form-group">
+                                <label>Fill Status</label>
+                                <select id="statusFilter">
+                                    <option value="">All Fill Statuses</option>
+                                    <option value="order">Order</option>
+                                    <option value="received">Received</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Urgency</label>
+                                <select id="priorityFilter">
+                                    <option value="">All Urgency Levels</option>
+                                    <option value="low">Low</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Date From</label>
+                                <input type="date" id="dateFrom">
+                            </div>
+                            <div class="form-group">
+                                <label>Date To</label>
+                                <input type="date" id="dateTo">
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="theme">Theme</label>
-                        <select id="theme">
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                            <option value="high-contrast">High Contrast</option>
-                        </select>
+                    <div id="tableView" class="table-container">
+                        <table class="table" id="requests-table">
+                            <thead>
+                                <tr>
+                                    <th class="checkbox-cell">
+                                        <input type="checkbox" id="selectAll">
+                                    </th>
+                                    <th>
+                                        <button onclick="sortTable('priority')">
+                                            Urgency <span id="sort-priority">↕️</span>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button onclick="sortTable('docline')">
+                                            DOCLINE # <span id="sort-docline">↕️</span>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button onclick="sortTable('pmid')">
+                                            PMID <span id="sort-pmid">↕️</span>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button onclick="sortTable('title')">
+                                            Citation <span id="sort-title">↕️</span>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button onclick="sortTable('patronEmail')">
+                                            Patron e-mail <span id="sort-patronEmail">↕️</span>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button onclick="sortTable('status')">
+                                            Fill Status <span id="sort-status">↕️</span>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button onclick="sortTable('updated')">
+                                            Last Updated <span id="sort-updated">↕️</span>
+                                        </button>
+                                    </th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
+                    <div id="cardsView" class="cards-grid hidden"></div>
+                </div>
+            </div>
 
-                    <div class="form-group">
-                        <label for="api-key">PubMed API Key (Optional)</label>
-                        <input type="text" id="api-key" placeholder="Enter your NCBI API key">
-                        <small>Provides higher rate limits for PubMed lookups</small>
+            <div class="tab-content" id="bulk-operations">
+                <div class="content-header">
+                    <h1 class="page-title">Bulk Operations</h1>
+                </div>
+                <div class="content-body">
+                    <div class="form-row cols-2">
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h2>Bulk Import</h2>
+                                <div class="form-group">
+                                    <label for="bulk-paste-data">Paste Identifiers</label>
+                                    <textarea id="bulk-paste-data" rows="6" placeholder="Paste PMIDs, DOIs, or NCT IDs (any format)"></textarea>
+                                </div>
+                                <button type="button" id="bulk-paste-btn" class="btn btn-success">Process Paste</button>
+                            </div>
+                        </div>
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h2>File Upload</h2>
+                                <div class="form-group">
+                                    <label for="bulk-upload">Upload File</label>
+                                    <input type="file" id="bulk-upload" accept=".txt,.csv,.json">
+                                </div>
+                                <button type="button" id="bulk-upload-btn" class="btn btn-success">Process File</button>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="crossref-email">Crossref Email (Optional)</label>
-                        <input type="email" id="crossref-email" placeholder="your@email.com">
-                        <small>Enables polite pool access for DOI lookups</small>
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Export Data</h2>
+                            <div class="form-row cols-3">
+                                <button type="button" id="exportCSV" class="btn btn-secondary">Export CSV</button>
+                                <button type="button" id="exportJSON" class="btn btn-secondary">Export JSON</button>
+                                <button type="button" id="exportNLM" class="btn btn-secondary">Export NLM Citations</button>
+                            </div>
+                            <div class="form-row cols-3" style="margin-top: 16px;">
+                                <button type="button" id="validateData" class="btn btn-secondary">Validate Data Quality</button>
+                            </div>
+                        </div>
                     </div>
+                </div>
+            </div>
 
-                    <button type="submit" class="btn btn-primary">
-                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path d="m12 1 1.68 4.02L18 6.7l-1.02 4.98L21 12l-4.02 1.68L15.3 18l-4.98-1.02L12 21l-1.68-4.02L6 15.3l1.02-4.98L3 12l4.02-1.68L8.7 6l4.98 1.02z"></path>
-                        </svg>
-                        Save Settings
-                    </button>
-                </form>
-            </section>
+            <div class="tab-content" id="settings">
+                <div class="content-header">
+                    <h1 class="page-title">Settings</h1>
+                </div>
+                <div class="content-body">
+                    <div class="form-row cols-2">
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h2>API Configuration</h2>
+                                <div class="form-group">
+                                    <label for="api-key">NCBI API Key</label>
+                                    <input type="password" id="api-key" placeholder="Optional for higher rate limits">
+                                </div>
+                                <div class="form-group">
+                                    <label for="crossref-email">CrossRef Email</label>
+                                    <input type="email" id="crossref-email" placeholder="your.email@domain.com">
+                                </div>
+                                <button type="button" id="saveSettings" class="btn">Save Settings</button>
+                            </div>
+                        </div>
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h2>Appearance</h2>
+                                <div class="form-group">
+                                    <label for="themeSelect">Theme</label>
+                                    <select id="themeSelect">
+                                        <option value="light">Light</option>
+                                        <option value="dark">Dark</option>
+                                        <option value="high-contrast">High Contrast</option>
+                                    </select>
+                                </div>
+                                <button type="button" id="saveAppearance" class="btn">Save Appearance</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Data Management</h2>
+                            <div class="form-row cols-3">
+                                <button type="button" id="backupData" class="btn btn-secondary">Backup Data</button>
+                                <button type="button" id="restoreData" class="btn btn-secondary">Restore Data</button>
+                                <button type="button" id="clearData" class="btn btn-danger">Clear All Data</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="help">
+                <div class="content-header">
+                    <h1 class="page-title">Help & Documentation</h1>
+                </div>
+                <div class="content-body">
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Quick Start Guide</h2>
+                            <h3>Getting Started</h3>
+                            <ol>
+                                <li><strong>Add a Request:</strong> Click "New Request" and enter publication details</li>
+                                <li><strong>Use Research Lookup:</strong> Enter PMID, DOI, or NCT to auto-populate</li>
+                                <li><strong>Manage Workflow:</strong> Track requests through 4-step process</li>
+                                <li><strong>View Data:</strong> Toggle between table and card views</li>
+                                <li><strong>Bulk Operations:</strong> Import/export multiple requests</li>
+                            </ol>
+                            <h3>Demo Data</h3>
+                            <p>Try these test PMIDs to see enrichment:</p>
+                            <ul>
+                                <li><strong>18539917</strong> - Hepatocellular carcinoma trial with NCT</li>
+                                <li><strong>23842776</strong> - Single-cell RNA sequencing</li>
+                            </ul>
+                            <h3>Features</h3>
+                            <ul>
+                                <li><strong>Dashboard:</strong> Overview of all requests and statistics</li>
+                                <li><strong>Add Request:</strong> Create new ILL requests with research intelligence</li>
+                                <li><strong>Manage Requests:</strong> View, edit, delete with table/card views</li>
+                                <li><strong>Bulk Operations:</strong> Import/export multiple requests</li>
+                                <li><strong>Settings:</strong> API configuration and preferences</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
-    <!-- JavaScript -->
-    <script src="assets/js/app.js"></script>
+    <!-- Dependencies: PapaParse + Fuse.js -->
+    <script src="dependencies.min.js" defer></script>
+    
+    <!-- SilentStacks Application -->
+    <script src="app.min.js" defer></script>
 </body>
 </html>
