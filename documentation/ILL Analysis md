@@ -1,0 +1,100 @@
+# SilentStacks: Simple ILL Request Tracker Analysis
+
+## Workflow-Focused Assessment
+
+SilentStacks is designed for a specific 4-step ILL workflow:
+1. **Input ILL request** using metadata for ease of input
+2. **Track order status** via cards or table  
+3. **Output citations** in NLM format with CSV export
+4. **Input JSON files** to continue working
+
+## Core Functionality Analysis
+
+### Step 1: Metadata Input
+**Current State**: Forms appear functional based on UI screenshots
+**Issues Identified**: 
+- Data contamination (patron names appearing in metadata fields)
+- Input validation problems
+
+**Optimization Focus**:
+- Clean field isolation between user data and bibliographic metadata
+- Better input validation for standard fields (PMID, DOI, NCT format checking)
+- Auto-population where possible to reduce manual entry
+
+### Step 2: Status Tracking
+**Current State**: CRUD operations non-functional (Issue #5)
+**Issues Identified**:
+- CSP violations preventing table operations
+- Edit/delete buttons not working
+- Data not persisting properly
+
+**Optimization Focus**:
+- Fix event handlers blocked by Content Security Policy
+- Ensure status updates save correctly
+- Simple status workflow (Requested → Processing → Fulfilled → etc.)
+
+### Step 3: Citation Output
+**Current State**: NLM formatting issues, incomplete metadata
+**Issues Identified**:
+- Missing volume/page data from PubMed API
+- DOI formatting problems (`doi: 10.1016&#x2F;S0140-6736(22)01841-4`)
+- CSV export functionality unclear
+
+**Optimization Focus**:
+- Correct NLM citation formatting
+- Complete metadata extraction from APIs
+- Clean CSV export with proper column headers
+
+### Step 4: JSON Import/Export
+**Current State**: Basic functionality exists but needs improvement
+**Issues Identified**:
+- Data persistence failures
+- No validation on import
+
+**Optimization Focus**:
+- Reliable backup/restore functionality
+- Data integrity validation on import
+- Error handling for corrupted JSON files
+
+## Extraneous Features Causing Problems
+
+The performance issues appear to stem from features beyond the core workflow:
+
+**PMID Enrichment Pipeline**: The console logs show extensive API orchestration for PubMed → DOI → NCT lookups. If this is supplementary to basic ILL tracking, it may be causing unnecessary complexity.
+
+**Bulk Operations**: References to processing hundreds/thousands of records suggest scope beyond simple ILL request tracking.
+
+**Complex Search/Filtering**: Advanced search features may be unnecessary for basic status tracking.
+
+## Focused Optimization Plan
+
+### Week 1: Core Workflow Fixes
+- Fix CRUD operations (edit/delete requests)
+- Resolve CSP violations
+- Ensure basic data persistence works
+
+### Week 2: Output Quality
+- Perfect NLM citation formatting
+- Complete metadata extraction from APIs
+- Reliable CSV export functionality
+
+### Week 3: Data Management
+- Robust JSON backup/restore
+- Input validation and error handling
+- Clean separation of user vs bibliographic data
+
+## Success Criteria (Simplified)
+
+- **Input**: Clean metadata entry forms with validation
+- **Tracking**: Functional status updates and data persistence  
+- **Output**: Correctly formatted NLM citations in clean CSV export
+- **Continuity**: Reliable JSON backup/restore for ongoing work
+
+## Revised Assessment
+
+**Vision Clarity**: A+ (Simple, focused workflow)
+**Architecture Appropriateness**: A (Client-only perfect for ILL tracking)
+**Current Implementation**: C- (Core CRUD broken, but scope is manageable)
+**Optimization Complexity**: Low (Fix existing features rather than add new ones)
+
+The tool should excel at being a reliable, simple ILL request tracker that librarians can deploy anywhere without complexity. All the performance optimization discussions around large datasets and complex API orchestration may be addressing features that are tangential to this core purpose.
