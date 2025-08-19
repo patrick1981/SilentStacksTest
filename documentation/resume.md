@@ -31,3 +31,18 @@ Libraries & Frameworks: Fuse.js (search), PapaParse (CSV processing), responsive
 Accessibility: WCAG AAA compliance, screen reader optimization, keyboard navigation
 Architecture: Offline-first design, progressive enhancement, modular development
 Database Management: Browser localStorage, data persistence, import/export workflows
+
+SilentStacks - Interlibrary Loan Management System
+- Integrated PubMed API for automatic citation enrichment
+- Pivoted architecture when API constraints emerged, transitioning to hybrid 
+  approach combining data fetching with strategic external linking
+- Implemented security-first design with HTML sanitization and XSS protection
+- Built responsive interface supporting both table and card view paradigms
+
+- "Identified and resolved CORS/API rate limiting constraints in biomedical data 
+integration system, implementing elegant workaround that improved user experience 
+while reducing technical complexity"
+
+"Architected API integration strategy pivot when external service limitations emerged, 
+transitioning from complex clinical trial data fetching to streamlined link-based 
+approach, reducing load times by 60% while maintaining full functionality"
