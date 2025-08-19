@@ -82,6 +82,21 @@ approach, reducing load times by 60% while maintaining full functionality"
 **Delivered complete web application** from concept to deployment, including responsive UI design, API integrations, offline functionality, and comprehensive testing suite
 
 ---
+---
+
+### SilentStacks – Interlibrary Loan Management System (v1.2 → v2.0)
+
+**Project Lead / Strategic Architect** | 2025
+
+* Directed the **end-to-end transformation** of SilentStacks from v1.2 to v2.0, ensuring feature parity while introducing **bulk operations, metadata enrichment, offline-first support, and enhanced accessibility (AAA compliance)**.
+* Identified and resolved a **critical CORS and stability challenge** with ClinicalTrials.gov APIs by leading a **pivot away from unsafe or unmaintainable integrations** toward a resilient design that links directly to authoritative trial records.
+* Partnered with AI development agents to **define functional specifications, validate security gaps, and enforce a strict playbook process**, ensuring delivery of a production-ready monolithic build.
+* Maintained project vision with a focus on **usability, sustainability, and compliance**, producing structured changelogs, executive summaries, and security rationales for national-level departmental review.
+* Oversaw the integration of PubMed and CrossRef pipelines while **streamlining workflows and reducing system complexity**, resulting in a **lighter, faster, and more reliable client application**.
+
+---
+
+
 
 ## Alternative Shorter Versions
 
