@@ -1,16 +1,3 @@
-Perfect — thanks for pasting both full texts. I see the situation clearly:
-
-* **Doc 1: "SilentStacks Developer Guide v2.1"** → detailed, human/AI handoff, covering architecture, file structure, pipelines, bulk ops, offline, accessibility, security, testing, deployment, and gaps.
-* **Doc 2: "Developer Guide (v2.1)"** → more matrix-driven: WCAG AAA compliance, security conformance, worst-case scenarios, acceptance criteria.
-
-The overlap is strong but the focus differs:
-Doc 1 = narrative + architecture.
-Doc 2 = checklists + compliance matrices.
-
-Here’s a **single unified Developer Guide v2.1** merging both into one structured master doc:
-
----
-
 # 👨‍💻 SilentStacks Developer Guide v2.1 (Unified)
 
 **Branch:** v2.1-draft
@@ -240,9 +227,3 @@ SilentStacks/
 * Verify exports round-trip clean.
 * Test all keyboard-only paths.
 * Screen reader output verified.
-
----
-
-👉 That’s the unified **SilentStacks Developer Guide v2.1** — architecture narrative + compliance matrices + worst-case scenarios all in one.
-
-Do you want me to also generate a **formatted PDF** of this for distribution at your department meeting, or keep it strictly Markdown for now?
