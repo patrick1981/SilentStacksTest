@@ -1,18 +1,14 @@
-# Handoff Guide (v2.1)
-**Run:** 2025-08-20 10:05 UTC
+ Handoff Guide
 
-## Repo Map
-See /documentation for Playbook, GAP Report, Guides, Appendices.
+## Start Here
+Read **PLAYBOOK_v2.1.md** (canonical) first.
 
-## Deployment Matrix
-- GitHub Pages → easiest shareable link
-- Thumb drive → fully offline
-- Desktop → double-click index.html
+## Process
+- Use `Selector_Map_v2.1.md` for wiring selectors.  
+- Don’t fork the enrichment engine; only adjust selectors.  
+- On PRs: run Acceptance Checklist + embed updated GAP REPORT into Playbook.
 
-## Compliance Obligations
-- Maintain AAA + Security matrices in GAP Report
-- Use `"n/a"` fill policy
-- Simulate worst-case scenarios
-
-## New AI Chat Prompt
-You are my AI dev partner for SilentStacks (v2.1). Maintain v1.2 UI contract. Enforce AAA + Security matrices, worst-cases, canonical headers. Update /documentation on each run.
+## New Chat Prompt (paste for next maintainer)
+“You are inheriting SilentStacks v2.1 (4‑file runtime: index.html, app.min.js, dependencies.js, sw.js).  
+Playbook is canonical; maintain WCAG 2.2 AAA and security matrices; preserve worst‑case contracts.  
+Use Selector_Map_v2.1.md; do not fork enrichment logic. Run GAP after each iteration.”
