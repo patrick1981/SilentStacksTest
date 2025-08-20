@@ -1,6 +1,6 @@
 # 📘 `PLAYBOOK_v2.1.md` (Canonical, with TOC + Worst‑Case + Embedded GAP)
 
-```markdown
+
 # SilentStacks – Project Playbook v2.1 (Canonical)
 **Last Updated:** 2025-08-20 00:00 UTC  
 **Rule:** This Playbook is the **single source of truth**. All other docs defer here.  
@@ -170,6 +170,6 @@ Dirty paste, extreme bulk rejection, network loss resume, CSV junk tolerance, ti
 - ✅ Cutoff + export round‑trip OK  
 - ⚠ AAA pendings tracked  
 - ⚠ Storage/dep integrity audit queued
-```
+
 
 ---
