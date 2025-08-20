@@ -1,13 +1,17 @@
-# Upkeep Guide v2.1
+# Upkeep v2.1 — Simple Steps (8–80)
+**Run:** 2025-08-20 10:05 UTC
 
-**Purpose:** Idiot-proof instructions for keeping SilentStacks fresh.
+## Back up
+- GitHub: **Code → Download ZIP** (save it)  
+- Thumb drive: Copy the whole folder to another drive
 
-1. Backup current `dist/`.  
-2. Download new release ZIP.  
-3. Replace old `dist/` with new.  
-4. Test:  
-   - Open `index.html`.  
-   - Verify AAA contrast, keyboard nav.  
-   - Check “n/a” fill preserved.  
+## Update
+- GitHub: **Add file → Upload files** (replace old files) → **Commit**
+- Thumb drive/desktop: Replace the old folder with the new one
 
-**Reminder:** Always check GAP_REPORT for latest compliance.
+## Verify
+- Open **index.html**
+- Check your table: every row has values or `"n/a"`
+- Dirty rows are highlighted; you can fix later
+
+**Footer:** For accessibility & security details, see the Compliance Appendix (User Edition).
