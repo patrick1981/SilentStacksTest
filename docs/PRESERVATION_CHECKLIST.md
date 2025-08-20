@@ -1,25 +1,7 @@
-# Preservation Checklist (v2.1)
-**Run:** 2025-08-20 10:05 UTC
+Preservation Checklist
 
-## CT.gov API Pivot
-- Removed; linkout-only
-- Present in Playbook, GAP Report, Dev Guide
-
-## P0 Requirements
-- Bulk ops; throttling; checkpoint/resume
-- Canonical headers with Fill Status
-- `"n/a"` policy; dirty-only export
-
-## Security
-- XSS & API injection mitigations
-- CORS policy
-- Storage + dependency follow-ups pending
-
-## Accessibility
-- AAA matrix tracked; pending items listed
-
-## Worst-Case Scenarios
-- Dirty paste; extreme bulk; tab close; export/import loop; CSV junk; titles-only
-
-## Modularization
-- File tree captured across docs
+- [ ] Backup the **four runtime files**.  
+- [ ] Bump SW `CACHE_VERSION`; verify old caches are cleared.  
+- [ ] Run worst‑case suite; confirm `"n/a"` policy.  
+- [ ] Export → re‑import test passes (Clean‑Only and Full).  
+- [ ] Attach **GAP REPORT** and **Playbook** to the release.
