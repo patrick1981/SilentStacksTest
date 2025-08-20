@@ -1,9 +1,9 @@
-# Selector Map v2.1
+Selector Map v2.1 (Contract)
+
+> Update selectors only if the UI changes. Do **not** change keys.
 
 ```json
 {
-  "$schema": "https://example.com/silentstacks/selector-map.schema.json",
-  "version": "2.1",
   "buttons": {
     "lookup_pmid": "#lookup-pmid",
     "lookup_doi": "#lookup-doi",
@@ -27,19 +27,6 @@
     "priority": "#priority",
     "docline": "#docline"
   },
-  "clinical_trials": {
-    "phase": "#gl-phase",
-    "status": "#gl-ct-status",
-    "sponsor": "#gl-sponsor",
-    "nct_title": "#gl-nct-title"
-  },
-  "chips": {
-    "mesh": "#mesh-chips"
-  },
-  "bulk": {
-    "paste_textarea": "#bulk-paste-data",
-    "upload_input": "#bulk-upload"
-  },
   "table": {
     "requests_tbody": "#requests-table tbody"
   },
@@ -50,4 +37,4 @@
     "nct": "#nct-status"
   }
 }
-```
+````
