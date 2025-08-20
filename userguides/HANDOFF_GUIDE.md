@@ -1,18 +1,34 @@
-# Handoff Guide (v2.1)
-**Run:** 2025-08-20 10:05 UTC
+# SilentStacks Handoff Guide
 
-## Repo Map
-See /documentation for Playbook, GAP Report, Guides, Appendices.
+---
 
-## Deployment Matrix
-- GitHub Pages → easiest shareable link
-- Thumb drive → fully offline
-- Desktop → double-click index.html
+## Repository Structure
+- `documentation/` — all guides, playbook, gap report.  
+- `src/` — modularized code.  
+- `dist/` — release builds.  
 
-## Compliance Obligations
-- Maintain AAA + Security matrices in GAP Report
-- Use `"n/a"` fill policy
-- Simulate worst-case scenarios
+---
 
-## New AI Chat Prompt
-You are my AI dev partner for SilentStacks (v2.1). Maintain v1.2 UI contract. Enforce AAA + Security matrices, worst-cases, canonical headers. Update /documentation on each run.
+## Deployment
+- **GitHub Pages:**  
+  1. Create GitHub account.  
+  2. New repo → upload files.  
+  3. Settings → Pages → choose `main` branch `/root`.  
+  4. Your app is live.  
+
+- **Thumbdrive:**  
+  Copy `dist/` to drive. Open `index.html` in browser.  
+
+- **Desktop:**  
+  Open `index.html` directly. No install needed.
+
+---
+
+## Compliance
+- Must meet WCAG 2.2 AAA.  
+- Must enforce Security Conformance Matrix.  
+- Must simulate Worst-Case Scenarios before release.
+
+---
+
+## AI Continuation Prompt
