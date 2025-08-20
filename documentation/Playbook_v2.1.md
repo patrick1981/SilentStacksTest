@@ -1,8 +1,3 @@
-
-* **Playbook v2.1** (already mostly solid, but I’ll expand & ensure it fully reflects our discussions including dirty-data, worst-case, and P0 items)
-*
----
-
 # 📘 SilentStacks Playbook v2.1 (Draft)
 
 **Origin:** Forked from v2.0 on 2025-08-19
