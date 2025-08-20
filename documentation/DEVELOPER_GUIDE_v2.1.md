@@ -1,79 +1,248 @@
-# Developer Guide (v2.1)
-**Run:** 2025-08-20 10:05 UTC
+Perfect — thanks for pasting both full texts. I see the situation clearly:
 
-## File Tree
+* **Doc 1: "SilentStacks Developer Guide v2.1"** → detailed, human/AI handoff, covering architecture, file structure, pipelines, bulk ops, offline, accessibility, security, testing, deployment, and gaps.
+* **Doc 2: "Developer Guide (v2.1)"** → more matrix-driven: WCAG AAA compliance, security conformance, worst-case scenarios, acceptance criteria.
+
+The overlap is strong but the focus differs:
+Doc 1 = narrative + architecture.
+Doc 2 = checklists + compliance matrices.
+
+Here’s a **single unified Developer Guide v2.1** merging both into one structured master doc:
+
+---
+
+# 👨‍💻 SilentStacks Developer Guide v2.1 (Unified)
+
+**Branch:** v2.1-draft
+**Maintainer:** Solo + AI-assisted
+**Last Updated:** 2025-08-20
+
+---
+
+## 📋 Table of Contents
+
+1. [Architecture Overview](#architecture-overview)
+2. [File Structure](#file-structure)
+3. [Metadata Pipelines](#metadata-pipelines)
+4. [Bulk Operations](#bulk-operations)
+5. [Offline & Persistence](#offline--persistence)
+6. [Accessibility & Theming](#accessibility--theming)
+7. [Security & Validation](#security--validation)
+8. [Compliance Matrices](#compliance-matrices)
+
+   * [WCAG 2.2 AAA](#wcag-22-aaa-conformance-matrix)
+   * [Security](#security-conformance-matrix)
+9. [Worst-Case Scenarios](#worst-case-scenarios)
+10. [Testing & Debugging](#testing--debugging)
+11. [Deployment & Packaging](#deployment--packaging)
+12. [Known Gaps (v2.1)](#known-gaps-v21)
+13. [Acceptance Criteria](#acceptance-criteria)
+
+---
+
+## 🏗️ Architecture Overview
+
+SilentStacks is a **client-side, offline-first ILL management app**.
+
+**Constraints:**
+
+* No backend: all storage and enrichment are client-side.
+* Monolithic HTML build (`dist/SilentStacks_v2_monolith.html`) for deployment.
+* Selector map ensures AI compatibility with UI.
+
+**Core Components:**
+
+* `app.js` — core enrichment & UI logic
+* `offline-manager.js` — service worker & API queue
+* `adapter.js` — selector map & wiring
+* `style.css` — AAA-compliant theming
+* `documentation/` — Playbook, Gap Report, QuickStart, Upkeep, etc.
+
+**Patterns:**
+
+* IIFE + event-driven to avoid namespace collisions.
+* Progressive enhancement baseline.
+* Accessible-first design (ARIA, keyboard nav, contrast).
+
+---
+
+## 📁 File Structure
+
 ```
 SilentStacks/
 ├── index.html
-├── /css/
-│   └── style.css
-├── /js/
-│   └── app.min.js
-├── /documentation/
+├── assets/
+│   ├── css/style.css
+│   ├── js/
+│   │   ├── app.js
+│   │   ├── adapter.js
+│   │   ├── offline-manager.js
+│   │   └── lib/
+│   │       ├── papaparse.min.js
+│   │       └── fuse.min.js
+│   └── fonts/reddit-sans/
+├── documentation/
 │   ├── PLAYBOOK_v2.1.md
 │   ├── GAP_REPORT_v2.1.md
 │   ├── QUICKSTART_v2.1.md
 │   ├── UPKEEP_v2.1.md
 │   ├── DEVELOPER_GUIDE_v2.1.md
 │   ├── COMPLIANCE_APPENDIX.md
-│   ├── COMPLIANCE_APPENDIX_User.md
 │   ├── HANDOFF_GUIDE.md
-│   ├── PRESERVATION_CHECKLIST.md
 │   └── Selector_Map_v2.1.md
+└── dist/SilentStacks_v2_monolith.html
 ```
 
-## Architecture & Contracts
-- Client-only app: IndexedDB for data; localStorage for prefs
-- v1.2 UI contract immutable
-- Canonical headers: `Urgency | Docline # | PMID | Citation | NCT Link | Patron e-mail | Fill Status`
-- NCT linkouts only; no CT.gov API
+---
 
-## Implementation Rules
-- Sanitize/escape all dynamic HTML
-- Validate & URL-encode all identifiers before calls
-- Never leave blanks; write `"n/a"` for missing data
-- Keep adapter/selectors in sync with Selector Map
+## 🔌 Metadata Pipelines
 
-## WCAG 2.2 AAA Conformance Matrix (v2.1)
+* **PMID → PubMed**: validate → ESummary → EFetch → normalize.
+* **DOI → CrossRef**: validate regex → fetch JSON → backfill PMID → normalize.
+* **NCT → ClinicalTrials.gov**: validate `NCT\d{8}` → fetch metadata → chips → normalize.
 
-| Guideline | Success Criterion | Level | Status |
-|-----------|-------------------|-------|--------|
-| 1.4.6 | Contrast (Enhanced) | AAA | ✅ Met – ≥7:1 (≥4.5:1 large) |
-| 1.4.8 | Visual Presentation | AAA | ⚠ Pending – preferences panel (spacing/width) |
-| 1.4.9 | Images of Text (No Exception) | AAA | ✅ Met – no text-in-images |
-| 2.1.3 | Keyboard (No Exception) | AAA | ✅ Met – full keyboard operability |
-| 2.2.3 | No Timing | AAA | ✅ Met – no timeouts |
-| 2.3.2 | Three Flashes | AAA | ✅ Met – no flashing content |
-| 2.4.8 | Location | AAA | ⚠ Pending – breadcrumb indicators |
-| 2.4.9 | Link Purpose (Link Only) | AAA | ✅ Met – self-describing links |
-| 2.4.10 | Section Headings | AAA | ✅ Met – semantic structure |
-| 2.4.12 | Focus Not Obscured (Enhanced) | AAA | ⚠ Pending – sticky header testing |
-| 2.4.13 | Focus Appearance | AAA | ✅ Met – thick, high-contrast outline |
-| 3.3.9 | Accessible Authentication (Enhanced) | AAA | N/A – no authentication |
-| 1.3.6 | Identify Purpose | AAA | ✅ Met – ARIA + autocomplete |
-| 3.3.7 / 3.3.8 | Redundant Entry / Consistent Help | A/AA | ⚠ Pending – persistent Help affordance |
-| 1.2.6 / 1.2.8 / 1.2.9 | Sign Language / Media Alternatives / Audio-only (Live) | AAA | N/A – no media |
+**Rule:** Always prefer `UnifiedResult.unified`.
 
-## Security Conformance Matrix (v2.1)
+---
 
-| Risk | Control | Status |
-|------|---------|--------|
-| XSS | Escape HTML/attributes; sanitize inputs | ✅ Met |
-| API Injection | Regex validation; URL-encode params | ✅ Met |
-| CORS Misuse | CT.gov API calls disabled; linkout only | ✅ Met |
-| Data Leakage | Exports normalized; `"n/a"` enforced | ✅ Met |
-| Storage Safety | IndexedDB cleanup of malformed blobs | ⚠ Pending (audit) |
-| Dependency Integrity | Pin libraries; SRI hashes for CDN | ⚠ Pending |
+## 📦 Bulk Operations
 
-## Worst-Case Scenarios (Explicit)
-- **Dirty bulk paste:** Mixed PMIDs/DOIs/NCTs + malformed strings → parse, queue, flag dirty rows, force `"n/a"`; continue queue.
-- **Extreme bulk:** >50k rows → reject with clear message (cutoff), suggest chunking.
-- **Network loss / tab close:** Checkpoint in IndexedDB; resume on reopen.
-- **Export/import loop:** Clean-only & full exports must re-import without corruption; dirty flags preserved.
-- **Titles-only dump w/ typos:** Fuzzy match; below threshold remains dirty (no silent fill).
-- **CSV junk:** Commas in quotes, Excel artifacts → robust parser, fallback regex.
+* **Bulk Paste**: regex → tokenize → dedupe → enrich @2/sec.
+* **Bulk Upload**: accept `.txt`, `.csv`, `.json`.
+* **Commit Options**:
 
-## Acceptance (Dev)
-- Update GAP Report matrices per PR
-- Verify exports round-trip cleanly
-- Test keyboard-only paths & screen reader output
+  * Commit Clean (validated only)
+  * Commit All (dirty flagged)
+* **Limits**: 50k row cutoff, resume checkpoint.
+
+---
+
+## 🌐 Offline & Persistence
+
+* IndexedDB → request persistence.
+* localStorage → settings/UI state.
+* Service Worker → caches shell, queues API calls (sync unstable).
+* Recovery → checkpoint + resume.
+
+---
+
+## 🎨 Accessibility & Theming
+
+* WCAG 2.2 AAA baseline.
+* Tokens for light/dark/high-contrast themes.
+* ARIA live regions, keyboard operability.
+* Chips = `role="button"`, focusable (gap: partial).
+
+---
+
+## 🔒 Security & Validation
+
+* Regex validation for PMID/DOI/NCT.
+* Escape HTML, sanitize attributes.
+* URL-encode all API calls.
+* Enforce `"n/a"` for missing values.
+* Rotating 50-entry local error log.
+
+---
+
+## 📊 Compliance Matrices
+
+### WCAG 2.2 AAA Conformance Matrix
+
+| Criterion               | Level | Status                             |
+| ----------------------- | ----- | ---------------------------------- |
+| Contrast (Enhanced)     | AAA   | ✅ Met                              |
+| Visual Presentation     | AAA   | ⚠ Pending (spacing prefs)          |
+| Images of Text          | AAA   | ✅ Met                              |
+| Keyboard (No Exception) | AAA   | ✅ Met                              |
+| No Timing               | AAA   | ✅ Met                              |
+| Three Flashes           | AAA   | ✅ Met                              |
+| Location (Breadcrumbs)  | AAA   | ⚠ Pending                          |
+| Link Purpose            | AAA   | ✅ Met                              |
+| Section Headings        | AAA   | ✅ Met                              |
+| Focus Not Obscured      | AAA   | ⚠ Pending                          |
+| Focus Appearance        | AAA   | ✅ Met                              |
+| Accessible Auth         | AAA   | N/A                                |
+| Identify Purpose        | AAA   | ✅ Met                              |
+| Consistent Help         | AA    | ⚠ Pending (persistent Help button) |
+| Media Alternatives      | AAA   | N/A                                |
+
+### Security Conformance Matrix
+
+| Risk                 | Control               | Status    |
+| -------------------- | --------------------- | --------- |
+| XSS                  | Escape HTML, sanitize | ✅ Met     |
+| API Injection        | Regex + encode        | ✅ Met     |
+| CORS Misuse          | Linkout-only CT.gov   | ✅ Met     |
+| Data Leakage         | Normalized exports    | ✅ Met     |
+| Storage Safety       | IndexedDB cleanup     | ⚠ Pending |
+| Dependency Integrity | SRI hash pinning      | ⚠ Pending |
+
+---
+
+## ⚠ Worst-Case Scenarios
+
+* Mixed dirty IDs → parse, queue, flag dirty, `"n/a"`.
+* > 50k rows → reject, suggest chunking.
+* Network loss / tab close → checkpoint, resume.
+* Export/import loops → no corruption, dirty preserved.
+* Title-only dumps → fuzzy match, low-score = dirty.
+* CSV junk → robust parser + fallback regex.
+
+---
+
+## 🧪 Testing & Debugging
+
+**Manual QA Checklist:**
+
+* PMID lookup populates DOI + MeSH
+* DOI backfills PMID
+* NCT populates trial data
+* Bulk Paste/Upload works
+* Clean vs All export works
+* Offline queues API calls
+* Keyboard nav + screen reader validated
+
+**Debugging Tips:**
+
+* `console.log('UnifiedResult:', result);`
+* Check IndexedDB via DevTools.
+* Run Lighthouse (PWA + accessibility audits).
+
+---
+
+## 🚀 Deployment & Packaging
+
+* Static hosting only (GitHub Pages, file share, thumb drive).
+* HTTPS required for service worker.
+* Packaging:
+
+  * Monolith HTML
+  * Docs folder
+  * Readme + license
+
+---
+
+## ❗ Known Gaps (v2.1)
+
+* MeSH chips not wired into table/cards.
+* NCT tags incomplete.
+* Bulk update/delete workflow unbound.
+* Service Worker background sync buggy.
+* Chip ARIA roles & contrast audit pending.
+* Final XSS/injection audit pending.
+
+---
+
+## ✅ Acceptance Criteria
+
+* Update GAP Report per PR.
+* Verify exports round-trip clean.
+* Test all keyboard-only paths.
+* Screen reader output verified.
+
+---
+
+👉 That’s the unified **SilentStacks Developer Guide v2.1** — architecture narrative + compliance matrices + worst-case scenarios all in one.
+
+Do you want me to also generate a **formatted PDF** of this for distribution at your department meeting, or keep it strictly Markdown for now?
