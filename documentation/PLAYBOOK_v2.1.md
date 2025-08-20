@@ -1,8 +1,4 @@
-Here’s the **unified SilentStacks Playbook v2.1**, merging the narrative P0 operational detail from the first draft with the structured repo baseline, matrices, and acceptance checklist from the second.
-
----
-
-# 📘 SilentStacks Playbook v2.1 (Unified)
+# 📘 SilentStacks Playbook v2.1 (Unified, Patched)
 
 **Origin:** Forked from v2.0 on 2025-08-19
 **Status:** Draft — under active refactor
@@ -44,12 +40,6 @@ Here’s the **unified SilentStacks Playbook v2.1**, merging the narrative P0 op
 
 * **Sources:** Clipboard paste, CSV/XLS upload, raw text.
 * Normalize tokens → route by type.
-* **Edge Cases:**
-
-  * Mixed valid/invalid IDs.
-  * Titles-only, misspelled text.
-  * Excel junk fields.
-  * Doctor’s “email dump.”
 * **Commit Paths:**
 
   * Auto-commit obvious matches.
@@ -58,15 +48,33 @@ Here’s the **unified SilentStacks Playbook v2.1**, merging the narrative P0 op
 
 ---
 
-## 4. Worst-Case Scenarios
+## 4. Worst-Case Scenarios (Explicit)
 
-* **Singleton:** Garbage PMID/DOI → fail gracefully, suggest manual search.
-* **Bulk Flood:** 500k rows attempted → reject (50k cutoff).
-* **Network Loss:** Resume from checkpoint.
-* **Mixed Dirty Data:** Dirty rows flagged, export enabled.
-* **Machine Hog:** 5+ hour runs mitigated by checkpointing + pause/resume.
+SilentStacks is built to handle **real-world, messy librarian workflows**. Below are explicit cases (see also *GAP REPORT v2.1 §4* for tracking).
 
-*(See Section “Worst-Case Scenarios (Explicit)” for expanded matrix.)*
+### A. Bulk Operations
+
+1. **Doctor Email Dump** → mixed DOIs/PMIDs/titles, Excel artifacts, typos.
+
+   * Normalize tokens, attempt metadata fetch.
+   * Obvious matches auto-commit. Uncertain → flagged dirty.
+2. **Titles-only Dump w/ Typos** → fuzzy match attempted; below threshold remains dirty (no silent fills).
+3. **CSV Junk** → commas in quotes, stray columns, Excel export artifacts handled via PapaParse + fallback regex.
+4. **Extreme Bulk Flood (500k rows)** → rejected with message. Librarian told to chunk ≤ 50k.
+5. **Dirty Rows** → highlighted, `n/a` enforced for blanks. Can export dirty-only for cleanup and re-import.
+6. **Commit Clean vs Commit All** → librarian chooses to commit only validated rows, or everything (dirty rows marked for later bulk update).
+
+### B. Singletons
+
+1. **Garbage PMID/DOI** → fails gracefully with message, suggest manual PubMed/CrossRef search.
+2. **NCT ID malformed** → linkout to ClinicalTrials.gov, but no fetch.
+3. **Mixed identifiers in one field** (user pastes PMID+DOI) → split parser resolves if possible, else flagged.
+
+### C. Runtime & Network
+
+1. **Network Loss Mid-Run** → checkpoint written to IndexedDB. Resume available on reopen.
+2. **Browser Crash / Tab Close** → same checkpoint system allows continuation without data loss.
+3. **Long-running Bulk Job (>5 hrs)** → user warned. Progress indicator + pause/resume available.
 
 ---
 
@@ -174,18 +182,7 @@ Urgency | Docline # | PMID | Citation | NCT Link | Patron e-mail | Fill Status
 
 ---
 
-## 12. Worst-Case Scenarios (Explicit)
-
-* **Dirty bulk paste:** Mixed PMIDs/DOIs/NCTs + malformed strings → parse, queue, flag dirty rows, force `"n/a"`; continue queue.
-* **Extreme bulk:** >50k rows → reject with clear message (cutoff), suggest chunking.
-* **Network loss / tab close:** Checkpoint in IndexedDB; resume on reopen.
-* **Export/import loop:** Clean-only & full exports must re-import without corruption; dirty flags preserved.
-* **Titles-only dump w/ typos:** Fuzzy match; below threshold remains dirty (no silent fill).
-* **CSV junk:** Commas in quotes, Excel artifacts → robust parser, fallback regex.
-
----
-
-## 13. Acceptance Checklist
+## 12. Acceptance Checklist
 
 * ✅ P0 scope validated (bulk ops, headers, n/a fill, linkouts).
 * ✅ Security checks (XSS, API injection, CORS).
@@ -194,14 +191,6 @@ Urgency | Docline # | PMID | Citation | NCT Link | Patron e-mail | Fill Status
 * ✅ Worst-case scenarios simulated.
 * ✅ Docs cross-linked, timestamps present.
 
----
 
-**Bottom line:**
-SilentStacks v2.1 Playbook sets the **operational contract**: client-side only, UI contract preserved, bulk ops and worst-case handling hardened, AAA accessibility baseline enforced.
-Demo-stable, production pending final accessibility + storage audits.
 
----
-
-✅ That’s the **merged Playbook v2.1**.
-
-Do you want me to move next to **QuickStart v2.1** or **Upkeep v2.1** as the next pair?
+Do you want me to generate the **patched GAP REPORT v2.1** next so it matches this Playbook 1:1?
