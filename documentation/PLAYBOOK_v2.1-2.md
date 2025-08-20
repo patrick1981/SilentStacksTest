@@ -1,15 +1,107 @@
-# SilentStacks – Master Playbook (v2.1)
-**Run:** 2025-08-20 10:05 UTC
+Here’s the **unified SilentStacks Playbook v2.1**, merging the narrative P0 operational detail from the first draft with the structured repo baseline, matrices, and acceptance checklist from the second.
 
-**Repo:** https://github.com/patrick1981/SilentStacksTest  
-**Branch:** main (PR-only; no direct pushes)
+---
 
-> **LIVING DOCUMENT** — Update on every run. Selector Map is the AI contract.
+# 📘 SilentStacks Playbook v2.1 (Unified)
 
-## Baseline Declaration
-- v1.2 UI remains the contract (IDs/classes/roles).
-- CT.gov API calls permanently disabled (security/CORS). NCT linkouts only.
-- Modularized structure is authoritative:
+**Origin:** Forked from v2.0 on 2025-08-19
+**Status:** Draft — under active refactor
+**Maintainer:** Solo + AI-assisted
+
+> **Note:** All content from v2.0 has been carried forward.
+> Overlaps, outdated items, and redundancies are being resolved during section reviews.
+> **Selector Map** is the AI contract.
+> **LIVING DOCUMENT** — update on every run.
+
+---
+
+## 1. Client-Side Data Architecture & Limits (P0)
+
+* **All client-side.** IndexedDB for requests & bulk jobs; localStorage for settings/state.
+* **Hard Cutoff:** Max **50,000 rows** per bulk job. Larger → reject.
+* **Rate Limits:** PubMed throttled ≤ 2/sec. Worst case: 50k run ≈ 7 hrs.
+* **Checkpointing:** Progress indicator with resume capability.
+* **Dirty Data Handling:**
+
+  * Invalid rows highlighted.
+  * *Commit Clean Only* vs *Commit All* toggle.
+  * Recovery path: export dirty-only set for offline cleaning & re-import.
+* **Accessibility:** AAA baseline. Light, Dark, and High Contrast themes are P0.
+
+---
+
+## 2. Add Request (Single Entry)
+
+* Input: PMID, DOI, or NCT → metadata fetch (PubMed/CrossRef/CT.gov).
+* Deduplication & cross-checks across IDs.
+* Manual fill for missing fields; librarian tagging.
+* Save → auto-commit to table + card view.
+* **UI Contract:** v1.2 preserved (tabs, IDs, roles). Only status/error badges + theming added.
+
+---
+
+## 3. Bulk Operations
+
+* **Sources:** Clipboard paste, CSV/XLS upload, raw text.
+* Normalize tokens → route by type.
+* **Edge Cases:**
+
+  * Mixed valid/invalid IDs.
+  * Titles-only, misspelled text.
+  * Excel junk fields.
+  * Doctor’s “email dump.”
+* **Commit Paths:**
+
+  * Auto-commit obvious matches.
+  * Librarian confirmation for uncertain matches.
+  * “Commit Clean” vs “Commit All.”
+
+---
+
+## 4. Worst-Case Scenarios
+
+* **Singleton:** Garbage PMID/DOI → fail gracefully, suggest manual search.
+* **Bulk Flood:** 500k rows attempted → reject (50k cutoff).
+* **Network Loss:** Resume from checkpoint.
+* **Mixed Dirty Data:** Dirty rows flagged, export enabled.
+* **Machine Hog:** 5+ hour runs mitigated by checkpointing + pause/resume.
+
+*(See Section “Worst-Case Scenarios (Explicit)” for expanded matrix.)*
+
+---
+
+## 5. Accessibility & Theming
+
+* **AAA compliance:** ARIA labels, skip links, live regions, keyboard navigation.
+* **Theme switching:** Light / Dark / High-Contrast.
+* Propagates consistently across forms, tables, cards, modals.
+
+---
+
+## 6. Exports & Interop
+
+* **Format:** Strict NLM citation format.
+* **Export Options:** Clean-only vs full set.
+* Dirty rows always `n/a`, never blank.
+* **Round-trip safe:** exports can be re-imported for retry.
+
+---
+
+## 7. Security & Storage
+
+* Input sanitization (escape HTML/scripts).
+* API URLs encoded, injection-proof.
+* IndexedDB for requests (scalable).
+* LocalStorage for settings only.
+* Error log capped at 50 entries.
+
+---
+
+## 8. Baseline Declaration
+
+* v1.2 UI remains contract (IDs/classes/roles).
+* **CT.gov API disabled** — NCT linkouts only (security/CORS).
+* Modularized structure authoritative:
 
 ```
 SilentStacks/
@@ -31,55 +123,85 @@ SilentStacks/
 │   └── Selector_Map_v2.1.md
 ```
 
-## P0 Requirements
-- Bulk ops (PMID/DOI/NCT); throttled; checkpoint/resume.
-- Canonical headers with **Fill Status** last.  
-- `Urgency | Docline # | PMID | Citation | NCT Link | Patron e-mail | Fill Status`
-- `"n/a"` for all missing fields; no blanks.
-- Dirty-only export available; exports re-import safe.
+---
 
-## Security Conformance Matrix (v2.1)
+## 9. P0 Requirements
 
-| Risk | Control | Status |
-|------|---------|--------|
-| XSS | Escape HTML/attributes; sanitize inputs | ✅ Met |
-| API Injection | Regex validation; URL-encode params | ✅ Met |
-| CORS Misuse | CT.gov API calls disabled; linkout only | ✅ Met |
-| Data Leakage | Exports normalized; `"n/a"` enforced | ✅ Met |
-| Storage Safety | IndexedDB cleanup of malformed blobs | ⚠ Pending (audit) |
-| Dependency Integrity | Pin libraries; SRI hashes for CDN | ⚠ Pending |
+* Bulk ops (PMID/DOI/NCT), throttled, checkpoint/resume.
+* Canonical headers (with **Fill Status** last):
 
-## WCAG 2.2 AAA Conformance Matrix (v2.1)
+```
+Urgency | Docline # | PMID | Citation | NCT Link | Patron e-mail | Fill Status
+```
 
-| Guideline | Success Criterion | Level | Status |
-|-----------|-------------------|-------|--------|
-| 1.4.6 | Contrast (Enhanced) | AAA | ✅ Met – ≥7:1 (≥4.5:1 large) |
-| 1.4.8 | Visual Presentation | AAA | ⚠ Pending – preferences panel (spacing/width) |
-| 1.4.9 | Images of Text (No Exception) | AAA | ✅ Met – no text-in-images |
-| 2.1.3 | Keyboard (No Exception) | AAA | ✅ Met – full keyboard operability |
-| 2.2.3 | No Timing | AAA | ✅ Met – no timeouts |
-| 2.3.2 | Three Flashes | AAA | ✅ Met – no flashing content |
-| 2.4.8 | Location | AAA | ⚠ Pending – breadcrumb indicators |
-| 2.4.9 | Link Purpose (Link Only) | AAA | ✅ Met – self-describing links |
-| 2.4.10 | Section Headings | AAA | ✅ Met – semantic structure |
-| 2.4.12 | Focus Not Obscured (Enhanced) | AAA | ⚠ Pending – sticky header testing |
-| 2.4.13 | Focus Appearance | AAA | ✅ Met – thick, high-contrast outline |
-| 3.3.9 | Accessible Authentication (Enhanced) | AAA | N/A – no authentication |
-| 1.3.6 | Identify Purpose | AAA | ✅ Met – ARIA + autocomplete |
-| 3.3.7 / 3.3.8 | Redundant Entry / Consistent Help | A/AA | ⚠ Pending – persistent Help affordance |
-| 1.2.6 / 1.2.8 / 1.2.9 | Sign Language / Media Alternatives / Audio-only (Live) | AAA | N/A – no media |
+* `"n/a"` for all missing fields.
+* Dirty-only export available; exports re-import safe.
 
-## Worst-Case Scenarios (Explicit)
-- **Dirty bulk paste:** Mixed PMIDs/DOIs/NCTs + malformed strings → parse, queue, flag dirty rows, force `"n/a"`; continue queue.
-- **Extreme bulk:** >50k rows → reject with clear message (cutoff), suggest chunking.
-- **Network loss / tab close:** Checkpoint in IndexedDB; resume on reopen.
-- **Export/import loop:** Clean-only & full exports must re-import without corruption; dirty flags preserved.
-- **Titles-only dump w/ typos:** Fuzzy match; below threshold remains dirty (no silent fill).
-- **CSV junk:** Commas in quotes, Excel artifacts → robust parser, fallback regex.
+---
 
-## Acceptance Checklist
-- ✅ P0 scope validated (bulk, headers, n/a, linkouts)
-- ✅ Security checks (XSS, API injection, CORS policy)
-- ✅ AAA checks (contrast, keyboard, headings, links; pending tracked)
-- ✅ Worst-case scenarios simulated
-- ✅ Docs cross-linked; timestamps present
+## 10. Security Conformance Matrix (v2.1)
+
+| Risk                 | Control                                 | Status            |
+| -------------------- | --------------------------------------- | ----------------- |
+| XSS                  | Escape HTML/attributes; sanitize inputs | ✅ Met             |
+| API Injection        | Regex validation; URL-encode params     | ✅ Met             |
+| CORS Misuse          | CT.gov API calls disabled; linkout only | ✅ Met             |
+| Data Leakage         | Exports normalized; `"n/a"` enforced    | ✅ Met             |
+| Storage Safety       | IndexedDB cleanup of malformed blobs    | ⚠ Pending (audit) |
+| Dependency Integrity | Pin libraries; SRI hashes for CDN       | ⚠ Pending         |
+
+---
+
+## 11. WCAG 2.2 AAA Conformance Matrix (v2.1)
+
+| Guideline             | Success Criterion                                      | Level | Status                                        |
+| --------------------- | ------------------------------------------------------ | ----- | --------------------------------------------- |
+| 1.4.6                 | Contrast (Enhanced)                                    | AAA   | ✅ Met – ≥7:1 (≥4.5:1 large)                   |
+| 1.4.8                 | Visual Presentation                                    | AAA   | ⚠ Pending – preferences panel (spacing/width) |
+| 1.4.9                 | Images of Text (No Exception)                          | AAA   | ✅ Met – no text-in-images                     |
+| 2.1.3                 | Keyboard (No Exception)                                | AAA   | ✅ Met – full keyboard operability             |
+| 2.2.3                 | No Timing                                              | AAA   | ✅ Met – no timeouts                           |
+| 2.3.2                 | Three Flashes                                          | AAA   | ✅ Met – no flashing content                   |
+| 2.4.8                 | Location                                               | AAA   | ⚠ Pending – breadcrumb indicators             |
+| 2.4.9                 | Link Purpose (Link Only)                               | AAA   | ✅ Met – self-describing links                 |
+| 2.4.10                | Section Headings                                       | AAA   | ✅ Met – semantic structure                    |
+| 2.4.12                | Focus Not Obscured (Enhanced)                          | AAA   | ⚠ Pending – sticky header testing             |
+| 2.4.13                | Focus Appearance                                       | AAA   | ✅ Met – thick, high-contrast outline          |
+| 3.3.9                 | Accessible Authentication (Enhanced)                   | AAA   | N/A – no authentication                       |
+| 1.3.6                 | Identify Purpose                                       | AAA   | ✅ Met – ARIA + autocomplete                   |
+| 3.3.7 / 3.3.8         | Redundant Entry / Consistent Help                      | A/AA  | ⚠ Pending – persistent Help affordance        |
+| 1.2.6 / 1.2.8 / 1.2.9 | Sign Language / Media Alternatives / Audio-only (Live) | AAA   | N/A – no media                                |
+
+---
+
+## 12. Worst-Case Scenarios (Explicit)
+
+* **Dirty bulk paste:** Mixed PMIDs/DOIs/NCTs + malformed strings → parse, queue, flag dirty rows, force `"n/a"`; continue queue.
+* **Extreme bulk:** >50k rows → reject with clear message (cutoff), suggest chunking.
+* **Network loss / tab close:** Checkpoint in IndexedDB; resume on reopen.
+* **Export/import loop:** Clean-only & full exports must re-import without corruption; dirty flags preserved.
+* **Titles-only dump w/ typos:** Fuzzy match; below threshold remains dirty (no silent fill).
+* **CSV junk:** Commas in quotes, Excel artifacts → robust parser, fallback regex.
+
+---
+
+## 13. Acceptance Checklist
+
+* ✅ P0 scope validated (bulk ops, headers, n/a fill, linkouts).
+* ✅ Security checks (XSS, API injection, CORS).
+* ✅ AAA checks (contrast, keyboard, headings, links).
+* ⚠ Pending: preferences panel, breadcrumbs, sticky header focus, persistent Help.
+* ✅ Worst-case scenarios simulated.
+* ✅ Docs cross-linked, timestamps present.
+
+---
+
+**Bottom line:**
+SilentStacks v2.1 Playbook sets the **operational contract**: client-side only, UI contract preserved, bulk ops and worst-case handling hardened, AAA accessibility baseline enforced.
+Demo-stable, production pending final accessibility + storage audits.
+
+---
+
+✅ That’s the **merged Playbook v2.1**.
+
+Do you want me to move next to **QuickStart v2.1** or **Upkeep v2.1** as the next pair?
