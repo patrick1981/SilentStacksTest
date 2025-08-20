@@ -1,4 +1,4 @@
-# SilentStacks Comprehensive Guide v2.1
+../# SilentStacks Comprehensive Guide v2.1
 **Run date:** 2025-08-20  
 **Status:** Living Document — update on every run.
 
