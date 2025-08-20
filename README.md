@@ -6,20 +6,18 @@ Built to be **idiot-proof (ages 8–80)**, **WCAG 2.2 AAA** accessible, and **se
 
 ---
 
-## Quick Links
-- **Master reference (single file):** `Silent_Stacks_ALL_DOCS.md`
-- **Playbook (Canonical):** `documentation/PLAYBOOK_v2.1.md`
-- **GAP Report:** `documentation/GAP_REPORT_v2.1.md`
-- **Quickstart:** `documentation/QUICKSTART_v2.1.md`
-- **User Guide:** `documentation/COMPREHENSIVE_USER_GUIDE_v2.1.md`
-- **Developer Guide:** `documentation/DEVELOPER_GUIDE_v2.1.md`
-- **Feature List:** `documentation/Feature_List_v2.1.md`
-- **Executive Summary:** `documentation/EXECUTIVE_SUMMARY.md`
-- **Compliance (Dev/User):** `documentation/COMPLIANCE_APPENDIX*.md`
-- **Preservation / Upkeep:** `documentation/PRESERVATION_CHECKLIST.md`, `documentation/UPKEEP_v2.1.md`
-- **Handoff Guide:** `documentation/HANDOFF_GUIDE.md`
-- **Selector Map:** `documentation/Selector_Map_v2.1.md`
-- **Worst‑Case (Quick Ref):** `documentation/Worst_Case_Scenarios.md`
+## Master TOC
+- [Playbook (Canonical)](#silentstacks--project-playbook-v21-canonical)
+- [GAP REPORT v2.1](#silentstacks--gap-report-v21-standalone)
+- [Worst‑Case Scenarios](#silentstacks--worstcase-scenarios-quick-reference)
+- [Quickstart](#silentstacks-quickstart-v21-880)
+- [User Guide](#silentstacks-comprehensive-user-guide-v21)
+- [Developer Guide](#silentstacks-developer-guide-v21)
+- [Compliance (Dev/User)](#compliance-appendix-developer)
+- [Preservation / Upkeep](#preservation-checklist)
+- [Handoff Guide](#handoff-guide)
+- [Selector Map](#selector-map-v21-contract)
+- [Root README](#silentstacks-v21)
 
 ---
 
