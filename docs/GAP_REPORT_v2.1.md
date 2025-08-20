@@ -4,7 +4,7 @@
 **Run:** 2025-08-20 00:00 UTC
 
 ## Table of Contents
-- [Status Overview](#status-overview)
+- [Status Overview](https://github.com/patrick1981/SilentStacksTest/blob/main/docs/Playbook_v2.1.md#status-overview)
 - [WCAG AAA Snapshot](#wcag-aaa-snapshot)
 - [Security Snapshot](#security-snapshot)
 - [Worst‑Case Scenarios (Verified)](#worst-case-scenarios-verified)
