@@ -1,126 +1,169 @@
-# SilentStacks Worst-Case Scenarios (v2.1)
+# 🔥 SilentStacks – Worst Case Scenarios v2.1 (Unified)
 
-## 📋 Overview
-This document outlines **worst-case scenarios** for both **single request operations** and **bulk paste/upload operations**. 
-It is intended to serve as a practical reference for librarians, developers, and AI collaborators to ensure the system can 
-handle messy real-world inputs under "doctors too busy to care" conditions.
-
----
-
-## 1. Single Request Scenarios
-
-### ✅ Normal Case
-- User enters a valid PMID → PubMed lookup works.
-- DOI cross-check is consistent.
-- Metadata fills correctly.
-
-### ⚠️ Worst Cases
-1. **Garbage PMID**
-   - Input: "123" or "ABC123"
-   - Behavior: Validation error → `"PMID must be 6–9 digits."`
-   - Resolution: Fail gracefully, suggest search.
-
-2. **Garbage DOI**
-   - Input: "10.bad.doi" or "abc10.1234"
-   - Behavior: Validation error → `"Enter DOI"`.
-   - Resolution: Fail gracefully, librarian edits manually.
-
-3. **Garbage NCT**
-   - Input: "NCT12"
-   - Behavior: Validation error → `"Enter NCT########"`.
-   - Resolution: Librarian search or manual entry.
-
-4. **User pastes article title only**
-   - Behavior: No identifier match.
-   - Resolution: Suggest librarian performs manual search. Placeholder row may be created with `n/a` fields.
+**Status:** Critical Reference (P0)
+**Audience:** Developers, librarians, and project leads
+**Scope:** Defines failure conditions, system responses, and recovery paths. Ensures librarians never lose work, and every dirty dataset has a safe recovery path.
 
 ---
 
-## 2. Bulk Paste / Upload Scenarios
+## 1. Dirty Data Dumps (Bulk Paste/Upload)
 
-### ✅ Normal Case
-- Paste or upload clean CSV with `pmid, doi, nct` headers.
-- All metadata fetched, table rows filled.
+**Problem:**
 
-### ⚠️ Worst Cases
-1. **Doctor Email Dump**
-   - Input: Mixed PMIDs, DOIs, article titles, Excel junk, misspelled words, diacritics.
-   - Behavior: 
-     - Parse PMIDs/DOIs.
-     - Titles-only fallback to placeholder row with `n/a`.
-     - Dirty rows highlighted in red.
-   - Resolution: Auto-commit obvious IDs; librarian cleans flagged rows.
+* Bulk input may contain mixed identifiers (PMIDs, DOIs, NCTs, titles, junk text, Excel residue).
+* Dirty/malformed rows can overwhelm librarians if committed directly.
 
-2. **Mixed Identifiers**
-   - Input: CSV with some rows PMID, some DOI, some blank.
-   - Behavior: Clean rows committed; dirty rows flagged.
-   - Resolution: Commit Clean vs Commit All.
+**Mitigation:**
 
-3. **Excel Copy/Paste Garbage**
-   - Input: Trailing commas, broken delimiters, extra columns.
-   - Behavior: Regex fallback → extract what’s possible.
-   - Resolution: Dirty rows flagged.
+* Regex validation before enrichment.
+* Color-coded + icon + ARIA labels for dirty rows.
+* Commit options:
 
-4. **500k Row Attack**
-   - Input: Upload massive file with >500k rows.
-   - Behavior: Hard cutoff at 50k rows. 
-   - Resolution: User shown rejection message.
+  * *Commit Clean Only*: Valid rows only.
+  * *Commit All*: Everything inserted; dirty flagged.
+* Recovery:
 
-5. **50k Row Legit Upload**
-   - Input: 50,000 PMIDs pasted.
-   - Behavior: 
-     - Throttled to 2/sec → ~7 hours runtime.
-     - Progress indicator shown.
-     - Checkpointing & resume required.
-   - Resolution: Auto-save progress to IndexedDB.
-
-6. **Network Loss Midway**
-   - Input: Upload starts fine, network drops after 5k rows.
-   - Behavior: Processing paused.
-   - Resolution: Resume from last checkpoint.
+  * Export dirty rows for offline cleaning + re-import.
+  * Filter dirty rows in UI for bulk editing.
 
 ---
 
-## 3. Post-Commit Editing
+## 2. Oversized Bulk Jobs
 
-### ✅ Normal Case
-- User reviews clean data in table.
+**Problem:**
 
-### ⚠️ Worst Cases
-- Dirty rows not cleaned before commit.
-- "Commit Clean Only" leaves dirty rows in holding area.
-- "Commit All" inserts all rows but dirty ones highlighted.
+* Users paste/upload massive datasets (e.g., 500k rows).
+* Browser memory crashes, app locks.
 
-**Resolutions:**
-- Librarian filters dirty rows by color → bulk edits.
-- Or exports dirty-only subset for offline cleanup & re-import.
+**Mitigation:**
 
----
-
-## 4. UI Requirements
-
-- Dirty rows highlighted with contrasting color (AAA-compliant).
-- Progress bar for bulk jobs.
-- Aria-live status messages for every commit step.
-- Filters for dirty rows built into table view.
+* Hard cutoff at **50,000 rows**.
+* Error message: *“Job exceeds 50k row limit — please split file.”*
+* Checkpointing: Progress bar + resume capability for large imports.
 
 ---
 
-## 5. Accessibility & Data Integrity
+## 3. Network Loss (During Enrichment)
 
-- **Empty fields** → filled with `"n/a"`, never left blank.
-- **Strict NLM format** enforced for citations.
-- **Screen reader support** for errors and bulk progress.
+**Problem:**
+
+* Enrichment run interrupted by dropped Wi-Fi.
+* Risk of incomplete jobs and lost work.
+
+**Mitigation:**
+
+* Service worker caches shell.
+* Offline queue holds requests.
+* Resume from checkpoint on reconnect.
+* Dirty/incomplete rows tagged “offline.”
 
 ---
 
-## ✅ Summary
+## 4. Singleton Garbage IDs
 
-SilentStacks bulk and single-request workflows are designed to survive:
-- Dirty inputs.
-- Huge jobs (≤50k rows).
-- API failures.
-- Network loss.
-- Human messiness.
+**Problem:**
 
-**Rule of thumb:** *Auto-commit obvious cases. Librarian finalizes the rest.*
+* Invalid identifiers like “1234” as PMID or broken DOI fragments.
+
+**Mitigation:**
+
+* Validators:
+
+  * PMID = 6–9 digits
+  * DOI = `10.xxxx/...`
+  * NCT = `NCT########`
+* UI feedback + aria-live error.
+* Invalid singletons never committed.
+
+---
+
+## 5. Doctor Email Dump Scenario
+
+**Problem:**
+
+* Patron email includes DOIs, PMIDs, half-titles, and junk notes.
+
+**Mitigation:**
+
+* Delimiter-agnostic parser extracts valid IDs.
+* Deduplication collapses duplicates.
+* Clean IDs enriched/committed automatically.
+* Titles/spelling errors flagged for librarian correction.
+
+---
+
+## 6. Dirty Storage / Data Rot
+
+**Problem:**
+
+* Local storage polluted with malformed values, exceeding quota.
+
+**Mitigation:**
+
+* IndexedDB as primary storage.
+* Error log capped at 50 entries (rotating).
+* Sanitization before commit.
+* Export backup prompt before cleanup.
+
+---
+
+## 7. Accessibility Failures
+
+**Problem:**
+
+* Colorblind staff or screen readers cannot parse error feedback.
+
+**Mitigation:**
+
+* Dual signaling: color + icon + ARIA.
+* aria-live announcements for AT.
+* AAA contrast themes enforced across dirty-row states.
+
+---
+
+## 8. System Hard Failures
+
+**Problem:**
+
+* Browser crashes mid-job, losing progress.
+
+**Mitigation:**
+
+* Checkpoint every 100 rows.
+* Auto-restore resume option on reload.
+* Safe export of incomplete rows.
+
+---
+
+## 9. Bulk-Case Library Scenarios (Examples)
+
+* **Doctor Email Dump:** Mixed identifiers, Excel junk → parse, commit clean IDs, flag others.
+* **Excel Copy/Paste Garbage:** Trailing commas, broken delimiters → regex fallback, dirty flagged.
+* **500k Row Attack:** Upload rejected with cutoff message.
+* **50k Legit Upload:** Throttled 2/sec (\~7 hrs) with progress + checkpointing.
+* **Network Loss Midway:** Processing paused, resumes on reconnect.
+* **Titles-Only Dump with Typos:** Fuzzy match; low-confidence rows flagged dirty.
+
+---
+
+## 10. UI & Accessibility Requirements
+
+* Dirty rows = AAA-compliant highlight + icon + ARIA.
+* Bulk progress bar visible at all times.
+* aria-live updates for commit steps.
+* Filters for dirty rows integrated into table view.
+* Empty fields always `"n/a"`.
+
+---
+
+# ✅ Bottom Line
+
+SilentStacks v2.1 is built to **fail gracefully**:
+
+* No silent data loss.
+* Librarians always have a recovery path (export, filter, retry).
+* Dirty data quarantined, never discarded.
+* Oversized jobs rejected early.
+* Long jobs checkpoint and resume safely.
+
+**Rule of thumb:** *Auto-commit obvious IDs. Librarians finalize the rest.*
