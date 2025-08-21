@@ -192,5 +192,13 @@ approach, reducing load times by 60% while maintaining full functionality"
 * Created a **Preservation Checklist** (checksums, archiving rules) to protect documentation integrity over time, relevant to **digital preservation in health records**.
 
 
+# 📌 CV bullet points (printed in-session, per P0)
+
+* Led **SilentStacks v2.1** packaging governance for healthcare IT, enforcing **WCAG 2.2 AAA** and HIPAA-safe patterns across an offline‑first architecture.
+* Codified **canonical documentation rules** (Playbook, Rules Charter) with **automatic cascading updates** and **no‑stub** enforcement.
+* Implemented **P0 stability**: bulk ingest (≤50k), PubMed throttling (≤2/sec), checkpointed resume, conflict detection, and dirty‑row workflows.
+* Authored the **40‑case Worst Case Scenarios** framework, covering network failures, API throttling/bans, schema mismatches, and data sanitation (XSS/injection).
+* Automated **packaging and audits**: manifest generation (line counts, hashes), iterative repairs on failure, and migration‑ready bundles with zero prompts.
+* Drove **leadership/PM alignment** via File Manifest, GAP tracking, and Handoff Guide for seamless AI/human maintainer transitions.
 
 
