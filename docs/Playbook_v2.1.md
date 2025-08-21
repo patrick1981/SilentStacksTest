@@ -4,7 +4,6 @@
 **Last Updated:** 2025-08-21  
 
 ---
-
 ## Table of Contents
 1. [Introduction](#1-introduction)  
 2. [Core Objectives](#2-core-objectives)  
@@ -19,6 +18,8 @@
 11. [Operational Rules](#11-operational-rules)  
 12. [Accessibility Roadmap — WCAG 2.2 AAA](#12-accessibility-roadmap--wcag-22-aaa)  
 13. [References](#13-references)  
+14. [Worst Case Scenarios](#14-worst-case-scenarios)  
+
 
 ---
 
@@ -124,4 +125,10 @@ SilentStacks references **WCAG 2.2** as canonical roadmap.
 - **Selector_Map_v2.1.md** — element → feature traceability
 - **GAP_REPORT_v2.1.md** — identifies open issues
 - **Worst_Case_Scenarios.md** — defines system recovery paths
+
+---
+
+## 14. Worst Case Scenarios
+
+  *Full list and complete details here → [Worst_Case_Scenarios.md](./Worst_Case_Scenarios.md)**
 
