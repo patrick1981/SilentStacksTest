@@ -40,6 +40,8 @@ This document defines the canonical rules followed for SilentStacks documentatio
 - **Post-ZIP Audit** → After creating any documentation package, immediately **audit for stubs and completeness** before release.
 - **TOC Requirement** → All major docs ([Playbooks](./Playbook_v2.1.md), [Developer Guides](./DEVELOPER_GUIDE_v2.1.md), [User Guides](./COMPREHENSIVE_USER_GUIDE_v2.1.md), [Compliance Appendices](./COMPLIANCE_APPENDIX.md), [GAP Reports](./GAP_REPORT_v2.1.md), [Quickstart](./QUICKSTART_v2.1.md), etc.) must include a **Table of Contents (TOC)** at the top.
 - **User Guide Requirement** → A comprehensive [USER_GUIDE_v2.1.md](./COMPREHENSIVE_USER_GUIDE_v2.1.md) must exist. If missing, generate from [Playbook](./Playbook_v2.1.md) + [Quickstart](./QUICKSTART_v2.1.md) + [Compliance_User](./COMPLIANCE_APPENDIX_User.md).
+- **Documentation Layout** → All canonical docs must exist and follow the structured layout defined in the Playbook. Missing files (e.g., User Guide) trigger package rejection until generated.
+
 
 ---
 
