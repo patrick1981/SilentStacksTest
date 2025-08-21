@@ -1,6 +1,3 @@
- `COMPREHENSIVE_USER_GUIDE_v2.1.md` (Plain language)
-
-
 # SilentStacks Comprehensive User Guide v2.1
 
 ## Table of Contents
@@ -17,7 +14,7 @@
 A librarian tool that runs from a webpage. Works **offline**. No installs.
 
 ## Set Up Choices
-- **GitHub Pages** (recommended), **Thumbdrive**, or **Desktop**. See **Quickstart**.
+- **GitHub Pages** (recommended), **Thumbdrive**, or **Desktop**. See [Quickstart](./QUICKSTART_v2.1.md).
 
 ## Add a Single Request
 1) Paste a **PMID, DOI, NCT ID, or Title**.  
@@ -37,12 +34,16 @@ A librarian tool that runs from a webpage. Works **offline**. No installs.
 - To re‑import, go back to **Bulk Upload** and select the file.
 
 ## Accessibility
-SilentStacks aims for **WCAG 2.2 AAA**: high contrast, keyboard friendly, clear focus rings, headings that make sense, screen reader labels.
+SilentStacks aims for **[WCAG 2.2 AAA](https://www.w3.org/TR/WCAG22/)**: high contrast, keyboard friendly, clear focus rings, headings that make sense, screen reader labels.
 
 ## Safety
 Data stays on your device. Inputs are cleaned to prevent attacks. No accounts or passwords.
 
 ## Troubleshooting
 - **Nothing loads?** Open `index.html` directly.  
-- **Can’t click a button?** Use the **Tab** key to move and **Enter** to activate.  
-- **Long list processing?** It’s okay; the app shows progress and can resume if interrupted.
+- **Can't click a button?** Use the **Tab** key to move and **Enter** to activate.  
+- **Long list processing?** It's okay; the app shows progress and can resume if interrupted.
+
+---
+
+For more detailed information, see the [Playbook](./Playbook_v2.1.md) and [Developer Guide](./DEVELOPER_GUIDE_v2.1.md).
