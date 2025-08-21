@@ -35,6 +35,11 @@ Release criteria aligned with [Preservation Checklist](./PRESERVATION_CHECKLIST.
 ## Acceptance (This Iteration)
 Acceptance testing procedures documented in [Upkeep](./UPKEEP_v2.1.md) and [Handoff Guide](./HANDOFF_GUIDE.md).
 
+| Area                 | Requirement                              | Status   |
+|----------------------|------------------------------------------|----------|
+| Documentation Layout | All canonical docs must exist and align  | ✅ In Progress (User Guide to be generated) |
+
+
 ---
 
 *(Content matches the embedded section in the [Playbook](./Playbook_v2.1.md).)*
