@@ -13,24 +13,6 @@ Lead Developer | 2024
 • Architected modular codebase for enterprise-level maintainability and long-term scalability
 • Achieved 95% maintenance-free operation with zero vendor dependencies or recurring costs
 
-CONFERENCE PRESENTATIONS
-
-Medical Library Association Annual Conference | 2024
-"Revolutionizing ILL Management: A Vendor-Independent Approach"
-
-• Selected to present innovative ILL management solution to 1000+ medical librarians nationwide
-• Demonstrated offline-first architecture eliminating system downtime during critical patient care requests
-• Showcased 90% cost reduction compared to traditional vendor-based ILL systems
-• Presented live demonstration of bulk processing capabilities and automated metadata extraction
-
-TECHNICAL SKILLS
-
-Programming Languages: JavaScript (ES6+), HTML5, CSS3
-APIs & Integration: PubMed E-utilities, CrossRef REST API, rate limiting implementation
-Libraries & Frameworks: Fuse.js (search), PapaParse (CSV processing), responsive design patterns
-Accessibility: WCAG AAA compliance, screen reader optimization, keyboard navigation
-Architecture: Offline-first design, progressive enhancement, modular development
-Database Management: Browser localStorage, data persistence, import/export workflows
 
 SilentStacks - Interlibrary Loan Management System
 - Integrated PubMed API for automatic citation enrichment
@@ -81,22 +63,11 @@ approach, reducing load times by 60% while maintaining full functionality"
 
 **Delivered complete web application** from concept to deployment, including responsive UI design, API integrations, offline functionality, and comprehensive testing suite
 
----
----
-
-### SilentStacks – Interlibrary Loan Management System (v1.2 → v2.0)
-
-**Project Lead / Strategic Architect** | 2025
-
 * Directed the **end-to-end transformation** of SilentStacks from v1.2 to v2.0, ensuring feature parity while introducing **bulk operations, metadata enrichment, offline-first support, and enhanced accessibility (AAA compliance)**.
 * Identified and resolved a **critical CORS and stability challenge** with ClinicalTrials.gov APIs by leading a **pivot away from unsafe or unmaintainable integrations** toward a resilient design that links directly to authoritative trial records.
 * Partnered with AI development agents to **define functional specifications, validate security gaps, and enforce a strict playbook process**, ensuring delivery of a production-ready monolithic build.
 * Maintained project vision with a focus on **usability, sustainability, and compliance**, producing structured changelogs, executive summaries, and security rationales for national-level departmental review.
 * Oversaw the integration of PubMed and CrossRef pipelines while **streamlining workflows and reducing system complexity**, resulting in a **lighter, faster, and more reliable client application**.
-
----
-
-
 
 ## Alternative Shorter Versions
 
@@ -120,3 +91,106 @@ approach, reducing load times by 60% while maintaining full functionality"
 • **Balanced technical constraints with user requirements** to create optimal product experience, making data-driven decisions that prioritized reliability and performance over feature bloat
 
 • **Launched comprehensive data management solution** with export capabilities, offline functionality, and mobile responsiveness, demonstrating end-to-end product development lifecycle management
+
+
+## 📌 Resume / CV Points (SilentStacks v2.1 Project)
+
+* **Led development of SilentStacks v2.1**, an **offline-first interlibrary loan (ILL) management system** deployed via GitHub Pages, thumbdrive, and desktop — accessible to users **ages 8–80**.
+* Enforced **WCAG 2.2 AAA accessibility compliance**, including contrast, keyboard paths, semantic structure, and consistent help — formalized into acceptance criteria and tracked via conformance matrices.
+* Designed and maintained a **canonical Project Playbook** as the single source of truth, embedding **gap reports, worst-case data scenarios, and acceptance checklists** for iterative releases.
+* Built **robust bulk operations pipeline** (bulk paste, CSV/JSON ingest, dedupe, checkpoint/resume) with safeguards for malformed, dirty, and malicious data inputs.
+* Established **P0 stability protocols**: canonical file check rule, session summaries, and automatic packaging to prevent regression or data loss across iterations.
+* Integrated **PubMed (PMID) and CrossRef (DOI) metadata pipelines**, with citation normalization and enrichment; designed fallback parsing rules for fuzzy matches and dirty data.
+* Architected **minimal modular runtime** (index.html + app.min.js + dependencies.js + sw\.js) for maintainability and offline reliability.
+* Strengthened security posture with controls against **XSS, API injection, CORS misuse, and malicious file uploads**, documented in a security conformance matrix.
+* Produced a **comprehensive documentation suite** (Quickstart, Developer Guide, Upkeep, Compliance Appendix, Handoff, Preservation Checklist) with **TOCs, master reference file, and cascading update rules**.
+* Directed **multi-AI collaboration workflow** for co-development, ensuring continuity across sessions with automated session summaries and packaged docs.
+
+
+### Project Leadership & Governance
+
+* Created and enforced a **canonical documentation framework** with a living Playbook, Gap Reports, and Acceptance Checklists — ensuring consistent rules across all iterations.
+* Designed **cascading update protocols** to automatically propagate requirements (e.g., WCAG AAA, security controls) across documentation and technical artifacts.
+* Instituted **P0 stability rules**: automatic packaging, canonical file checks, and session summaries to prevent regressions and maintain continuity across long development cycles.
+* Directed a **multi-agent/AI-assisted development workflow**, managing scope, enforcing baselines, and ensuring traceability of requirements.
+
+### Accessibility & Patient Safety Alignment
+
+* Delivered **WCAG 2.2 AAA compliance** across the entire application, exceeding typical AA standards required in healthcare and aligning with Section 508 mandates.
+* Built acceptance matrices for **accessibility and security**, modeled after regulatory conformance frameworks (HIPAA, ONC Health IT Certification).
+* Eliminated common patient-safety risks in UI workflows by enforcing **“don’t make me think” design** principles, supporting users **ages 8–80** with no technical training.
+* Documented accessibility checkpoints in **Gap Reports** to institutionalize compliance verification — similar to **EHR Meaningful Use / Usability testing**.
+
+### Data Quality & Interoperability
+
+* Implemented **bulk data ingestion pipelines** capable of handling malformed identifiers (PMIDs, DOIs, NCT IDs), dirty rows, and extreme data dumps — mirroring real-world EHR data quality issues.
+* Developed **dirty vs clean export paths**, supporting preservation of raw input while producing structured, normalized datasets — a core informatics skill.
+* Enforced strict **NLM citation standards** and consistent schema validation, demonstrating metadata stewardship comparable to bibliographic and clinical trial registries.
+* Designed **worst-case data handling protocols** (Dumpster Fire inputs, copy/paste chaos, malicious uploads), ensuring resilience to the messy data often seen in healthcare/EHR integration.
+
+### Security & Compliance
+
+* Hardened application security against **XSS, API injection, malicious uploads, and CORS misuse**, documenting controls in a **security conformance matrix** — an approach directly transferable to HIPAA security rule compliance.
+* Established **dependency integrity controls**: local-only bundles, hash verification, and storage audits — aligning with NIST/FedRAMP approaches.
+* Built **session checkpoint/resume** with IndexedDB to ensure data integrity during crashes or network loss, reflecting clinical safety requirements for data continuity.
+
+### Technical Architecture & Engineering
+
+* Delivered a **minimal modular runtime**: four files only (`index.html`, `app.min.js`, `dependencies.js`, `sw.js`), balancing maintainability and reliability in resource-constrained deployments.
+* Engineered an **offline-first design** with service worker caching, background sync, and checkpoint/resume — analogous to healthcare settings with unreliable network access.
+* Designed **CSV ingestion headers and validation** routines to normalize free-text inputs and enforce schema — skills highly relevant to **FHIR/HL7 data handling**.
+* Directed the transition from **monolithic builds to modular runtime**, aligning with modern healthcare IT patterns (containerization, microservices).
+
+### Documentation & Knowledge Transfer
+
+* Authored a **comprehensive documentation suite**: Quickstart, Developer Guide, Upkeep, Preservation Checklist, Compliance Appendix, Handoff Guide, and Master Reference — all structured with TOCs and canonical alignment.
+* Wrote **idiot-proof Quickstart guides** for GitHub Pages, thumbdrive, and desktop deployment — designed for non-technical staff in healthcare environments.
+* Produced a **Handoff Guide with prompts** for continuity, ensuring smooth transfer of system knowledge between maintainers — mirroring clinical IT governance.
+* Built a **Session Summary workflow** that logs iterative decisions — supporting auditability, traceability, and reproducibility of development.
+
+
+### Clinical Data Integrity & Interoperability
+
+* Designed parsing rules for **malformed bibliographic identifiers** (PMIDs, DOIs, NCT IDs), analogous to resolving **dirty EHR patient identifiers** and mismatched codes.
+* Built **row-level checkpointing and resume** functions to prevent data loss during crashes or connectivity failures, echoing **clinical safety requirements** for EMRs.
+* Enforced **“n/a” placeholders** for missing fields, ensuring schema integrity and eliminating null errors — transferable to **FHIR/HL7 validation routines**.
+* Implemented **fuzzy matching with safe thresholds** to manage titles-only inputs, reflecting **record-linkage methods** used in EHR deduplication.
+
+### Accessibility & Health Equity
+
+* Delivered **AAA-level accessibility** (beyond industry standard AA), enabling **inclusive digital health tools** for patients, providers, and staff with varying needs.
+* Built a **preferences panel (font size, spacing, width)** for universal design, reflecting **health equity principles** in informatics.
+* Ensured **all workflows keyboard-accessible** and screen-reader operable, aligning with accessibility standards in **patient portals and EHR interfaces**.
+* Documented accessibility compliance in matrices and enforced them as **acceptance criteria**, mirroring ONC and FDA usability review requirements.
+
+### Security & Risk Mitigation
+
+* Implemented layered defenses against **injection, XSS, and CORS abuse**, mapped to **HIPAA Security Rule safeguards**.
+* Established **local dependency integrity checks** (hash validation, no CDN reliance) to mitigate supply chain risks, relevant to **healthcare IT governance**.
+* Built **export safety rules** (normalized, sanitized data only) to prevent accidental leakage of sensitive records — parallel to de-identification in health data sharing.
+* Defined **worst-case scenarios** (dirty dumps, malicious inputs, long runtimes) with explicit system responses, reflecting **risk-based EHR validation** approaches.
+
+### Governance & Project Leadership
+
+* Authored a **canonical Playbook** to govern every release, embedding **Gap Reports** and worst-case scenarios into acceptance criteria.
+* Designed **cascading documentation updates**: every new rule auto-propagates into Playbook, GAP, Upkeep, and Handoff docs.
+* Instituted **Canonical File Check (P0)**: packaging fails if any file is missing, empty, or inconsistent with the Playbook.
+* Produced **session summaries and master references**, ensuring **auditability and reproducibility** across iterative builds — vital for regulated environments.
+
+### Technical Engineering & Deployment
+
+* Delivered a runtime requiring only **four core files**: `index.html`, `app.min.js`, `dependencies.js`, `sw.js`, ensuring portability across environments (cloud, offline, local).
+* Engineered **offline-first architecture** with service worker caching and background sync — enabling reliability in **low-connectivity healthcare settings**.
+* Built deployment workflows for **GitHub Pages, thumbdrives, and desktop double-click** use — reflecting **“edge deployment” practices** needed in clinics.
+* Modularized runtime architecture to simplify debugging and maintenance — relevant to **modular EHR certification**.
+
+### Documentation & Knowledge Transfer
+
+* Produced **Quickstart guides** written for **non-technical users (ages 8–80)**, ensuring usability for all staff in healthcare contexts.
+* Authored **Developer Guides** explaining metadata enrichment, API handling, and validation — targeted for informatics teams.
+* Wrote **Handoff Guides** including **AI prompt templates**, ensuring continuity of development and knowledge even across different maintainers.
+* Created a **Preservation Checklist** (checksums, archiving rules) to protect documentation integrity over time, relevant to **digital preservation in health records**.
+
+
+
+
