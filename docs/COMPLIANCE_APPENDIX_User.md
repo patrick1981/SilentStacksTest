@@ -1,7 +1,24 @@
- Compliance Appendix (User)
+# Compliance Appendix (User)
 
-SilentStacks is built to be **easy to use**, **safe**, and **accessible**:
-- High‑contrast text; large, clear focus outlines; keyboard friendly.  
-- No accounts or passwords; no flashing or timers.  
-- Data stays on your device; inputs are cleaned automatically.  
-For details, see the **Playbook**.
+This appendix summarizes compliance considerations for end-users and staff.
+
+---
+
+### User Privacy
+- SilentStacks does not track or profile users.
+- Local browser storage only; no server collection.
+
+### Accessibility
+- UI designed for **AAA compliance**:
+  - Screen reader support
+  - Keyboard-only workflows
+  - High-contrast theme
+- Tested against WCAG 2.2.
+
+### Data Handling
+- Users must avoid entering PHI.
+- Requestor field limited to institutional email address.
+
+---
+
+**Note:** End-user compliance guidance mirrors Playbook v2.1.
