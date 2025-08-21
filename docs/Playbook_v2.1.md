@@ -135,3 +135,23 @@ SilentStacks references **[WCAG 2.2](https://www.w3.org/TR/WCAG22/)** as canonic
 ## 14. Worst Case Scenarios
 
 Full list and complete details here → **[Worst_Case_Scenarios.md](./Worst_Case_Scenarios.md)**
+
+---
+
+## 15. Documentation Layout
+
+SilentStacks documentation is organized into **core canonical files**. This layout is binding and must be maintained in every package.
+
+* `PLAYBOOK_v2.1.md` → Single source of truth, cascades to all others.
+* `RULES_CHARTER_v2.1.md` → Governance and canonical rules.
+* `DEV_GUIDE_v2.1.md` → Developer practices, coding standards, assembly rules.
+* `WORST_CASE_SCENARIOS_v2.1.md` → 40 explicit P0 cases with mitigations.
+* `FEATURE_LIST_v2.1.md` → Functional feature matrix.
+* `GAP_REPORT_v2.1.md` → Completeness & compliance audit.
+* `USER_GUIDE_v2.1.md` → End-user workflows & instructions (must exist).
+* `EXEC_SUMMARY_v2.1.md` → High-level orientation for leadership & PM.
+* `QUICKSTART_v2.1.md` → Step-by-step setup reference.
+* `UPKEEP_v2.1.md` → Maintenance SOPs.
+* `COMPLIANCE_USER_v2.1.md` → WCAG + accessibility maps.
+
+---
