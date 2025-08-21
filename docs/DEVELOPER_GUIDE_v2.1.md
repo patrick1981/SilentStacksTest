@@ -1,46 +1,65 @@
-🛠️ `DEVELOPER_GUIDE_v2.1.md`
-
-
 # SilentStacks Developer Guide v2.1
 
+**Status:** Reference Guide  
+**Last Updated:** 2025-08-21  
+
+---
+
 ## Table of Contents
-- [Runtime & Load Order](#runtime--load-order)
-- [Selectors & Adapter Contract](#selectors--adapter-contract)
-- [Validators](#validators)
-- [Security Rules](#security-rules)
-- [Service Worker](#service-worker)
-- [Acceptance Tests](#acceptance-tests)
-- [Dependency Integrity](#dependency-integrity)
+1. [Overview](#1-overview)  
+2. [Development Principles](#2-development-principles)  
+3. [Monolithic Build](#3-monolithic-build)  
+4. [Service Worker](#4-service-worker)  
+5. [Accessibility](#5-accessibility)  
+6. [Handoff & Maintenance](#6-handoff--maintenance)  
+7. [References](#7-references)  
 
-## Runtime & Load Order
-Files: `index.html` (inline CSS), `dependencies.js`, `app.min.js`, `sw.js`.  
-Load order: **dependencies → app → register SW**. No CDN.
+---
 
-## Selectors & Adapter Contract
-- **Selector map** lives in `Selector_Map_v2.1.md`.  
-- Do **not** fork enrichment logic; only update selectors if the UI changes.
+## 1. Overview
+This guide provides developer-facing instructions for SilentStacks.  
+It complements the Playbook, Rules Charter, and User Guide.  
 
-## Validators
-- PMID: `^\d{6,9}$`  
-- DOI: `^10\.\S+$`  
-- NCT: `^NCT\d{8}$` (case‑insensitive)
+---
 
-## Security Rules
-- Sanitize all inputs; escape attributes/HTML on output.  
-- Regex‑validate IDs; **URL‑encode** before API calls.  
-- CT.gov API calls **disabled**; provide **linkout** only.
+## 2. Development Principles
+- **Monolithic-first**: Build/test monoliths before modularization.  
+- **No placeholders**: All code must be production-ready.  
+- **Accessibility**: All commits reviewed against WCAG 2.2 AAA.  
+- **Cascading updates**: When rules/docs change, cascade into Playbook.  
 
-## Service Worker
-- Cache `index.html`, `app.min.js`, `dependencies.js`, `sw.js`.  
-- Bump `CACHE_VERSION` each release; clean old caches on activate.
+---
 
-## Acceptance Tests
-- Single IDs populate fields/chips and add table rows.  
-- Mixed bulk list honors order; dedup works.  
-- **50k cutoff** enforced; **Dirty‑Only Export** works.  
-- Exports **round‑trip**; `"n/a"` preserved.  
-- Contrast, focus, keyboard checks pass.
+## 3. Monolithic Build
+- Keep a full monolithic HTML/JS build as the operational baseline.  
+- Modularization may occur later but only after monolith stability.  
+- Service Worker and IndexedDB integration must be validated in monolith first.  
 
-## Dependency Integrity
-- Keep one file: **`dependencies.js`** (Fuse + PapaParse).  
-- On release, compute and record **SHA256** in release notes.
+---
+
+## 4. Service Worker
+- Cache-first strategy with network fallback.  
+- Background sync for failed requests.  
+- Error handling logged into developer console and GAP report.  
+
+---
+
+## 5. Accessibility
+- Use semantic HTML, ARIA roles, captions.  
+- Test with screen readers (NVDA, JAWS).  
+- Verify against WCAG 2.2 AAA Success Criteria.  
+- Maintain a Success Criteria → Feature traceability map in `Selector_Map_v2.1.md`.  
+
+---
+
+## 6. Handoff & Maintenance
+- All docs and code must be structured for AI + human developers.  
+- Provide session summaries and changelogs for continuity.  
+- On new dev cycles, review `RULES_CHARTER.md` before starting.  
+
+---
+
+## 7. References
+- [Playbook_v2.1.md](./Playbook_v2.1.md)  
+- [RULES_CHARTER.md](./RULES_CHARTER.md)  
+- [Selector_Map_v2.1.md](./Selector_Map_v2.1.md)  
