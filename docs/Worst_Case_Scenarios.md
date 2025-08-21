@@ -2,17 +2,17 @@
 
 **Status:** v2.1 Draft – Canonical reference
 **Maintainer:** Solo + AI-assisted
-**Rule:** This doc is **P0**. All other references (Playbook, GAP) must defer here.
+**Rule:** This doc is **P0**. All other references ([Playbook](./Playbook_v2.1.md), [GAP](./GAP_REPORT_v2.1.md)) must defer here.
 **Scope:** Defines 40 explicit worst-case scenarios, mitigation strategies, and acceptance checks.
 
 ---
 
 ## 📑 Table of Contents
 
-* [Case 1–10](#case-1-10)
-* [Case 11–20](#case-11-20)
-* [Case 21–30](#case-21-30)
-* [Case 31–40](#case-31-40)
+* [Case 1–10](#case-110)
+* [Case 11–20](#case-1120)
+* [Case 21–30](#case-2130)
+* [Case 31–40](#case-3140)
 
 ---
 
@@ -21,7 +21,7 @@
 ### Case 1. **Garbage PMID input**
 
 * Trigger: User enters `123abc`.
-* UI: Inline error “Invalid PMID.”
+* UI: Inline error "Invalid PMID."
 * Storage: Not committed.
 * User Workflow: User retries.
 * Logging: `invalid PMID`.
@@ -29,14 +29,14 @@
 ### Case 2. **Garbage DOI input**
 
 * Trigger: User enters `10.@@##bad`.
-* UI: Inline error “Invalid DOI.”
+* UI: Inline error "Invalid DOI."
 * Storage: Not committed.
 * Logging: `invalid DOI`.
 
 ### Case 3. **Nonexistent NCT ID**
 
 * Trigger: `NCT99999999`.
-* UI: Toast “No trial found.”
+* UI: Toast "No trial found."
 * Storage: `"n/a"`.
 * Logging: `NCT not found`.
 
@@ -51,25 +51,25 @@
 ### Case 5. **Extreme bulk flood**
 
 * Trigger: >500k IDs.
-* UI: Reject with “50k cutoff.”
+* UI: Reject with "50k cutoff."
 * Storage: None.
 * Logging: `bulk flood`.
 
 ### Case 6. **Network loss during 50k job**
 
 * Trigger: Wi-Fi drops.
-* UI: Banner “Resuming from checkpoint.”
+* UI: Banner "Resuming from checkpoint."
 * Storage: IndexedDB checkpoint.
 * Logging: `resume after network loss`.
 
 ### Case 7. **Dirty Excel upload**
 
 * Trigger: CSV with misaligned commas.
-* UI: Alert “Malformed rows flagged dirty.”
+* UI: Alert "Malformed rows flagged dirty."
 * Storage: Clean committed, dirty flagged.
 * Logging: `CSV parse error`.
 
-### Case 8. **Doctor’s email dump**
+### Case 8. **Doctor's email dump**
 
 * Trigger: Free-form text pasted.
 * UI: Obvious IDs parsed; rest flagged dirty.
@@ -79,7 +79,7 @@
 ### Case 9. **Tab crash mid-job**
 
 * Trigger: Browser crash.
-* UI: On reopen, “Resuming job…”
+* UI: On reopen, "Resuming job…"
 * Storage: Resume via IndexedDB.
 * Logging: `resume after crash`.
 
@@ -94,22 +94,22 @@
 
 ### Case 11. **MeSH API missing tags**
 
-* Trigger: PubMed returns no MeSH.
-* UI: “No MeSH terms found.”
+* Trigger: [PubMed](https://pubmed.ncbi.nlm.nih.gov/) returns no MeSH.
+* UI: "No MeSH terms found."
 * Storage: `"n/a"`.
 * Logging: `MeSH missing`.
 
 ### Case 12. **CrossRef API returns 404**
 
-* Trigger: DOI not found.
-* UI: “Metadata not found.”
+* Trigger: DOI not found on [CrossRef](https://www.crossref.org/).
+* UI: "Metadata not found."
 * Storage: `"n/a"`.
 * Logging: `CrossRef 404`.
 
 ### Case 13. **ClinicalTrials.gov schema change**
 
-* Trigger: Unexpected response shape.
-* UI: “Trial data unavailable.”
+* Trigger: Unexpected response shape from [ClinicalTrials.gov](https://clinicaltrials.gov/).
+* UI: "Trial data unavailable."
 * Storage: `"n/a"`.
 * Logging: `CT schema mismatch`.
 
@@ -123,27 +123,27 @@
 ### Case 15. **Row mismatch between APIs**
 
 * Trigger: PubMed vs CrossRef mismatch.
-* UI: Badge “Conflict detected.”
+* UI: Badge "Conflict detected."
 * Storage: Dirty flag.
 * Logging: `metadata mismatch`.
 
 ### Case 16. **User bulk-commits all dirty rows**
 
-* Trigger: User chooses “Commit All.”
+* Trigger: User chooses "Commit All."
 * UI: Dirty still highlighted.
 * Storage: `"n/a"` in dirty fields.
 * Logging: `force commit`.
 
 ### Case 17. **User commits clean only**
 
-* Trigger: User chooses “Commit Clean.”
+* Trigger: User chooses "Commit Clean."
 * UI: Dirty rows remain visible.
 * Storage: Only clean rows saved.
 * Logging: `commit clean`.
 
 ### Case 18. **Export dirty-only dataset**
 
-* Trigger: User selects “Export dirty.”
+* Trigger: User selects "Export dirty."
 * UI: CSV with only flagged rows.
 * Storage: Export safe.
 * Logging: `export dirty`.
@@ -158,7 +158,7 @@
 ### Case 20. **User tries unsupported file**
 
 * Trigger: Upload `.pdf`.
-* UI: “Unsupported file format.”
+* UI: "Unsupported file format."
 * Storage: None.
 * Logging: `bad file type`.
 
@@ -169,7 +169,7 @@
 ### Case 21. **Duplicate PMIDs**
 
 * Trigger: Same PMID pasted twice.
-* UI: “Duplicate skipped.”
+* UI: "Duplicate skipped."
 * Storage: One committed.
 * Logging: `duplicate PMID`.
 
@@ -181,8 +181,8 @@
 
 ### Case 23. **Network throttle by PubMed**
 
-* Trigger: >2/sec.
-* UI: Banner “Pausing to respect limits.”
+* Trigger: >2/sec to [PubMed](https://pubmed.ncbi.nlm.nih.gov/).
+* UI: Banner "Pausing to respect limits."
 * Storage: Queue waits.
 * Logging: `api throttled`.
 
@@ -208,28 +208,28 @@
 ### Case 27. **Outdated browser w/o IDB**
 
 * Trigger: IE11.
-* UI: Banner “Storage unavailable.”
+* UI: Banner "Storage unavailable."
 * Storage: Fallback = localStorage.
 * Logging: `IDB not supported`.
 
 ### Case 28. **User clears localStorage**
 
 * Trigger: Clears manually.
-* UI: Banner “Settings reset.”
+* UI: Banner "Settings reset."
 * Storage: Defaults restored.
 * Logging: `settings reset`.
 
 ### Case 29. **Quota exceeded in IDB**
 
 * Trigger: Storage full.
-* UI: “Quota exceeded.”
+* UI: "Quota exceeded."
 * Storage: Stop committing.
 * Logging: `quota exceeded`.
 
 ### Case 30. **Malformed CSV from vendor**
 
 * Trigger: Badly encoded file.
-* UI: “Encoding error.”
+* UI: "Encoding error."
 * Storage: Dirty flagged.
 * Logging: `CSV encoding`.
 
@@ -240,27 +240,27 @@
 ### Case 31. **Large JSON import with recursion**
 
 * Trigger: Nested JSON.
-* UI: “Flattened schema.”
+* UI: "Flattened schema."
 * Storage: Canonical fields only.
 * Logging: `json flatten`.
 
 ### Case 32. **Clipboard paste overflow**
 
 * Trigger: 200k IDs.
-* UI: “Exceeded 50k cutoff.”
+* UI: "Exceeded 50k cutoff."
 * Logging: `paste overflow`.
 
 ### Case 33. **Checkpoint corruption**
 
 * Trigger: IDB checkpoint invalid.
-* UI: “Could not resume.”
+* UI: "Could not resume."
 * Storage: Restart job.
 * Logging: `checkpoint corruption`.
 
 ### Case 34. **Offline edit**
 
 * Trigger: User edits offline.
-* UI: “Saved locally.”
+* UI: "Saved locally."
 * Storage: Sync later.
 * Logging: `offline edit`.
 
@@ -273,7 +273,7 @@
 ### Case 36. **API mismatch**
 
 * Trigger: Different titles.
-* UI: “Metadata mismatch.”
+* UI: "Metadata mismatch."
 * Storage: Dirty flag.
 * Logging: `api mismatch`.
 
@@ -286,21 +286,27 @@
 ### Case 38. **Export → re-import formula artifacts**
 
 * Trigger: Excel adds formulas.
-* UI: Alert “Formulas removed.”
+* UI: Alert "Formulas removed."
 * Storage: `"n/a"` substitution.
 * Logging: `formula scrub`.
 
 ### Case 39. **API ban triggered**
 
 * Trigger: Excessive requests.
-* UI: “API temporarily blocked.”
+* UI: "API temporarily blocked."
 * Storage: Queue paused.
 * Logging: `api ban`.
 
 ### Case 40. **Unsupported export format**
 
 * Trigger: User requests XLSX.
-* UI: Error “Unsupported.”
+* UI: Error "Unsupported."
 * Logging: `unsupported export`.
 
+---
 
+## Related Documentation
+- [Playbook](./Playbook_v2.1.md) - References these scenarios for operational planning
+- [GAP Report](./GAP_REPORT_v2.1.md) - Tracks mitigation status
+- [Preservation Checklist](./PRESERVATION_CHECKLIST.md) - Includes worst-case testing
+- [Developer Guide](./DEVELOPER_GUIDE_v2.1.md) - Implementation guidance for scenarios
