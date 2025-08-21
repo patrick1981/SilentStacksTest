@@ -12,7 +12,38 @@
 4. [Service Worker](#4-service-worker)  
 5. [Accessibility](#5-accessibility)  
 6. [Handoff & Maintenance](#6-handoff--maintenance)  
-7. [References](#7-references)  
+7. [References](#7-references)
+8. [Documentation Layout](#8-documentation-layout)
+
+Developers must reference and maintain the canonical file structure:
+
+- Playbook → truth source
+- Rules Charter → governance rules
+- Dev Guide → coding & build standards
+- Worst Case Scenarios → failure conditions
+- Feature List → feature matrix
+- GAP Report → audit baselines
+- User Guide → workflows
+- Exec Summary → leadership orientation
+- Quickstart → setup
+- Upkeep → maintenance
+- Compliance_User → WCAG traceability
+
+
+Developers must reference and maintain the canonical file structure:
+
+- Playbook → truth source
+- Rules Charter → governance rules
+- Dev Guide → coding & build standards
+- Worst Case Scenarios → failure conditions
+- Feature List → feature matrix
+- GAP Report → audit baselines
+- User Guide → workflows
+- Exec Summary → leadership orientation
+- Quickstart → setup
+- Upkeep → maintenance
+- Compliance_User → WCAG traceability
+  
 
 ---
 
@@ -65,3 +96,21 @@ It complements the [Playbook](./Playbook_v2.1.md), [Rules Charter](./RULES_CHART
 - [Selector_Map_v2.1.md](./Selector_Map_v2.1.md)
 - [Handoff Guide](./HANDOFF_GUIDE.md)
 - [Preservation Checklist](./PRESERVATION_CHECKLIST.md)
+
+---
+## 8. Documentation Layout
+
+Developers must reference and maintain the canonical file structure:
+
+- Playbook → truth source
+- Rules Charter → governance rules
+- Dev Guide → coding & build standards
+- Worst Case Scenarios → failure conditions
+- Feature List → feature matrix
+- GAP Report → audit baselines
+- User Guide → workflows
+- Exec Summary → leadership orientation
+- Quickstart → setup
+- Upkeep → maintenance
+- Compliance_User → WCAG traceability
+
