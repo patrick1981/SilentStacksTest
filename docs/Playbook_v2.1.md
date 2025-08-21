@@ -18,7 +18,8 @@
 11. [Operational Rules](#11-operational-rules)  
 12. [Accessibility Roadmap — WCAG 2.2 AAA](#12-accessibility-roadmap--wcag-22-aaa)  
 13. [References](#13-references)  
-14. [Worst Case Scenarios](#14-worst-case-scenarios)  
+14. [Worst Case Scenarios](#14-worst-case-scenarios)
+15. [Documentation Layout](#15-documentation-layout)  
 
 ---
 
