@@ -18,15 +18,15 @@
 
 ## 1. Overview
 This guide provides developer-facing instructions for SilentStacks.  
-It complements the Playbook, Rules Charter, and User Guide.  
+It complements the [Playbook](./Playbook_v2.1.md), [Rules Charter](./RULES_CHARTER.md), and [User Guide](./COMPREHENSIVE_USER_GUIDE_v2.1.md).  
 
 ---
 
 ## 2. Development Principles
 - **Monolithic-first**: Build/test monoliths before modularization.  
 - **No placeholders**: All code must be production-ready.  
-- **Accessibility**: All commits reviewed against WCAG 2.2 AAA.  
-- **Cascading updates**: When rules/docs change, cascade into Playbook.  
+- **Accessibility**: All commits reviewed against [WCAG 2.2 AAA](https://www.w3.org/TR/WCAG22/).  
+- **Cascading updates**: When rules/docs change, cascade into [Playbook](./Playbook_v2.1.md).  
 
 ---
 
@@ -40,26 +40,28 @@ It complements the Playbook, Rules Charter, and User Guide.
 ## 4. Service Worker
 - Cache-first strategy with network fallback.  
 - Background sync for failed requests.  
-- Error handling logged into developer console and GAP report.  
+- Error handling logged into developer console and [GAP report](./GAP_REPORT_v2.1.md).  
 
 ---
 
 ## 5. Accessibility
 - Use semantic HTML, ARIA roles, captions.  
 - Test with screen readers (NVDA, JAWS).  
-- Verify against WCAG 2.2 AAA Success Criteria.  
-- Maintain a Success Criteria → Feature traceability map in `Selector_Map_v2.1.md`.  
+- Verify against [WCAG 2.2 AAA Success Criteria](https://www.w3.org/WAI/WCAG22/quickref/).  
+- Maintain a Success Criteria → Feature traceability map in [Selector_Map_v2.1.md](./Selector_Map_v2.1.md).  
 
 ---
 
 ## 6. Handoff & Maintenance
 - All docs and code must be structured for AI + human developers.  
 - Provide session summaries and changelogs for continuity.  
-- On new dev cycles, review `RULES_CHARTER.md` before starting.  
+- On new dev cycles, review [RULES_CHARTER.md](./RULES_CHARTER.md) before starting.  
 
 ---
 
 ## 7. References
 - [Playbook_v2.1.md](./Playbook_v2.1.md)  
 - [RULES_CHARTER.md](./RULES_CHARTER.md)  
-- [Selector_Map_v2.1.md](./Selector_Map_v2.1.md)  
+- [Selector_Map_v2.1.md](./Selector_Map_v2.1.md)
+- [Handoff Guide](./HANDOFF_GUIDE.md)
+- [Preservation Checklist](./PRESERVATION_CHECKLIST.md)
