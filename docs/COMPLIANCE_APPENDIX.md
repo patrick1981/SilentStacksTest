@@ -12,7 +12,7 @@ This appendix tracks compliance requirements relevant to SilentStacks and its de
 
 ### Accessibility (WCAG)
 - SilentStacks follows **WCAG 2.2 AAA** roadmap.
-- Traceability map maintained in Selector_Map_v2.1.md.
+- Traceability map maintained in [Selector_Map_v2.1.md](./Selector_Map_v2.1.md).
 - Continuous audit required (automated + human).
 
 ### Security & Data Integrity
@@ -23,4 +23,4 @@ This appendix tracks compliance requirements relevant to SilentStacks and its de
 ---
 
 ### Canonical Rule
-Compliance requirements cascade into the Playbook and Preservation Checklist. Gaps logged in GAP_REPORT_v2.1.md.
+Compliance requirements cascade into the [Playbook](./Playbook_v2.1.md) and [Preservation Checklist](./PRESERVATION_CHECKLIST.md). Gaps logged in [GAP_REPORT_v2.1.md](./GAP_REPORT_v2.1.md).
