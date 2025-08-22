@@ -339,5 +339,7 @@ approach, reducing load times by 60% while maintaining full functionality"
 - Architected modular codebase for enterprise-level maintainability and scalability
 
 
-https://chatgpt.com/g/g-p-68a58af4ba7c81919e17b3649b85cdc6-silentstacks2-0/c/68a759fb-9374-8333-9585-00e6c216eaa5?project_id=g-p-68a58af4ba7c81919e17b3649b85cdc6&owner_user_id=user-8BV0POJdo2jTBaHU7RvMrLNP
+Governance Architect: Authored canonical Playbook, enforced cascading documentation updates, and designed Gate 0-4 audit framework for systemic reliability.
+Leadership & Change Management: Directed multi-session design sprints, coordinated concurrency enforcement across 12+ canonical docs, and implemented guardrails preventing drift.
+SilentStacks v2.1 — Lead Developer (2024-2025): Designed and delivered an offline-first ILL management system with PubMed/CrossRef integration, bulk import/export, and AAA accessibility.
 
