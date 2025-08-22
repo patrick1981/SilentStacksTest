@@ -1,194 +1,185 @@
 # SilentStacks Playbook v2.1
 
-**Status:** Canonical, single source of truth
-**Last Updated:** 2025-08-21
+**Status:** Canonical, single source of truth  
+**Last Updated:** 2025-08-21  
 
 ---
 
 ## Table of Contents
-
-1. [Introduction](#1-introduction)
-2. [Core Objectives](#2-core-objectives)
-3. [P0 Benchmarks](#3-p0-benchmarks)
-4. [Data Architecture](#4-data-architecture)
-5. [Bulk Operations](#5-bulk-operations)
-6. [Metadata Enrichment](#6-metadata-enrichment)
-7. [UI & Accessibility](#7-ui--accessibility)
-8. [Offline Support](#8-offline-support)
-9. [Export & Reporting](#9-export--reporting)
-10. [Governance & Compliance](#10-governance--compliance)
-11. [Operational Rules](#11-operational-rules)
-12. [Modes of Operation](#12-modes-of-operation)
-13. [Accessibility Roadmap — WCAG 2.2 AAA](#13-accessibility-roadmap--wcag-22-aaa)
-14. [References](#14-references)
-15. [Worst Case Scenarios](#15-worst-case-scenarios)
-16. [Documentation Layout](#16-documentation-layout)
+1. [Introduction](#1-introduction)  
+2. [Core Objectives](#2-core-objectives)  
+3. [P0 Benchmarks](#3-p0-benchmarks)  
+4. [Data Architecture](#4-data-architecture)  
+5. [Bulk Operations](#5-bulk-operations)  
+6. [Metadata Enrichment](#6-metadata-enrichment)  
+7. [UI & Accessibility](#7-ui--accessibility)  
+8. [Offline Support](#8-offline-support)  
+9. [Export & Reporting](#9-export--reporting)  
+10. [Governance & Compliance](#10-governance--compliance)  
+11. [Operational Rules](#11-operational-rules)  
+12. [Accessibility Roadmap — WCAG 2.2 AAA](#12-accessibility-roadmap--wcag-22-aaa)  
+13. [References](#13-references)  
+14. [Worst Case Scenarios](#14-worst-case-scenarios)  
+15. [Documentation Layout](#15-documentation-layout)  
+16. [Operation Modes](#16-operation-modes)  
+17. [P0 Failure Log](#17-p0-failure-log)  
 
 ---
 
 ## 1. Introduction
-
-SilentStacks is an offline-first, accessible interlibrary loan (ILL) and request management platform built for healthcare and academic libraries.
+SilentStacks is an offline-first, accessible interlibrary loan (ILL) and request management platform built for healthcare and academic libraries.  
 This Playbook is the **canonical operational guide**. All other documents ([Developer Guide](./DEVELOPER_GUIDE_v2.1.md), [User Guide](./COMPREHENSIVE_USER_GUIDE_v2.1.md), [Compliance](./COMPLIANCE_APPENDIX.md), [GAP Report](./GAP_REPORT_v2.1.md), etc.) defer to this file.
 
 ---
 
 ## 2. Core Objectives
-
-* **Client-only execution:** No server-side persistence; IndexedDB + LocalStorage only.
-* **Healthcare IT alignment:** HIPAA safe (no PHI), WCAG 2.2 AAA accessibility.
-* **Metadata enrichment:** PubMed, CrossRef, ClinicalTrials.gov (linkout only).
-* **Reliability:** Operates under unreliable networks with retry logic.
-* **Uniformity:** Canonical headers and schema enforced globally.
+- **Client-only execution:** No server-side persistence; IndexedDB + LocalStorage only.  
+- **Healthcare IT alignment:** HIPAA safe (no PHI), [AAA accessibility](https://www.w3.org/TR/WCAG22/).  
+- **Metadata enrichment:** [PubMed](https://pubmed.ncbi.nlm.nih.gov/), [CrossRef](https://www.crossref.org/), [ClinicalTrials.gov linkouts only](https://clinicaltrials.gov/).  
+- **Reliability:** Operates under unreliable networks with retry logic.  
+- **Uniformity:** Headers, request schema, linkouts consistent across system.  
 
 ---
 
 ## 3. P0 Benchmarks
-
-* **Bulk operations** up to 50,000 rows.
-* **API throttling:** PubMed ≤ 2/sec.
-* **Headers:** Canonical 7-column schema (Urgency, Docline #, PMID, Citation, NCT Link, Patron E-mail, Fill Status).
-* **Linkout pivot:** PMID/DOI/NCT consistent across table + card view.
-* **AAA accessibility** compliance validated every release.
+- **Bulk operations** up to 50,000 rows.  
+- **Throttling:** PubMed ≤ 2 requests/sec.  
+- **Headers:** Canonical CSV headers, with auto-map dictionary.  
+- **Linkout pivot:** PMID/DOI/NCT linkouts consistent across card + table.  
+- **AAA accessibility:** [WCAG 2.2 AAA](https://www.w3.org/TR/WCAG22/) roadmap, continuous audit.  
 
 ---
 
 ## 4. Data Architecture
-
-* **IndexedDB** → request storage, checkpointing.
-* **LocalStorage** → preferences + UI state.
-* **Service Worker** → offline cache + background sync.
-* **Cutoff:** 50,000 rows/job.
+- **IndexedDB** → request storage, bulk imports.  
+- **LocalStorage** → preferences, UI state.  
+- **Service Worker** → offline cache + background sync.  
+- **Cutoff:** 50,000 rows/job.  
 
 ---
 
 ## 5. Bulk Operations
-
-* **CSV & Paste** accepted.
-* **Validation** against canonical headers.
-* **Dirty data:** flagged `"n/a"`, filterable, exportable.
-* **Retry Queue** with exponential backoff.
-* **UI Feedback:** ARIA live regions + AAA contrast.
+- **CSV & Paste** accepted.  
+- **Validation** against canonical headers.  
+- **Retry Queue** with exponential backoff.  
+- **UI Feedback:** ARIA live regions + AAA contrast.  
 
 ---
 
 ## 6. Metadata Enrichment
-
-* **PubMed (ESummary/EFetch)** primary source.
-* **CrossRef** fallback for DOI/title.
-* **ClinicalTrials.gov:** linkout only (CORS limits).
-* **Mismatch detection** flagged in UI.
+- **PubMed** (ESummary/EFetch).  
+- **CrossRef** fallback for DOI/title.  
+- **ClinicalTrials.gov** — **linkout only**.  
+- **Mismatch detection** → flagged in UI.  
 
 ---
 
 ## 7. UI & Accessibility
-
-* **Semantic HTML5**, ARIA roles, captions.
-* **Keyboard-first nav** (skip links, focus outlines).
-* **High-contrast theme**.
-* **Help/FAQ** panel maintained.
+- **Semantic HTML5**, ARIA roles, captions.  
+- **Keyboard-first nav** (skip links, focus outlines).  
+- **High-contrast theme**.  
+- **Help/FAQ** panel maintained.  
 
 ---
 
 ## 8. Offline Support
-
-* **Service Worker** cache-first strategy w/ fallback.
-* **Background Sync** queues requests for later retry.
-* **IndexedDB Sync** ensures no data loss on disconnect.
+- **Service Worker** handles cache-first with network fallback.  
+- **Background Sync** queues requests for later retry.  
+- **IndexedDB Sync** ensures no data loss during disconnects.  
 
 ---
 
 ## 9. Export & Reporting
-
-* **CSV/Excel** export w/ canonical headers.
-* **Variants:** clean-only or full dataset.
-* **Round-trip guarantee:** exports reimport safely.
-* **Audit trail** cascades into GAP report.
+- **CSV export** with canonical headers.  
+- **Session summaries** auto-generated.  
+- **Audit trail** cascades into [GAP_REPORT_v2.1.md](./GAP_REPORT_v2.1.md).  
 
 ---
 
 ## 10. Governance & Compliance
-
-* **Compliance Appendices** → requirements tracked, referenced here.
-* **Preservation Checklist** → ensures long-term operability.
-* **Session Summary** → auto-generated every wind-down.
-* **Peer-review Conference Report** now mandatory output.
+- **[Compliance Appendices](./COMPLIANCE_APPENDIX.md)** → requirements tracked separately.  
+- **[Preservation Checklist](./PRESERVATION_CHECKLIST.md)** → ensures long-term operability.  
+- **Session Summary** → produced automatically per session.  
 
 ---
 
 ## 11. Operational Rules
-
-* **Playbook = Canonical.**
-* **Cascading updates** → all docs cascade from Playbook.
-* **No placeholders** → deliverables must be production-ready.
-* **TOC Requirement** → all docs must include TOCs.
-* **ZIP/Print Audit** → line counts + file sizes printed at wind-down.
-* **Concurrency** → yesterday + today’s edits merged, 100% synch required.
-
----
-
-## 12. Modes of Operation
-
-SilentStacks runs in two modes:
-
-1. **Modeling Mode**
-
-   * Path: `docs/modeling/`
-   * Docs-only packaging (Markdown).
-   * Used for modeling new policies/features.
-
-2. **Development Mode**
-
-   * Path: root `/docs/` + client app.
-   * Live HTML/JS/CSS execution.
-   * Includes API fetches, offline-first runtime.
+- **Playbook = Canonical.**  
+- **Cascading updates** → All changes cascade into Playbook and other docs.  
+- **No placeholders** → Deliverables must be production-ready.  
+- **Audit Requirement** → All packages audited for completeness and stubs before release.  
+- **TOC Requirement** → All major docs must include TOC.  
+- **User Guide Requirement** → [USER_GUIDE_v2.1.md](./COMPREHENSIVE_USER_GUIDE_v2.1.md) must exist.  
 
 ---
 
-## 13. Accessibility Roadmap — WCAG 2.2 AAA
-
-* **Contrast ≥ 7:1** for normal text.
-* **Keyboard navigation** enforced.
-* **ARIA labeling + skip links** included.
-* **Audit**: automated + manual every release.
-* **Conformance target: AAA** without exception.
-
----
-
-## 14. References
-
-* [RULES\_CHARTER.md](./RULES_CHARTER.md) — governance & rules
-* [Selector\_Map\_v2.1.md](./Selector_Map_v2.1.md) — accessibility traceability
-* [Worst\_Case\_Scenarios.md](./WORST_CASE_SCENARIOS.md) — 40 explicit failure cases
-* [Developer Guide](./DEVELOPER_GUIDE_v2.1.md)
-* [User Guide](./COMPREHENSIVE_USER_GUIDE_v2.1.md)
-* [Quickstart](./QUICKSTART_v2.1.md)
-* [Handoff Guide](./HANDOFF_GUIDE.md)
-* [Conference\_Report.md](./CONFERENCE_REPORT.md) — session problems + solutions
+## 12. Accessibility Roadmap — WCAG 2.2 AAA
+- Reference: [WCAG 2.2 Specification](https://www.w3.org/TR/WCAG22/)  
+- Quick Reference: [How to Meet WCAG](https://www.w3.org/WAI/WCAG22/quickref/)  
+- Traceability map: [Selector_Map_v2.1.md](./Selector_Map_v2.1.md)  
+- **Audit:** Automated + human, every release.  
+- **Conformance:** AAA target, no exceptions.  
 
 ---
 
-## 15. Worst Case Scenarios
-
-See full detail → [Worst\_Case\_Scenarios.md](./Worst_Case_Scenarios.md)
-
----
-
-## 16. Documentation Layout
-
-* `Playbook_v2.1.md` → canonical.
-* `RULES_CHARTER_v2.1.md` → governance.
-* `DEV_GUIDE_v2.1.md` → developer rules.
-* `WORST_CASE_SCENARIOS_v2.1.md` → P0 failures + mitigations.
-* `FEATURE_LIST_v2.1.md` → feature matrix.
-* `GAP_REPORT_v2.1.md` → compliance audit.
-* `USER_GUIDE_v2.1.md` → end-user workflows.
-* `EXEC_SUMMARY_v2.1.md` → leadership overview.
-* `QUICKSTART_v2.1.md` → setup.
-* `UPKEEP_v2.1.md` → maintenance SOP.
-* `COMPLIANCE_USER_v2.1.md` → WCAG + accessibility.
-* `CONFERENCE_REPORT.md` → canonical session report (peer-review quality).
+## 13. References
+- **[RULES_CHARTER.md](./RULES_CHARTER.md)**  
+- **[Selector_Map_v2.1.md](./Selector_Map_v2.1.md)**  
+- **[GAP_REPORT_v2.1.md](./GAP_REPORT_v2.1.md)**  
+- **[Worst_Case_Scenarios.md](./Worst_Case_Scenarios.md)**  
+- **[Developer Guide](./DEVELOPER_GUIDE_v2.1.md)**  
+- **[User Guide](./COMPREHENSIVE_USER_GUIDE_v2.1.md)**  
+- **[Quickstart](./QUICKSTART_v2.1.md)**  
+- **[Handoff Guide](./HANDOFF_GUIDE.md)**  
 
 ---
 
-Do you want me to now **print the modeling files under `docs/modeling/`** so you see their current state in the wind-down package?
+## 14. Worst Case Scenarios
+Full list and details: [Worst_Case_Scenarios.md](./Worst_Case_Scenarios.md)  
+
+---
+
+## 15. Documentation Layout
+- `Playbook_v2.1.md` → Canonical.  
+- `RULES_CHARTER_v2.1.md` → Governance.  
+- `DEV_GUIDE_v2.1.md` → Coding standards.  
+- `WORST_CASE_SCENARIOS_v2.1.md` → 40 explicit P0 cases.  
+- `FEATURE_LIST_v2.1.md` → Feature matrix.  
+- `GAP_REPORT_v2.1.md` → Completeness/compliance.  
+- `USER_GUIDE_v2.1.md` → End-user workflows.  
+- `EXEC_SUMMARY_v2.1.md` → Leadership orientation.  
+- `QUICKSTART_v2.1.md` → Setup instructions.  
+- `UPKEEP_v2.1.md` → Maintenance SOPs.  
+- `COMPLIANCE_USER_v2.1.md` → Accessibility maps.  
+
+---
+
+## 16. Operation Modes
+- **Modeling Mode:** Sandbox path → `docs/modeling/` for prototypes.  
+- **Dev Mode:** Production path with locked canon → all deliverables must cascade.  
+
+---
+
+## 17. P0 Failure Log
+
+**2025-08-18 — Canonical Headers Drift**  
+- Trigger: Missing/reordered headers.  
+- Resolution: Re-grounded canonical schema.  
+
+**2025-08-20 — Concurrency Break (Multiple Playbooks)**  
+- Trigger: 4+ divergent playbooks.  
+- Resolution: Introduced Gate 4.  
+
+**2025-08-21 (AM) — Resume Points Omitted**  
+- Trigger: Wind-down didn’t print CV/resume bullets.  
+- Resolution: Resume generation added to canon.  
+
+**2025-08-21 (PM) — Playbook Omission in Deliverable**  
+- Trigger: Packaged ZIP lacked Playbook.  
+- Resolution: Gate 0 rollback; Playbook reinstated.  
+
+**2025-08-21 (PM) — CT.gov Enrichment Misstatement**  
+- Trigger: Playbook referenced enrichment instead of linkout only.  
+- Resolution: Corrected to NCT linkout only.  
+
+---
