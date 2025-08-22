@@ -170,7 +170,7 @@ SilentStacks runs in two modes:
 
 ## 15. Worst Case Scenarios
 
-See full detail → [Worst\_Case\_Scenarios.md](./WORST_CASE_SCENARIOS.md)
+See full detail → [Worst\_Case\_Scenarios.md](./Worst_Case_Scenarios.md)
 
 ---
 
