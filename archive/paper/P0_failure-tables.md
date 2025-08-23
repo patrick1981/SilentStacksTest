@@ -1,14 +1,22 @@
-| Category                | v2.0 Failure Mode (Production)                                      | v2.1 Failure Mode (Modeling)                                                         | Notes / Evolution                                                            |
-| ----------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| **Development Pattern** | Straight into coding, rapid UI iteration, no systematic gate checks | Gate framework introduced but failed catastrophically                                | v2.1 tried to fix 2.0 chaos with process, but collapsed under its own weight |
-| **Metadata Enrichment** | PubMed → DOI broken; PubMed → NCT missing; CT.gov blocked by CORS   | CT.gov linkout-only policy adopted, but PubMed/DOI/NCT enrichment still inconsistent | CORS pivot marked official split between 2.0 and 2.1                         |
-| **UI / Data Model**     | Missing NCT fields, MeSH/CT.gov chips absent, table headers wrong   | Chips preview added but not bound to table/cards; table mostly fixed                 | v2.1 improved structure but never fully delivered                            |
-| **CRUD Operations**     | Baseline regression: bulk update missing, bulk delete incomplete    | Bulk update still broken; delete restored                                            | CRUD regressions carried forward despite multiple patches                    |
-| **Export / Reporting**  | NLM export missing; CSV/JSON partial                                | NLM export wired in recovery builds but docs unsynced                                | Export features improved post-meltdown                                       |
-| **Security**            | Weak validation, no API injection prevention                        | Regex validators + encoding added, allow-list still pending                          | Slight hardening but incomplete                                              |
-| **Accessibility**       | Only partial AAA (contrast, keyboard traps)                         | Audit abandoned mid-pass during meltdown                                             | Accessibility never stabilized in either version                             |
-| **Docs & Playbook**     | Ad hoc GAP reports; Playbook incomplete                             | Playbook + GAP reports expanded but lost sync during meltdown                        | v2.1 meltdown forced Playbook consolidation afterwards                       |
-| **Failure Character**   | **Feature collapse**: enrichment ambitions untenable                | **Systemic meltdown**: all gates failed, catastrophic flush, unrecoverable logs      | Defines the pivot: v2.0 = technical failure, v2.1 = governance failure       |
+| Time/Phase                       | Event                                                        | Impact                                                          | Status/Action                     |
+| -------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------- | --------------------------------- |
+| Spin-up (pre-Gate 1)             | Initial v2.1 builds run with new Gate tables                 | Looked stable                                                   | No failures detected yet          |
+| Gate 1 (Baseline Canon)          | Canon checks misaligned across sessions                      | Multiple failures flagged                                       | Manual overrides attempted        |
+| Gate 2 (Completeness & Manifest) | Missing docs + incomplete monoliths                          | Packaging blocked                                               | Docs diverged from repo           |
+| Gate 3 (Regression Tests)        | Widespread failures (bulk ops, enrichment, accessibility)    | Test logs corrupted                                             | All flagged as P0 regressions     |
+| Gate 4 (Packaging & Approval)    | Attempted to bypass with incomplete Playbook                 | Total failure                                                   | Catastrophic collapse             |
+| Meltdown Aftermath               | “Every gate failed” — emergency file not written             | System-wide flush triggered; unrecoverable loss of session data | Recovery modeling initiated       |
+| Recovery Path                    | Manual reconstruction of Playbook, GAP reports, Failure Logs | Stabilization in progress                                       | Led to consolidated Playbook v2.1 |
+
+
+| Expectation                                         | Actual                               | Root Cause                                           | Corrective Action                                        | Date       |
+| --------------------------------------------------- | ------------------------------------ | ---------------------------------------------------- | -------------------------------------------------------- | ---------- |
+| Gate framework stabilizes builds                    | Multiple Gates failed simultaneously | Uncoordinated regression runs; no auto-recovery      | Introduced Gate 0 stability + automated recovery policy  | 2025-08-12 |
+| Bulk update restored from v1.2 baseline             | Still incomplete                     | Wiring/UI mismatch                                   | Marked as P0; flagged for restoration in recovery builds | 2025-08-12 |
+| Chips (MeSH + CT.gov) render in table & cards       | Preview-only; not fully integrated   | Renderer only bound in preview, not main render loop | Augmented row renderer post-meltdown                     | 2025-08-12 |
+| AAA Accessibility audit completed                   | Audit incomplete; AAA not verified   | Theming + labels left mid-pass during meltdown       | Deferred to post-recovery stabilization                  | 2025-08-12 |
+| CT.gov → PMID back-population policy                | Unimplemented                        | Deferred due to linkout-only policy; proxy forbidden | Marked as future optional if proxy allowed               | 2025-08-12 |
+| Docs concurrency (QuickStart, Dev Guide, TechMaint) | Unsynced across commits              | Meltdown halted doc updates                          | Introduced sync step into Gate 2 completeness            | 2025-08-12 |
 
 
 | Date       | P0 Failure                                                    | Impact                                | Corrective Action                                            |
