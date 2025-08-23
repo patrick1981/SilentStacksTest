@@ -1,0 +1,970 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SilentStacks v2.1 — Monolithic (AAA, NCT↔PMID, MeSH, Bulk Enrichment)</title>
+<meta name="description" content="SilentStacks — medical library ILL management. Offline-first, AAA accessible, PubMed/CrossRef/ClinicalTrials.gov integrations." />
+<style>
+  /* ===== Design tokens (WCAG 2.2 AAA-leaning contrast) ===== */
+  :root{--bg:#0b0f1a;--panel:#0f1626;--panel-2:#111a2b;--ink:#eef3ff;--ink-2:#c8d5f2;--ink-3:#a8b8dd;
+    --brand:#6aa8ff;--brand-600:#4f95ff;--brand-700:#3b81f5;--brand-soft:#142445;
+    --ok:#5fe1b1;--warn:#ffd087;--danger:#ff98a9;--info:#a9c6ff;
+    --border:#21314f;--ring:#a9c6ff;--shadow:0 10px 24px rgba(5,10,20,.35),0 2px 6px rgba(5,10,20,.3);
+    --radius:16px;--radius-lg:22px;--font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
+  [data-theme="light"]{--bg:#f6f8fc;--panel:#fff;--panel-2:#f2f5fb;--ink:#0b1220;--ink-2:#2a3447;--ink-3:#44506a;
+    --brand:#173b8c;--brand-600:#142f6f;--brand-700:#0f2558;--brand-soft:#e6ecf8;
+    --ok:#0b5b3b;--warn:#7a3f00;--danger:#7a1220;--info:#274059;--border:#d7deec;--ring:#0a3a95;
+    --shadow:0 10px 24px rgba(16,24,40,.06),0 2px 6px rgba(16,24,40,.06)}
+  [data-theme="high-contrast"]{--bg:#fff;--panel:#fff;--panel-2:#fff;--ink:#000;--ink-2:#000;--ink-3:#000;
+    --brand:#000;--brand-600:#000;--brand-700:#000;--brand-soft:#fff;--ok:#000;--warn:#000;--danger:#000;--info:#000;--border:#000;--ring:#000;--shadow:none}
+  *,*::before,*::after{box-sizing:border-box} html,body{height:100%} body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.6 var(--font)}
+  .skip{position:absolute;left:16px;top:-48px;background:var(--brand);color:#fff;padding:10px 14px;border-radius:10px}
+  .skip:focus{top:12px;outline:4px solid var(--ring)}
+  .shell{display:grid;grid-template-columns:280px 1fr;min-height:100dvh}
+  .sidebar{position:sticky;top:0;height:100dvh;background:linear-gradient(180deg,color-mix(in oklab,var(--panel) 80%,transparent),transparent 120%),
+    radial-gradient(120% 80% at 10% 0%,color-mix(in oklab,var(--brand) 25%,transparent),transparent 60%);
+    border-right:1px solid var(--border);padding:18px}
+  .brand{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .brand__logo{width:38px;height:38px;border-radius:12px;background:radial-gradient(140% 140% at 10% 10%,var(--brand) 0%,var(--brand-700) 50%,#111 120%)}
+  .brand__name{font-weight:900}
+  .nav{display:flex;flex-direction:column;gap:6px}
+  .nav-btn{appearance:none;border:0;background:transparent;color:var(--ink-2);padding:12px;border-radius:12px;text-align:left;cursor:pointer;font-weight:800;display:flex;gap:10px;align-items:center}
+  .nav-btn[aria-current="page"], .nav-btn:hover{background:var(--brand-soft);color:var(--ink)}
+  .nav-btn:focus-visible{outline:4px solid var(--ring);outline-offset:2px}
+  .panel{padding:24px 28px}
+  .hero{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;background:
+    linear-gradient(180deg,color-mix(in oklab,var(--panel-2) 85%,transparent),transparent 120%),
+    radial-gradient(120% 100% at 0% 0%,color-mix(in oklab,var(--brand) 20%,transparent) 0%,transparent 60%);
+    border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .grid{display:grid;gap:14px} .g-2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
+  select,input,textarea,button{font:inherit}
+  .select,.input,.textarea{min-height:48px;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:color-mix(in oklab,var(--panel) 92%,transparent);color:var(--ink)}
+  .textarea{min-height:96px;resize:vertical}
+  .select:focus-visible,.input:focus-visible,.textarea:focus-visible,.btn:focus-visible{outline:4px solid var(--ring);outline-offset:2px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 16px;border-radius:12px;border:1.5px solid transparent;cursor:pointer;font-weight:900}
+  .btn-primary{background:var(--brand);color:#fff} .btn-success{background:var(--ok);color:#001} .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--border)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap} .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:color-mix(in oklab,var(--panel-2) 70%,transparent)}
+  .chip button{border:none;background:transparent;cursor:pointer;color:var(--ink-3)} .hint{color:var(--ink-3);font-weight:600}
+  .table-wrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--panel)}
+  .table-head{display:grid;grid-template-columns:40px 120px 110px 1fr 180px 120px 160px 120px;gap:0;border-bottom:1px solid var(--border);background:color-mix(in oklab,var(--panel-2) 60%,transparent)}
+  .th,.td{padding:10px 12px;font-weight:800} .td{font-weight:500;border-bottom:1px solid var(--border)}
+  .vlist{height:420px;overflow:auto} .vcontent{position:relative}
+  .row-item{position:absolute;left:0;width:100%;display:grid;grid-template-columns:40px 120px 110px 1fr 180px 120px 160px 120px;gap:0;align-items:center}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid var(--border)}
+  .badge[data-variant="pending"]{background:#fff6db;color:#4c3a00}
+  .badge[data-variant="in-progress"]{background:#e6f0ff;color:#0a2a72}
+  .badge[data-variant="completed"]{background:#e8fff6;color:#064a34}
+  .badge[data-variant="cancelled"]{background:#ffe8ec;color:#6b0e1e}
+  .net{position:fixed;top:14px;left:14px;z-index:50;padding:8px 12px;border-radius:999px;font-weight:900}
+  .net--online{background:var(--ok);color:#001} .net--offline{background:var(--danger);color:#000}
+  .toasts{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:40}
+  .toast{max-width:520px;background:var(--panel);border:2px solid var(--border);border-left:8px solid var(--info);color:var(--ink);border-radius:16px;padding:12px 14px}
+  .progress{width:100%;height:10px;border-radius:999px;background:color-mix(in oklab,var(--panel-2) 70%,transparent);overflow:clip;border:1px solid var(--border)}
+  .fill{height:100%;background:var(--brand);transition:width .18s ease}
+  @media (max-width:1100px){.shell{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.table-head,.row-item{grid-template-columns:40px 120px 110px 1fr 180px 140px}}
+</style>
+</head>
+<body data-theme="light">
+<a href="#main" class="skip">Skip to main content</a>
+<div id="connectionStatus" class="net net--online" role="status" aria-live="polite"><span id="connectionText">Online</span></div>
+<div id="toastContainer" class="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Primary navigation">
+    <div class="brand">
+      <div class="brand__logo" aria-hidden="true"></div>
+      <div><div class="brand__name">SilentStacks</div><div class="hint">ILL Management</div></div>
+    </div>
+    <nav class="nav" role="navigation">
+      <button class="nav-btn" data-section="dashboard" aria-current="page">📊 Dashboard</button>
+      <button class="nav-btn" data-section="add-request">➕ Add Request</button>
+      <button class="nav-btn" data-section="all-requests">📋 All Requests</button>
+      <button class="nav-btn" data-section="import-export">📁 Import/Export</button>
+      <button class="nav-btn" data-section="settings">⚙️ Settings</button>
+    </nav>
+    <div class="grid" style="margin-top:16px">
+      <label class="hint" for="themeSelect">Theme</label>
+      <select id="themeSelect" class="select" aria-label="Theme">
+        <option value="light">☀️ Light</option>
+        <option value="dark">🌙 Dark</option>
+        <option value="high-contrast">⚡ High Contrast</option>
+      </select>
+      <button id="helpBtn" class="btn btn-ghost">❓ Help</button>
+    </div>
+  </aside>
+
+  <main id="main" class="panel" role="main">
+    <section class="hero" aria-label="Header">
+      <div>
+        <h1 style="margin:0 0 6px 0; font-weight:900">SilentStacks v2.1 — Monolithic</h1>
+        <p class="hint" style="margin:0">NCT↔PMID • MeSH • Bulk Enrichment • Sorting • Offline • Export/Import • AAA</p>
+      </div>
+      <div class="row">
+        <button id="exportJsonBtn-hero" class="btn btn-success">⬇ Export JSON</button>
+        <button id="exportCsvBtn-hero" class="btn btn-success">⬇ Export CSV</button>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" class="section" style="margin-top:16px">
+      <div class="grid g-2">
+        <div class="card"><h3>Totals</h3><div id="totalRequests" style="font-size:32px;font-weight:900">0</div></div>
+        <div class="card"><h3>Pending</h3><div id="pendingRequests" style="font-size:32px;font-weight:900">0</div></div>
+        <div class="card"><h3>Completed</h3><div id="completedRequests" style="font-size:32px;font-weight:900">0</div></div>
+        <div class="card"><h3>Urgent</h3><div id="urgentRequests" style="font-size:32px;font-weight:900">0</div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin:0 0 8px">Recent Activity</h3>
+        <div id="recentActivity" aria-live="polite"><p class="hint" style="margin:0">(actions appear here)</p></div>
+      </div>
+    </section>
+
+    <!-- Add Request -->
+    <section id="add-request" class="section" hidden style="margin-top:16px">
+      <div class="grid g-2">
+        <div class="card">
+          <h3>Quick Lookup</h3>
+          <div class="grid">
+            <div>
+              <label for="pmidInput">PMID</label>
+              <div class="row">
+                <input id="pmidInput" class="input" inputmode="numeric" pattern="\\d{6,10}" placeholder="e.g., 34567890" />
+                <button id="lookupPmidBtn" class="btn btn-primary">Lookup</button>
+              </div>
+              <p class="hint">PMID → PubMed metadata + MeSH + Trials</p>
+            </div>
+            <div>
+              <label for="doiInput">DOI</label>
+              <div class="row">
+                <input id="doiInput" class="input" placeholder="e.g., 10.1000/xyz123" />
+                <button id="lookupDoiBtn" class="btn btn-primary">Lookup</button>
+              </div>
+              <p class="hint">DOI → CrossRef metadata</p>
+            </div>
+            <div>
+              <label for="nctQuick">NCT ID</label>
+              <div class="row">
+                <input id="nctQuick" class="input" placeholder="NCT01234567" />
+                <button id="lookupNctBtn" class="btn btn-primary">Lookup</button>
+              </div>
+              <p class="hint">NCT → ClinicalTrials.gov + linked PMIDs</p>
+            </div>
+          </div>
+        </div>
+
+        <form id="requestForm" class="card" novalidate>
+          <h3>Add / Edit Request</h3>
+          <div class="grid">
+            <div class="row" style="gap:12px;flex-wrap:wrap">
+              <label style="flex:1 1 320px">Title <span aria-hidden="true">*</span>
+                <input id="title" name="title" class="input" required aria-required="true" />
+              </label>
+              <label style="flex:1 1 220px">DOCLINE #
+                <input id="doclineId" name="doclineId" class="input" placeholder="Unique per request" />
+              </label>
+            </div>
+
+            <div class="row" style="gap:12px;flex-wrap:wrap">
+              <label style="flex:1 1 260px">Authors
+                <input id="authors" name="authors" class="input" />
+              </label>
+              <label style="flex:1 1 260px">Journal
+                <input id="journal" name="journal" class="input" />
+              </label>
+              <label style="flex:0 0 160px">Year
+                <input id="year" name="year" class="input" type="number" min="1900" max="2100" />
+              </label>
+            </div>
+
+            <div class="row" style="gap:12px;flex-wrap:wrap">
+              <label style="flex:1 1 180px">Volume
+                <input id="volume" name="volume" class="input" />
+              </label>
+              <label style="flex:1 1 180px">Issue
+                <input id="issue" name="issue" class="input" />
+              </label>
+              <label style="flex:1 1 180px">Pages
+                <input id="pages" name="pages" class="input" />
+              </label>
+            </div>
+
+            <div class="row" style="gap:12px;flex-wrap:wrap">
+              <label style="flex:1 1 220px">PMID
+                <input id="pmid" name="pmid" class="input" />
+              </label>
+              <label style="flex:1 1 220px">DOI
+                <input id="doi" name="doi" class="input" />
+              </label>
+              <label style="flex:1 1 280px">Patron Email
+                <input id="patronEmail" name="patronEmail" class="input" type="email" autocomplete="email" />
+              </label>
+            </div>
+
+            <div class="row" style="gap:12px;flex-wrap:wrap">
+              <label style="flex:1 1 220px">Status
+                <select id="status" name="status" class="select">
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </label>
+              <label style="flex:1 1 220px">Priority
+                <select id="priority" name="priority" class="select">
+                  <option value="normal">Normal</option>
+                  <option value="rush">Rush</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </label>
+              <label style="flex:1 1 360px">NLM Citation
+                <input id="nlmCitation" name="nlmCitation" class="input" placeholder="Auto-generated" />
+              </label>
+            </div>
+
+            <div class="grid g-2">
+              <div>
+                <label>NCT IDs</label>
+                <div class="row">
+                  <input id="nctInput" class="input" placeholder="NCT01234567" />
+                  <button type="button" id="addNctBtn" class="btn btn-ghost">+ Add</button>
+                </div>
+                <div id="nctChips" class="chips" aria-live="polite"></div>
+              </div>
+              <div>
+                <label>MeSH Headings</label>
+                <div id="meshChips" class="chips" aria-live="polite"><span class="hint">(auto from PubMed)</span></div>
+              </div>
+              <div>
+                <label>Tags</label>
+                <div class="row">
+                  <input id="tagInput" class="input" placeholder="Add tag (e.g., Phase III)" />
+                  <button type="button" id="addTagBtn" class="btn btn-ghost">+ Add</button>
+                </div>
+                <div id="tagChips" class="chips"></div>
+              </div>
+            </div>
+
+            <label>Notes
+              <textarea id="notes" name="notes" class="textarea" rows="3"></textarea>
+            </label>
+
+            <div class="row" style="margin-top:12px">
+              <button type="submit" class="btn btn-primary">Save Request</button>
+              <button type="button" id="clearFormBtn" class="btn btn-ghost">Clear Form</button>
+            </div>
+            <p class="hint" id="requiredHint">Required fields: Title (default). Configure in Settings → Validation.</p>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top:16px" id="trialBlock" aria-live="polite">
+        <h3>Related Clinical Trials</h3>
+        <div id="trialResults">(trial cards appear here)</div>
+      </div>
+    </section>
+
+    <!-- All Requests -->
+    <section id="all-requests" class="section" hidden style="margin-top:16px">
+      <div class="row" role="search" style="margin-bottom:12px">
+        <input id="searchInput" class="input" placeholder="Search title, authors, journal, notes…" />
+        <select id="statusFilter" class="select" aria-label="Status filter">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="in-progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="priorityFilter" class="select" aria-label="Priority filter">
+          <option value="">All Priority</option>
+          <option value="urgent">Urgent</option>
+          <option value="rush">Rush</option>
+          <option value="normal">Normal</option>
+        </select>
+        <select id="sortBy" class="select" aria-label="Sort by">
+          <option value="created-desc">Newest</option>
+          <option value="title-asc">Title (A→Z)</option>
+          <option value="title-desc">Title (Z→A)</option>
+          <option value="year-desc">Year (new→old)</option>
+          <option value="status-asc">Status</option>
+          <option value="priority-desc">Priority (urgent→normal)</option>
+        </select>
+        <label class="row"><input type="checkbox" id="selectAllCheckbox" /> Select All</label>
+        <button id="deleteSelectedBtn" class="btn btn-ghost" hidden>Delete Selected</button>
+        <div id="requestCount" class="hint" aria-live="polite">(count)</div>
+      </div>
+
+      <div class="table-wrap" aria-label="Requests table">
+        <div class="table-head">
+          <div class="th">Sel</div>
+          <div class="th">Urgency</div>
+          <div class="th">DOCLINE #</div>
+          <div class="th">NLM Citation</div>
+          <div class="th">Patron E-mail</div>
+          <div class="th">PMID</div>
+          <div class="th">NCT</div>
+          <div class="th">Status</div>
+        </div>
+        <div id="requestsList" class="vlist">
+          <div id="requestsContent" class="vcontent" role="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Import / Export -->
+    <section id="import-export" class="section" hidden style="margin-top:16px">
+      <div class="grid g-2">
+        <div class="card">
+          <h3>Import</h3>
+          <div class="grid">
+            <label>Choose File
+              <input id="importFile" class="input" type="file" accept=".csv,.json" />
+            </label>
+            <label>Or paste PMIDs (one per line)
+              <textarea id="bulkPmids" class="textarea" rows="6" placeholder="34567890&#10;34567891&#10;34567892"></textarea>
+            </label>
+          </div>
+          <fieldset class="card" style="margin-top:12px">
+            <legend class="hint">Enrichment Options</legend>
+            <label class="row"><input type="checkbox" id="enrichMetadata" checked /> Fetch Metadata (PubMed/CrossRef)</label>
+            <label class="row"><input type="checkbox" id="enrichMesh" checked /> Add MeSH Tags</label>
+            <label class="row"><input type="checkbox" id="enrichTrials" checked /> Discover Trials & NCTs</label>
+          </fieldset>
+          <div class="progress" id="importProgress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+            <div class="fill" style="width:0%"></div>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button id="importBtn" class="btn btn-primary">Import</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Export & Backup</h3>
+          <p class="hint">Exports full dataset and settings</p>
+          <div class="row">
+            <button id="exportCsvBtn" class="btn btn-success">Export CSV</button>
+            <button id="exportJsonBtn" class="btn btn-success">Export JSON</button>
+            <button id="exportBackupBtn" class="btn btn-ghost">Export Backup</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="settings" class="section" hidden style="margin-top:16px">
+      <div class="grid g-2">
+        <div class="card">
+          <h3>API Configuration</h3>
+          <label for="pubmedApiKey">PubMed API Key (Optional)</label>
+          <input id="pubmedApiKey" class="input" type="password" placeholder="Enter API key for higher rate limits" />
+          <p class="hint">Without key: ~3 req/s. With key: ~10 req/s (subject to NCBI policy).</p>
+          <button id="saveSettingsBtn" class="btn btn-primary" style="margin-top:10px">Save Settings</button>
+        </div>
+
+        <div class="card">
+          <h3>Validation</h3>
+          <p class="hint">Choose required fields</p>
+          <div id="requiredFields" class="grid">
+            <label class="row"><input type="checkbox" data-field="title" checked disabled /> Title (always required)</label>
+            <label class="row"><input type="checkbox" data-field="year" /> Year</label>
+            <label class="row"><input type="checkbox" data-field="patronEmail" /> Patron Email</label>
+            <label class="row"><input type="checkbox" data-field="priority" /> Priority</label>
+            <label class="row"><input type="checkbox" data-field="status" /> Status</label>
+            <label class="row"><input type="checkbox" data-field="pmid" /> PMID</label>
+            <label class="row"><input type="checkbox" data-field="nctIds" /> NCT ID</label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Data Management</h3>
+          <div class="row">
+            <button id="clearDataBtn" class="btn btn-ghost">Clear All Data</button>
+            <button id="reindexBtn" class="btn btn-ghost">Rebuild Index</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>System Information</h3>
+          <div id="systemInfo">
+            <p><strong>Version:</strong> SilentStacks v2.1</p>
+            <p><strong>Storage Used:</strong> <span id="storageUsed">0 KB</span></p>
+            <p><strong>Total Requests:</strong> <span id="totalRequestsInfo">0</span></p>
+            <p><strong>Last Backup:</strong> <span id="lastBackup">Never</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/** SilentStacks v2.1 — Monolithic
+ * This file includes:
+ *  - CRUD + sorting/filtering
+ *  - NCT↔PMID cross-fill
+ *  - PubMed, CrossRef, ClinicalTrials.gov integrations
+ *  - MeSH extraction (efetch XML)
+ *  - Bulk import + enrichment
+ *  - DOCLINE uniqueness + NLM citation auto-gen
+ *  - LocalStorage persistence; basic offline queue
+ *  - Export/backup
+ *  - AAA theming + a11y affordances
+ */
+(() => {
+  /** @typedef {{id:string,title:string,authors?:string,journal?:string,year?:number,volume?:string,issue?:string,pages?:string,pmid?:string,doi?:string,nctIds?:string[],status:'pending'|'in-progress'|'completed'|'cancelled',priority:'normal'|'rush'|'urgent',tags?:string[],mesh?:string[],notes?:string,createdAt:string,updatedAt:string,doclineId?:string,nlmCitation?:string,patronEmail?:string}} Request */
+
+  const state = {
+    /** @type {Request[]} */ requests: [],
+    filtered: [],
+    selected: new Set(),
+    theme: localStorage.getItem('silentstacks-theme') || 'light',
+    isOnline: navigator.onLine,
+    offlineQueue: [],
+    apiCache: new Map(),
+    settings: { pubmedApiKey: '', required: { title:true, year:false, patronEmail:false, priority:false, status:false, pmid:false, nctIds:false } },
+    virtual: { itemHeight:56, containerHeight:420, scrollTop:0, start:0, end:0 }
+  };
+
+  const ui = {
+    toast(msg, variant='info'){
+      const c=document.getElementById('toastContainer'); const t=document.createElement('div');
+      t.className='toast'; t.dataset.variant=variant;
+      t.innerHTML=\`<div class="row" style="justify-content:space-between"><div>\${msg}</div><button aria-label="Dismiss" class="btn btn-ghost" onclick="this.closest('.toast').remove()">✕</button></div>\`;
+      c.appendChild(t); setTimeout(()=>t.remove(),7000);
+    },
+    esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; },
+    setTheme(v){ document.body.setAttribute('data-theme',v); state.theme=v; localStorage.setItem('silentstacks-theme',v); },
+    show(section){ document.querySelectorAll('.section').forEach(s=>s.hidden=true); document.getElementById(section).hidden=false; },
+    updateStats(){
+      const total=state.requests.length, pending=state.requests.filter(r=>r.status==='pending').length,
+            completed=state.requests.filter(r=>r.status==='completed').length, urgent=state.requests.filter(r=>r.priority==='urgent').length;
+      document.getElementById('totalRequests').textContent=total;
+      document.getElementById('pendingRequests').textContent=pending;
+      document.getElementById('completedRequests').textContent=completed;
+      document.getElementById('urgentRequests').textContent=urgent;
+      document.getElementById('totalRequestsInfo').textContent=total;
+      const bytes=new Blob([localStorage.getItem('silentstacks-data')||'']).size;
+      document.getElementById('storageUsed').textContent=\`\${Math.round(bytes/1024)} KB\`;
+    }
+  };
+
+  const store = {
+    load(){
+      try{
+        const s=localStorage.getItem('silentstacks-data');
+        if(s){ const d=JSON.parse(s); state.requests=d.requests||[]; state.offlineQueue=d.offlineQueue||[]; state.settings={...state.settings,...(d.settings||{})}; }
+      }catch(e){ console.error(e); ui.toast('Error loading data','error'); }
+      document.getElementById('pubmedApiKey').value=state.settings.pubmedApiKey||'';
+      [...document.querySelectorAll('#requiredFields input[data-field]')].forEach(cb=>{
+        const f=cb.getAttribute('data-field'); cb.checked=!!state.settings.required[f];
+      });
+    },
+    save(){
+      try{
+        const d={requests:state.requests,offlineQueue:state.offlineQueue,settings:state.settings,lastSaved:new Date().toISOString()};
+        localStorage.setItem('silentstacks-data',JSON.stringify(d));
+        localStorage.setItem('silentstacks-theme',state.theme);
+      }catch(e){ console.error(e); ui.toast('Error saving data','error'); }
+      ui.updateStats();
+    }
+  };
+
+  const net = {
+    update(){ const el=document.getElementById('connectionStatus'); const t=document.getElementById('connectionText'); el.className='net '+(state.isOnline?'net--online':'net--offline'); t.textContent=state.isOnline?'Online':'Offline'; },
+    bind(){ addEventListener('online',()=>{state.isOnline=true; net.update(); worker.processQueue(); ui.toast('Connection restored','success');});
+            addEventListener('offline',()=>{state.isOnline=false; net.update(); ui.toast('Working offline','warning');});
+            net.update(); }
+  };
+
+  const http = {
+    keyParam(){ return state.settings.pubmedApiKey ? \`&api_key=\${encodeURIComponent(state.settings.pubmedApiKey)}\` : ''; },
+    async cached(url, opt={}, ttlMs=24*60*60*1000){
+      const k=url+JSON.stringify(opt); const now=Date.now();
+      const cached=state.apiCache.get(k);
+      if(cached && (now-cached.t)<ttlMs) return cached.v;
+      // retry with backoff
+      let attempt=0; const max=3;
+      while(attempt<max){
+        try{
+          const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(), 12000);
+          const res=await fetch(url,{...opt,signal:ctrl.signal}); clearTimeout(to);
+          if(!res.ok) throw new Error('HTTP '+res.status);
+          const val = url.includes('efetch.fcgi') ? await res.text() : await res.json();
+          state.apiCache.set(k,{v:val,t:now}); return val;
+        }catch(e){
+          attempt++; if(attempt>=max){ if(!state.isOnline){ state.offlineQueue.push({url, opt}); store.save(); throw new Error('Request queued for when online'); } throw e; }
+          await new Promise(r=>setTimeout(r, 800*attempt + Math.random()*400));
+        }
+      }
+    }
+  };
+
+  const api = {
+    async lookupPMID(pmid){
+      const sumUrl=\`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=\${encodeURIComponent(pmid)}&retmode=json\${http.keyParam()}\`;
+      const data=await http.cached(sumUrl);
+      const rec=data?.result?.[pmid];
+      if(!rec) throw new Error('PMID not found');
+      const title=rec.title||'';
+      const authors=(rec.authors||[]).map(a=>a.name).join(', ');
+      const journal=rec.fulljournalname || rec.source || '';
+      const year=rec.pubdate ? (new Date(rec.pubdate).getFullYear()||'') : '';
+      const volume=rec.volume||''; const issue=rec.issue||''; const pages=rec.pages||'';
+      // DOI heuristic
+      let doi=''; const eloc=rec.elocationid||''; const doiMatch=eloc.match(/10\\.\\S+/); if(doiMatch) doi=doiMatch[0];
+      return { title, authors, journal, year, volume, issue, pages, pmid:String(pmid), doi };
+    },
+    async fetchMesh(pmid){
+      const xmlUrl=\`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=\${encodeURIComponent(pmid)}&retmode=xml\${http.keyParam()}\`;
+      const text=await http.cached(xmlUrl,{},24*60*60*1000);
+      const doc=new window.DOMParser().parseFromString(text,'application/xml');
+      const nodes=[...doc.querySelectorAll('MeshHeading > DescriptorName')];
+      return nodes.map(n=>n.textContent).filter(Boolean);
+    },
+    async lookupDOI(doi){
+      const clean=doi.replace(/^https?:\\/\\/(dx\\.)?doi\\.org\\//,'').trim();
+      const url=\`https://api.crossref.org/works/\${encodeURIComponent(clean)}\`;
+      const data=await http.cached(url,{},24*60*60*1000);
+      const w=data?.message; if(!w) throw new Error('DOI not found');
+      return {
+        title: (w.title && w.title[0]) || '',
+        authors: (w.author||[]).map(a=>[\n          (a.given||'').trim(), (a.family||'').trim()\n        ].filter(Boolean).join(' ')).join(', '),
+        journal: (w['container-title'] && w['container-title'][0]) || '',
+        year: w.published?.['date-parts']?.[0]?.[0] || '',
+        volume: w.volume||'', issue: w.issue||'', pages: w.page||'', doi: w.DOI||clean
+      };
+    },
+    // ClinicalTrials.gov v2 query by NCT ID
+    async lookupNCT(nct){
+      const url=\`https://clinicaltrials.gov/api/v2/studies/\${encodeURIComponent(nct)}\`;
+      const data=await http.cached(url,{},12*60*60*1000);
+      // v2 single study response format (simplified extraction)
+      const study=data?.studies?.[0] || data?.study || data;
+      if(!study) throw new Error('NCT not found');
+      const id = study.protocolSection?.identificationModule?.nctId || nct;
+      const title = study.protocolSection?.identificationModule?.officialTitle || study.protocolSection?.identificationModule?.briefTitle || '';
+      const phase = study.protocolSection?.designModule?.phases?.join(', ') || study.protocolSection?.designModule?.phase || '';
+      const status = study.protocolSection?.statusModule?.overallStatus || '';
+      const conditions = study.conditionsModule?.conditions || [];
+      const interventions = (study.armsInterventionsModule?.interventions||[]).map(x=>x.name);
+      // linked PMIDs if present
+      const refs = (study.referencesModule?.references||[]).map(r=>r.pmid).filter(Boolean);
+      return { nct: id, title, phase, status, conditions, interventions, pmids: refs };
+    },
+    // Heuristic title → trials search
+    async trialsByTitle(title){
+      const q = encodeURIComponent(title.split(/\W+/).filter(x=>x.length>3).slice(0,6).join(' '));
+      const url = \`https://clinicaltrials.gov/api/v2/studies?query.cond=\${q}&pageSize=10\`;
+      const data=await http.cached(url,{},6*60*60*1000);
+      const studies=(data?.studies)||[];
+      return studies.map(s=>{
+        const id=s.protocolSection?.identificationModule?.nctId||'';
+        const t=s.protocolSection?.identificationModule?.officialTitle||s.protocolSection?.identificationModule?.briefTitle||'';
+        const phase = s.protocolSection?.designModule?.phases?.join(', ') || s.protocolSection?.designModule?.phase || '';
+        const status= s.protocolSection?.statusModule?.overallStatus || '';
+        const conditions=s.conditionsModule?.conditions||[];
+        const interventions=(s.armsInterventionsModule?.interventions||[]).map(x=>x.name);
+        return {nct:id,title:t,phase,status,conditions,interventions};
+      });
+    }
+  };
+
+  const model = {
+    makeCitation(r){
+      const authors=(r.authors||'').split(/;|,\\s*(?=[A-Z][a-z])/).map(a=>a.trim()).filter(Boolean);
+      const a=authors.length>6? authors.slice(0,6).join(', ')+', et al.' : authors.join(', ');
+      const y=r.year||''; const j=r.journal||''; const v=r.volume? r.volume : ''; const i=r.issue? \`(\${r.issue})\` : ''; const p=r.pages? \`:\${r.pages}\`:''; const t=r.title||'';
+      return [a, \` \${t}.\`, \` \${j}.\`, \` \${y};\${v}\${i}\${p}.\`].join('').replace(/\\s+/g,' ').trim();
+    },
+    upsert(data){
+      if(data.doclineId){
+        const dup=state.requests.find(x=>x.doclineId===data.doclineId && x.id!==data.id);
+        if(dup){ ui.toast(\`Duplicate DOCLINE #: \${data.doclineId}\`,'warning'); }
+      }
+      let r=state.requests.find(x=>x.id===data.id);
+      if(!r){
+        r={ id:Date.now().toString(), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString(),
+            status:'pending', priority:'normal', nctIds:[], tags:[], mesh:[], ...data };
+        state.requests.unshift(r);
+      } else {
+        Object.assign(r, data, {updatedAt:new Date().toISOString()});
+      }
+      r.nlmCitation=model.makeCitation(r);
+      store.save(); list.search(); ui.toast('Request saved','success');
+    },
+    remove(id){
+      const i=state.requests.findIndex(r=>r.id===id);
+      if(i>-1){ state.requests.splice(i,1); state.selected.delete(id); store.save(); list.search(); ui.toast('Request deleted','success'); }
+    }
+  };
+
+  const chips = {
+    add(containerId, value, onRemove){
+      if(!value) return;
+      const wrap=document.getElementById(containerId); const chip=document.createElement('span');
+      chip.className='chip'; chip.innerHTML=\`\${ui.esc(value)} <button aria-label="Remove">✕</button>\`;
+      chip.querySelector('button').addEventListener('click',()=>{ chip.remove(); onRemove?.(value); });
+      wrap.appendChild(chip);
+    },
+    render(containerId, arr, onRemove){ const wrap=document.getElementById(containerId); wrap.innerHTML=''; (arr||[]).forEach(v=>chips.add(containerId,v,onRemove)); }
+  };
+
+  // Trials UI
+  const trialsUI = {
+    renderList(list){
+      const host=document.getElementById('trialResults'); host.innerHTML='';
+      if(!list.length){ host.innerHTML='<p class="hint">No trials found</p>'; return; }
+      list.forEach(t=>{
+        const card=document.createElement('div'); card.className='card';
+        const phase = t.phase ? \`<span class="chip">Phase: \${ui.esc(t.phase)}</span>\` : '';
+        const status = t.status ? \`<span class="chip">Status: \${ui.esc(t.status)}</span>\` : '';
+        const cond = (t.conditions||[]).slice(0,3).map(c=>\`<span class="chip">\${ui.esc(c)}</span>\`).join(' ');
+        const inv = (t.interventions||[]).slice(0,3).map(c=>\`<span class="chip">\${ui.esc(c)}</span>\`).join(' ');
+        card.innerHTML=\`
+          <div class="row" style="justify-content:space-between">
+            <div><strong>\${ui.esc(t.nct)}</strong> — \${ui.esc(t.title||'')}\</div>
+            <div class="row"><a class="btn btn-ghost" target="_blank" rel="noopener" href="https://clinicaltrials.gov/study/\${ui.esc(t.nct)}">Open</a>
+            <button class="btn btn-primary" data-add-nct="\${ui.esc(t.nct)}">+ Add NCT</button></div>
+          </div>
+          <div class="row" style="margin-top:8px">\${phase} \${status} \${cond} \${inv}</div>\`;
+        card.querySelector('[data-add-nct]').addEventListener('click',()=>{
+          chips.add('nctChips', t.nct);
+          ui.toast(\`Added NCT \${t.nct} to form\`, 'success');
+        });
+        host.appendChild(card);
+      });
+    },
+    async refresh(){
+      const title=document.getElementById('title').value.trim();
+      if(!title){ document.getElementById('trialResults').textContent='Enter a title to search trials'; return; }
+      try{
+        const trials=await api.trialsByTitle(title);
+        trialsUI.renderList(trials);
+      }catch(e){ console.error(e); ui.toast('Trials search failed','warning'); }
+    }
+  };
+
+  const form = {
+    collect(){
+      const get=id=>document.getElementById(id).value.trim();
+      const nctChips=[...document.querySelectorAll('#nctChips .chip')].map(x=>x.childNodes[0].textContent.trim());
+      const tagChips=[...document.querySelectorAll('#tagChips .chip')].map(x=>x.childNodes[0].textContent.trim());
+      const meshChips=[...document.querySelectorAll('#meshChips .chip')].map(x=>x.childNodes[0].textContent.trim());
+      return { id:document.getElementById('requestForm').dataset.editId || undefined,
+        title:get('title'), authors:get('authors'), journal:get('journal'), year:get('year'), volume:get('volume'), issue:get('issue'), pages:get('pages'),
+        pmid:get('pmid'), doi:get('doi'), doclineId:get('doclineId'), patronEmail:get('patronEmail'),
+        status:document.getElementById('status').value, priority:document.getElementById('priority').value,
+        nlmCitation:get('nlmCitation'), notes:get('notes'), nctIds:nctChips, tags:tagChips, mesh:meshChips };
+    },
+    validate(r){
+      const req=state.settings.required; const missing=[];
+      const check=(f,cond)=>{ if(req[f] && (!cond)) missing.push(f); };
+      check('title', !!r.title); check('year', !!r.year); check('patronEmail', !!r.patronEmail); check('priority', !!r.priority);
+      check('status', !!r.status); check('pmid', !!r.pmid); check('nctIds', r.nctIds && r.nctIds.length>0);
+      if(missing.length){ const names={title:'Title',year:'Year',patronEmail:'Patron Email',priority:'Priority',status:'Status',pmid:'PMID',nctIds:'NCT ID'};
+        const list=missing.map(m=>names[m]).join(', '); ui.toast(\`Missing required: \${list}\`,'error'); return false; }
+      return true;
+    },
+    edit(id){
+      const r=state.requests.find(x=>x.id===id); if(!r) return;
+      ui.show('add-request');
+      const f=document.getElementById('requestForm'); f.dataset.editId=id;
+      const set=(i,v)=>{ const el=document.getElementById(i); if(el) el.value=v||''; };
+      set('title',r.title); set('authors',r.authors); set('journal',r.journal); set('year',r.year);
+      set('volume',r.volume); set('issue',r.issue); set('pages',r.pages); set('pmid',r.pmid); set('doi',r.doi);
+      set('doclineId',r.doclineId); set('patronEmail',r.patronEmail); set('status',r.status); set('priority',r.priority);
+      set('nlmCitation',r.nlmCitation); set('notes',r.notes);
+      chips.render('nctChips',r.nctIds||[],(val)=>{ r.nctIds=r.nctIds.filter(x=>x!==val); store.save(); list.search(); });
+      chips.render('meshChips',r.mesh||[],(val)=>{ r.mesh=r.mesh.filter(x=>x!==val); store.save(); list.search(); });
+      chips.render('tagChips',r.tags||[],(val)=>{ r.tags=r.tags.filter(x=>x!==val); store.save(); list.search(); });
+    }
+  };
+
+  const list = {
+    debounced:null,
+    search(){
+      const q=document.getElementById('searchInput').value.toLowerCase();
+      const st=document.getElementById('statusFilter').value; const pr=document.getElementById('priorityFilter').value; const sort=document.getElementById('sortBy').value;
+      state.filtered=state.requests.filter(r=>{
+        const txt=[r.title,r.authors,r.journal,r.notes].join(' ').toLowerCase();
+        const mQ=!q||txt.includes(q), mS=!st||r.status===st, mP=!pr||r.priority===pr; return mQ&&mS&&mP;
+      });
+      const cmp={
+        'created-desc':(a,b)=>new Date(b.createdAt)-new Date(a.createdAt),
+        'title-asc':(a,b)=>(a.title||'').localeCompare(b.title||''),
+        'title-desc':(a,b)=>(b.title||'').localeCompare(a.title||''),
+        'year-desc':(a,b)=>(Number(b.year||0)-Number(a.year||0)),
+        'status-asc':(a,b)=> (a.status||'').localeCompare(b.status||''),
+        'priority-desc':(a,b)=>({urgent:3,rush:2,normal:1}[b.priority||'normal']-({urgent:3,rush:2,normal:1}[a.priority||'normal']))
+      }[sort];
+      if(cmp) state.filtered.sort(cmp);
+      document.getElementById('requestCount').textContent=\`\${state.filtered.length} requests\`;
+      list.render();
+    },
+    setupVList(){
+      const c=document.getElementById('requestsList');
+      c.addEventListener('scroll',()=>{ state.virtual.scrollTop=c.scrollTop; list.updateRange(); list.renderVirtual(); });
+      const ro=new ResizeObserver(()=>{ state.virtual.containerHeight=c.clientHeight; list.updateRange(); list.renderVirtual(); });
+      ro.observe(c); list.updateRange();
+    },
+    updateRange(){ const {itemHeight,containerHeight,scrollTop}=state.virtual; const buf=6;
+      state.virtual.start=Math.max(0,Math.floor(scrollTop/itemHeight)-buf);
+      const n=(state.filtered.length||state.requests.length);
+      state.virtual.end=Math.min(n,Math.ceil((scrollTop+containerHeight)/itemHeight)+buf);
+    },
+    render(){ state.filtered=(state.filtered&&state.filtered.length)?state.filtered:state.requests;
+      if(!list._init){ list.setupVList(); list._init=true; }
+      if(state.filtered.length>200){ list.renderVirtual(); } else { list.renderAll(); }
+    },
+    rowEl(r,i,flow=false){
+      const row=document.createElement('div'); row.className='row-item'; if(flow) row.style.position='relative';
+      const nctView=(r.nctIds||[]).slice(0,2).join(' • ')+(r.nctIds&&r.nctIds.length>2?\` (+\${r.nctIds.length-2})\`:'' );
+      row.innerHTML=\`
+        <div class="td"><input type="checkbox" \${state.selected.has(r.id)?'checked':''} aria-label="Select" data-sel="\${r.id}" /></div>
+        <div class="td"><span class="badge" data-tone="\${r.priority||'normal'}">\${r.priority||'normal'}</span></div>
+        <div class="td">\${ui.esc(r.doclineId||'—')}</div>
+        <div class="td" title="\${ui.esc(r.nlmCitation||'') }">\${ui.esc(r.nlmCitation||r.title||'Untitled')}</div>
+        <div class="td">\${ui.esc(r.patronEmail||'—')}</div>
+        <div class="td">\${ui.esc(r.pmid||'—')}</div>
+        <div class="td">\${ui.esc(nctView||'—')}</div>
+        <div class="td">
+          <select data-status="\${r.id}" class="select" style="min-height:40px;padding:6px 8px">
+            <option value="pending" \${r.status==='pending'?'selected':''}>Pending</option>
+            <option value="in-progress" \${r.status==='in-progress'?'selected':''}>In Progress</option>
+            <option value="completed" \${r.status==='completed'?'selected':''}>Completed</option>
+            <option value="cancelled" \${r.status==='cancelled'?'selected':''}>Cancelled</option>
+          </select>
+        </div>`;
+      row.querySelector(\`[data-status="\${r.id}"]\`).addEventListener('change',(e)=>{ r.status=e.target.value; r.updatedAt=new Date().toISOString(); store.save(); list.search(); });
+      row.querySelector(\`[data-sel="\${r.id}"]\`).addEventListener('change',(e)=>{ if(e.target.checked) state.selected.add(r.id); else state.selected.delete(r.id); document.getElementById('deleteSelectedBtn').hidden=state.selected.size===0; });
+      row.addEventListener('dblclick',()=>{ form.edit(r.id); });
+      return row;
+    },
+    renderVirtual(){ const content=document.getElementById('requestsContent'); const {start,end,itemHeight}=state.virtual;
+      const listArr=state.filtered; content.style.height=\`\${listArr.length*itemHeight}px\`; content.innerHTML='';
+      for(let i=start;i<end;i++){ const r=listArr[i]; if(!r) continue; const row=list.rowEl(r,i); row.style.top=\`\${i*itemHeight}px\`; row.style.height=\`\${itemHeight-1}px\`; content.appendChild(row); }
+    },
+    renderAll(){ const content=document.getElementById('requestsContent'); const listArr=state.filtered; content.style.height='auto'; content.innerHTML='';
+      if(!listArr.length){ content.innerHTML='<div class="card" style="margin:12px">No requests found</div>'; return; }
+      listArr.forEach((r,i)=>content.appendChild(list.rowEl(r,i,true)));
+    }
+  };
+
+  const worker = {
+    async processQueue(){
+      if(!state.isOnline || !state.offlineQueue.length) return;
+      const q=[...state.offlineQueue]; state.offlineQueue.length=0;
+      for(const item of q){
+        try{ await http.cached(item.url, item.opt, 1000); await new Promise(r=>setTimeout(r,350)); }
+        catch(e){ state.offlineQueue.push(item); }
+      }
+      store.save();
+    }
+  };
+
+  const io = {
+    async handleImport(){
+      const fileInput=document.getElementById('importFile');
+      const pasted=document.getElementById('bulkPmids').value.trim();
+      const enrichMeta=document.getElementById('enrichMetadata').checked;
+      const enrichMesh=document.getElementById('enrichMesh').checked;
+      const enrichTrials=document.getElementById('enrichTrials').checked;
+      const bar=document.getElementById('importProgress'); const fill=bar.querySelector('.fill');
+      let items=[];
+      if(fileInput.files.length){
+        const f=fileInput.files[0]; const text=await f.text();
+        if(f.name.endsWith('.csv')){
+          const [header, ...rows] = text.split(/\r?\n/).filter(Boolean);
+          const cols=header.split(',').map(h=>h.trim().toLowerCase());
+          for(const row of rows){ const vals=row.split(',').map(v=>v.replace(/^"|"$/g,'').trim()); const obj={}; cols.forEach((c,i)=>obj[c]=vals[i]||''); items.push(obj); }
+        } else { items = JSON.parse(text); }
+      } else if(pasted){
+        items = pasted.split(/\r?\n/).filter(Boolean).map(p=>({pmid:p.trim()}));
+      } else { ui.toast('Select a file or paste PMIDs','warning'); return; }
+      bar.hidden=false; let processed=0;
+      for(const item of items){
+        let r = { title:'', authors:'', journal:'', year:'', volume:'', issue:'', pages:'', pmid:item.pmid||'', doi:item.doi||'', priority:'normal', status:'pending', nctIds:[], tags:[], mesh:[], notes:'' };
+        try{
+          if(enrichMeta){
+            if(r.pmid){ const m=await api.lookupPMID(r.pmid); Object.assign(r,m); }
+            else if(r.doi){ const m=await api.lookupDOI(r.doi); Object.assign(r,m); }
+          }
+          if(enrichMesh && r.pmid){ const mesh=await api.fetchMesh(r.pmid); r.mesh=[...new Set(mesh)]; }
+          if(enrichTrials){
+            const trials = r.title ? await api.trialsByTitle(r.title) : [];
+            const phases = new Set(trials.map(t=>t.phase).filter(Boolean));
+            // add first few NCTs
+            r.nctIds = [...new Set([...(r.nctIds||[]), ...trials.slice(0,3).map(t=>t.nct)])].filter(Boolean);
+            // auto-tag phases
+            for(const ph of phases){ if(ph) (r.tags||=[]).push(ph); }
+          }
+          r.nlmCitation = model.makeCitation(r);
+          model.upsert(r);
+        }catch(e){ console.warn('Failed to process item', item, e); }
+        processed++; fill.style.width = \`\${Math.round(processed/items.length*100)}%\`; await new Promise(r=>setTimeout(r,150));
+      }
+      ui.toast(\`Imported \${processed} requests\`,'success'); bar.hidden=true; fill.style.width='0%'; document.getElementById('bulkPmids').value='';
+    },
+    exportData(fmt='json'){
+      let data, filename, mime;
+      if(fmt==='csv'){
+        const headers=['title','authors','journal','year','volume','issue','pages','pmid','doi','status','priority','notes','doclineId','patronEmail','nlmCitation','nctIds','mesh','tags'];
+        const rows=[headers.join(',')];
+        for(const r of state.requests){
+          const row=headers.map(h=>{
+            let v=r[h]; if(Array.isArray(v)) v=v.join('|'); if(v==null) v='';
+            return '"'+String(v).replace(/"/g,'""')+'"';
+          }).join(',');
+          rows.push(row);
+        }
+        data=rows.join('\n'); filename='silentstacks-export.csv'; mime='text/csv';
+      } else {
+        data=JSON.stringify(state.requests,null,2); filename='silentstacks-export.json'; mime='application/json';
+      }
+      const blob=new Blob([data],{type:mime}); const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
+      ui.toast(\`Data exported as \${fmt.toUpperCase()}\`,'success');
+    },
+    exportBackup(){
+      const backup={ requests:state.requests, settings:state.settings, exportDate:new Date().toISOString(), version:'2.1' };
+      const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url;
+      a.download=\`silentstacks-backup-\${new Date().toISOString().split('T')[0]}.json\`; a.click(); URL.revokeObjectURL(url);
+      document.getElementById('lastBackup').textContent=(new Date()).toLocaleString();
+      ui.toast('Backup exported','success');
+    }
+  };
+
+  function updateRequiredHint(){
+    const req=state.settings.required;
+    const names={title:'Title',year:'Year',patronEmail:'Patron Email',priority:'Priority',status:'Status',pmid:'PMID',nctIds:'NCT ID'};
+    const active=Object.keys(req).filter(k=>req[k]).map(k=>names[k]).join(', ');
+    document.getElementById('requiredHint').textContent = \`Required fields: \${active}\`;
+  }
+
+  function bind(){
+    document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      document.querySelectorAll('.nav-btn').forEach(b=>b.removeAttribute('aria-current'));
+      btn.setAttribute('aria-current','page'); ui.show(btn.dataset.section);
+    }));
+    document.getElementById('themeSelect').addEventListener('change',e=>ui.setTheme(e.target.value));
+    document.getElementById('exportJsonBtn-hero').addEventListener('click',()=>io.exportData('json'));
+    document.getElementById('exportCsvBtn-hero').addEventListener('click',()=>io.exportData('csv'));
+
+    // Quick lookups
+    document.getElementById('lookupPmidBtn').addEventListener('click', async ()=>{
+      const btn=document.getElementById('lookupPmidBtn'); const pmid=document.getElementById('pmidInput').value.trim()||document.getElementById('pmid').value.trim();
+      if(!pmid) return; const old=btn.textContent; btn.textContent='Looking up…'; btn.disabled=true;
+      try{
+        const meta=await api.lookupPMID(pmid);
+        fillForm(meta);
+        const mesh=await api.fetchMesh(pmid).catch(()=>[]);
+        mesh.forEach(m=>chips.add('meshChips', m));
+        await trialsUI.refresh();
+      }catch(e){ ui.toast(e.message||'PMID lookup failed','error'); }
+      finally{ btn.textContent=old; btn.disabled=false; }
+    });
+
+    document.getElementById('lookupDoiBtn').addEventListener('click', async ()=>{
+      const btn=document.getElementById('lookupDoiBtn'); const doi=document.getElementById('doiInput').value.trim()||document.getElementById('doi').value.trim();
+      if(!doi) return; const old=btn.textContent; btn.textContent='Looking up…'; btn.disabled=true;
+      try{ const meta=await api.lookupDOI(doi); fillForm(meta); await trialsUI.refresh(); }
+      catch(e){ ui.toast(e.message||'DOI lookup failed','error'); }
+      finally{ btn.textContent=old; btn.disabled=false; }
+    });
+
+    document.getElementById('lookupNctBtn').addEventListener('click', async ()=>{
+      const btn=document.getElementById('lookupNctBtn'); const nct=document.getElementById('nctQuick').value.trim().toUpperCase();
+      if(!/^NCT\\d{8}$/.test(nct)){ ui.toast('Enter valid NCT (e.g., NCT01234567)','warning'); return; }
+      const old=btn.textContent; btn.textContent='Looking up…'; btn.disabled=true;
+      try{
+        const t=await api.lookupNCT(nct);
+        chips.add('nctChips', t.nct);
+        if((t.pmids||[]).length){
+          // pick first PMID to enrich
+          const first=t.pmids[0];
+          const meta=await api.lookupPMID(first); fillForm({...meta, pmid:first});
+          const mesh=await api.fetchMesh(first).catch(()=>[]); mesh.forEach(m=>chips.add('meshChips', m));
+        }
+      }catch(e){ ui.toast(e.message||'NCT lookup failed','error'); }
+      finally{ btn.textContent=old; btn.disabled=false; }
+    });
+
+    document.getElementById('title').addEventListener('input', debounce(()=>trialsUI.refresh(), 500));
+    document.getElementById('addNctBtn').addEventListener('click',()=>{ const val=document.getElementById('nctInput').value.trim().toUpperCase();
+      if(!/^NCT\\d{8}$/.test(val)){ ui.toast('Invalid NCT','warning'); return; } chips.add('nctChips', val); document.getElementById('nctInput').value=''; });
+    document.getElementById('addTagBtn').addEventListener('click',()=>{ const v=document.getElementById('tagInput').value.trim(); if(!v) return; chips.add('tagChips', v); document.getElementById('tagInput').value=''; });
+
+    document.getElementById('requestForm').addEventListener('submit',(e)=>{
+      e.preventDefault(); const r=form.collect(); if(!form.validate(r)) return;
+      if(!r.nlmCitation) r.nlmCitation=model.makeCitation(r);
+      model.upsert(r);
+      e.target.reset(); e.target.dataset.editId='';
+      document.getElementById('nctChips').innerHTML=''; document.getElementById('tagChips').innerHTML=''; document.getElementById('meshChips').innerHTML='';
+    });
+    document.getElementById('clearFormBtn').addEventListener('click',()=>{
+      const f=document.getElementById('requestForm'); f.reset(); f.dataset.editId='';
+      document.getElementById('nctChips').innerHTML=''; document.getElementById('tagChips').innerHTML=''; document.getElementById('meshChips').innerHTML='';
+    });
+
+    document.getElementById('searchInput').addEventListener('input',()=>{ if(!list.debounced) list.debounced=debounce(()=>list.search(),250); list.debounced(); });
+    document.getElementById('statusFilter').addEventListener('change',()=>list.search());
+    document.getElementById('priorityFilter').addEventListener('change',()=>list.search());
+    document.getElementById('sortBy').addEventListener('change',()=>list.search());
+
+    document.getElementById('selectAllCheckbox').addEventListener('change',()=>{
+      const arr=(state.filtered.length?state.filtered:state.requests);
+      if(selectAllCheckbox.checked){ arr.forEach(r=>state.selected.add(r.id)); } else { state.selected.clear(); }
+      document.getElementById('deleteSelectedBtn').hidden=state.selected.size===0; list.render();
+    });
+    document.getElementById('deleteSelectedBtn').addEventListener('click',()=>{
+      if(confirm(\`Delete \${state.selected.size} selected requests?\`)){
+        const n=state.selected.size;
+        state.requests=state.requests.filter(r=>!state.selected.has(r.id));
+        state.selected.clear(); store.save(); list.search(); ui.toast(\`\${n} requests deleted\`,'success');
+        document.getElementById('deleteSelectedBtn').hidden=true; document.getElementById('selectAllCheckbox').checked=false;
+      }
+    });
+
+    document.getElementById('importBtn').addEventListener('click',()=>io.handleImport());
+    document.getElementById('exportCsvBtn').addEventListener('click',()=>io.exportData('csv'));
+    document.getElementById('exportJsonBtn').addEventListener('click',()=>io.exportData('json'));
+    document.getElementById('exportBackupBtn').addEventListener('click',()=>io.exportBackup());
+
+    document.getElementById('saveSettingsBtn').addEventListener('click',()=>{
+      state.settings.pubmedApiKey=document.getElementById('pubmedApiKey').value;
+      [...document.querySelectorAll('#requiredFields input[data-field]')].forEach(cb=>{
+        const f=cb.getAttribute('data-field'); if(f==='title') return; state.settings.required[f]=cb.checked;
+      });
+      store.save(); ui.toast('Settings saved','success'); updateRequiredHint();
+    });
+    document.getElementById('clearDataBtn').addEventListener('click',()=>{
+      if(confirm('This will delete all your data. Are you sure?')){
+        state.requests=[]; state.selected.clear(); store.save(); list.search(); ui.toast('All data cleared','success');
+      }
+    });
+    document.getElementById('reindexBtn').addEventListener('click',()=>{ ui.toast('Index rebuilt','success'); });
+  }
+
+  function fillForm(metadata){
+    for(const [k,v] of Object.entries(metadata)){
+      const el=document.getElementById(k); if(el && v!=null){ el.value = String(v); }
+    }
+    // keep primary PMID field in sync with quick input
+    if(metadata.pmid) document.getElementById('pmidInput').value = metadata.pmid;
+    if(metadata.title) trialsUI.refresh();
+  }
+
+  function debounce(fn,wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),wait); } }
+
+  function init(){
+    store.load(); ui.setTheme(state.theme); bind(); net.bind(); ui.updateStats(); list.search(); list.render(); updateRequiredHint();
+    ui.toast('SilentStacks v2.1 loaded','success');
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>

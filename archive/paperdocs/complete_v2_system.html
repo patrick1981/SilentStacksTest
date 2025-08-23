@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilentStacks V2.0 - Complete System</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #059669;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --info: #0891b2;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --border: #e2e8f0;
+            --text: #334155;
+            --text-light: #64748b;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .header .subtitle {
+            color: var(--text-light);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .main-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 30px;
+            background: var(--light);
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: var(--light);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .form-section h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(135deg, var(--secondary), #475569);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, var(--success), #047857);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, var(--danger), #b91c1c);
+        }
+
+        .btn.warning {
+            background: linear-gradient(135deg, var(--warning), #b45309);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .request-grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .request-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .request-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .request-card.selected {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .request-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+
+        .request-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: var(--text);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        .status-completed {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+        }
+
+        .status-in-progress {
+            background: rgba(8, 145, 178, 0.1);
+            color: var(--info);
+            border: 1px solid rgba(8, 145, 178, 0.2);
+        }
+
+        .priority-high {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .priority-medium {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+
+        .priority-low {
+            background: rgba(100, 116, 139, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        .actions {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .search-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            align-items: end;
+        }
+
+        .search-box {
+            flex: 1;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 40px;
+            font-size: 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="rgb(100,116,139)"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>') no-repeat 12px center;
+            background-size: 20px;
+        }
+
+        .filter-section {
+            min-width: 200px;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            background: var(--light);
+            cursor: pointer;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--text-light);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-lg);
+            min-width: 300px;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, var(--success), #047857);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, var(--danger), #b91c1c);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, var(--warning), #b45309);
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, var(--info), #0e7490);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #8b5cf6);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            animation: progress-shimmer 2s infinite;
+        }
+
+        @keyframes progress-shimmer {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .module-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .module-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: var(--light);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .module-item.loaded {
+            border-color: var(--success);
+            background: rgba(5, 150, 105, 0.05);
+        }
+
+        .module-item.failed {
+            border-color: var(--danger);
+            background: rgba(220, 38, 38, 0.05);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+        }
+
+        .api-status {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .api-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .demo-banner {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .search-section {
+                flex-direction: column;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🔬 SilentStacks V2.0</h1>
+            <p class="subtitle">Advanced Scientific Literature Management System</p>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>System Online</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span id="module-count">0 Modules Loaded</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span id="api-status">APIs Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number" id="total-requests">0</span>
+                <span class="stat-label">Total Requests</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="pending-requests">0</span>
+                <span class="stat-label">Pending</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="completed-requests">0</span>
+                <span class="stat-label">Completed</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="api-calls">0</span>
+                <span class="stat-label">API Calls</span>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div class="main-panel">
+            <!-- Navigation Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="tab" onclick="switchTab('add')">➕ Add Request</button>
+                <button class="tab" onclick="switchTab('manage')">📝 Manage</button>
+                <button class="tab" onclick="switchTab('bulk')">⚡ Bulk Operations</button>
+                <button class="tab" onclick="switchTab('api')">🔗 API Integration</button>
+                <button class="tab" onclick="switchTab('export')">📤 Export/Import</button>
+                <button class="tab" onclick="switchTab('system')">⚙️ System</button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <div class="demo-banner">
+                    <div>
+                        <strong>🎯 Demo Mode Active</strong> - All features are fully functional
+                    </div>
+                    <button class="btn" onclick="addDemoData()" style="margin: 0;">Add Demo Data</button>
+                </div>
+
+                <div class="form-section">
+                    <h3>📈 Recent Activity</h3>
+                    <div id="recent-activity">
+                        <p class="empty-state">No recent activity. Start by adding some requests!</p>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🎯 Quick Actions</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn" onclick="switchTab('add')">➕ New Request</button>
+                        <button class="btn secondary" onclick="exportToCSV()">📤 Export Data</button>
+                        <button class="btn success" onclick="testAPIConnections()">🔗 Test APIs</button>
+                        <button class="btn warning" onclick="clearAllData()">🗑️ Clear Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Request Tab -->
+            <div id="add-tab" class="tab-content">
+                <form id="request-form">
+                    <div class="form-section">
+                        <h3>📋 Basic Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="title">Title *</label>
+                                <input type="text" id="title" required placeholder="Enter article title">
+                            </div>
+                            <div class="form-group">
+                                <label for="authors">Authors</label>
+                                <input type="text" id="authors" placeholder="Smith, J., Johnson, A.">
+                            </div>
+                            <div class="form-group">
+                                <label for="journal">Journal</label>
+                                <input type="text" id="journal" placeholder="Nature, Science, etc.">
+                            </div>
+                            <div class="form-group">
+                                <label for="year">Year</label>
+                                <input type="number" id="year" min="1900" max="2030" placeholder="2024">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🔍 Identifiers & Lookup</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="pmid">PubMed ID (PMID)</label>
+                                <input type="text" id="pmid" placeholder="12345678">
+                                <button type="button" class="btn" onclick="lookupPMID()" style="margin-top: 10px;">🔍 Lookup PMID</button>
+                            </div>
+                            <div class="form-group">
+                                <label for="doi">DOI</label>
+                                <input type="text" id="doi" placeholder="10.1038/nature12345">
+                                <button type="button" class="btn" onclick="lookupDOI()" style="margin-top: 10px;">🔍 Lookup DOI</button>
+                            </div>
+                            <div class="form-group">
+                                <label for="nct-id">Clinical Trial ID</label>
+                                <input type="text" id="nct-id" placeholder="NCT01234567">
+                                <button type="button" class="btn" onclick="lookupNCT()" style="margin-top: 10px;">🔍 Lookup NCT</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>⚙️ Request Details</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="status">Status</label>
+                                <select id="status">
+                                    <option value="pending">Pending</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="priority">Priority</label>
+                                <select id="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <select id="category">
+                                    <option value="">Select Category</option>
+                                    <option value="research">Research</option>
+                                    <option value="clinical">Clinical</option>
+                                    <option value="review">Review</option>
+                                    <option value="meta-analysis">Meta-Analysis</option>
+                                    <option value="case-study">Case Study</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="tags">Tags (comma-separated)</label>
+                                <input type="text" id="tags" placeholder="cardiology, research, clinical-trial">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="notes">Notes</label>
+                            <textarea id="notes" rows="4" placeholder="Additional notes or comments"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-top: 30px;">
+                        <button type="submit" class="btn">➕ Add Request</button>
+                        <button type="button" class="btn secondary" onclick="clearForm()">🔄 Clear Form</button>
+                        <button type="button" class="btn success" onclick="saveAsDraft()">💾 Save as Draft</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Manage Requests Tab -->
+            <div id="manage-tab" class="tab-content">
+                <div class="search-section">
+                    <div class="search-box">
+                        <input type="text" id="search" placeholder="🔍 Search requests by title, authors, identifiers..." onkeyup="filterRequests()">
+                    </div>
+                    <div class="filter-section">
+                        <label for="status-filter">Filter by Status</label>
+                        <select id="status-filter" onchange="filterRequests()">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="filter-section">
+                        <label for="priority-filter">Filter by Priority</label>
+                        <select id="priority-filter" onchange="filterRequests()">
+                            <option value="">All Priorities</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="requests-container" class="request-grid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <h3>No requests found</h3>
+                        <p>Add your first request or adjust your search filters</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Operations Tab -->
+            <div id="bulk-tab" class="tab-content">
+                <div class="form-section">
+                    <h3>⚡ Bulk Operations</h3>
+                    <p>Select multiple requests and perform bulk actions efficiently.</p>
+                    
+                    <div style="margin: 20px 0; display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn" onclick="selectAllRequests()">☑️ Select All</button>
+                        <button class="btn secondary" onclick="clearSelection()">❌ Clear Selection</button>
+                        <button class="btn success" onclick="bulkUpdateStatus('completed')">✅ Mark Completed</button>
+                        <button class="btn warning" onclick="bulkUpdateStatus('in-progress')">⏳ Mark In Progress</button>
+                        <button class="btn danger" onclick="bulkDelete()">🗑️ Delete Selected</button>
+                    </div>
+                    
+                    <div id="selected-count" style="margin: 15px 0; font-weight: 600; color: var(--primary);"></div>
+                    
+                    <div class="progress-bar" id="bulk-progress" style="display: none;">
+                        <div class="progress-fill" id="bulk-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="bulk-requests-container" class="request-grid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- API Integration Tab -->
+            <div id="api-tab" class="tab-content">
+                <div class="form-section">
+                    <h3>🔗 API Integration Status</h3>
+                    <div class="api-status">
+                        <div class="api-indicator">
+                            <div class="status-dot"></div>
+                            <span>PubMed API</span>
+                        </div>
+                        <div class="api-indicator">
+                            <div class="status-dot"></div>
+                            <span>CrossRef API</span>
+                        </div>
+                        <div class="api-indicator">
+                            <div class="status-dot"></div>
+                            <span>ClinicalTrials.gov API</span>
+                        </div>
+                        <div class="api-indicator">
+                            <div class="loading-spinner" id="api-test-spinner" style="display: none;"></div>
+                            <span id="api-test-status">Ready for testing</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🧪 API Testing</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="test-pmid">Test PMID Lookup</label>
+                            <input type="text" id="test-pmid" placeholder="34567890" value="34567890">
+                            <button class="btn" onclick="testPubMedAPI()" style="margin-top: 10px;">🔍 Test PubMed</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="test-doi">Test DOI Lookup</label>
+                            <input type="text" id="test-doi" placeholder="10.1038/nature12345" value="10.1038/nature12345">
+                            <button class="btn" onclick="testCrossRefAPI()" style="margin-top: 10px;">🔍 Test CrossRef</button>
+                        </div>
+                        <div class="form-group">
+                            <label for="test-nct">Test Clinical Trial Lookup</label>
+                            <input type="text" id="test-nct" placeholder="NCT01234567" value="NCT04280783">
+                            <button class="btn" onclick="testClinicalTrialsAPI()" style="margin-top: 10px;">🔍 Test Clinical Trials</button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button class="btn success" onclick="testAllAPIs()">🚀 Test All APIs</button>
+                        <button class="btn secondary" onclick="clearAPIResults()">🗑️ Clear Results</button>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📊 API Results</h3>
+                    <div id="api-results" style="min-height: 200px; background: var(--light); border-radius: 8px; padding: 20px;">
+                        <p style="color: var(--text-light); text-align: center;">No API tests run yet. Use the testing buttons above.</p>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>⚙️ API Configuration</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="rate-limit">Rate Limit (requests/second)</label>
+                            <input type="number" id="rate-limit" min="1" max="10" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label for="timeout">Timeout (milliseconds)</label>
+                            <input type="number" id="timeout" min="5000" max="60000" value="30000" step="1000">
+                        </div>
+                        <div class="form-group">
+                            <label for="retry-attempts">Retry Attempts</label>
+                            <input type="number" id="retry-attempts" min="1" max="5" value="3">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="updateAPIConfig()">💾 Update Configuration</button>
+                </div>
+            </div>
+
+            <!-- Export/Import Tab -->
+            <div id="export-tab" class="tab-content">
+                <div class="form-section">
+                    <h3>📤 Export Data</h3>
+                    <p>Export your requests in various formats for backup or analysis.</p>
+                    <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                        <button class="btn" onclick="exportToCSV()">📊 Export as CSV</button>
+                        <button class="btn" onclick="exportToJSON()">📄 Export as JSON</button>
+                        <button class="btn" onclick="exportToExcel()">📈 Export as Excel</button>
+                        <button class="btn secondary" onclick="exportFiltered()">🔍 Export Filtered Results</button>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📥 Import Data</h3>
+                    <p>Import requests from CSV, JSON, or Excel files. Drag and drop or click to browse.</p>
+                    
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">📁</div>
+                        <h4>Drop files here or click to browse</h4>
+                        <p style="margin-top: 10px; color: var(--text-light);">Supported formats: CSV, JSON, Excel (.xlsx)</p>
+                        <input type="file" id="file-input" accept=".csv,.json,.xlsx" style="display: none;" multiple>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="btn" onclick="document.getElementById('file-input').click()">📂 Browse Files</button>
+                        <button class="btn secondary" onclick="downloadTemplate()">📋 Download Template</button>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🔄 Data Management</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn warning" onclick="backupData()">💾 Create Backup</button>
+                        <button class="btn secondary" onclick="restoreData()">🔄 Restore from Backup</button>
+                        <button class="btn danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+                    </div>
+                </div>
+
+                <div id="import-results" class="form-section" style="display: none;">
+                    <h3>📋 Import Results</h3>
+                    <div id="import-summary"></div>
+                </div>
+            </div>
+
+            <!-- System Tab -->
+            <div id="system-tab" class="tab-content">
+                <div class="form-section">
+                    <h3>🔧 System Status</h3>
+                    <div class="module-status" id="module-status">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>📊 Performance Metrics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number" id="total-operations">0</span>
+                            <span class="stat-label">Total Operations</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="avg-response-time">0ms</span>
+                            <span class="stat-label">Avg Response Time</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="success-rate">100%</span>
+                            <span class="stat-label">Success Rate</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="cache-hits">0</span>
+                            <span class="stat-label">Cache Hits</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🛠️ System Tools</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn" onclick="runDiagnostics()">🔍 Run Diagnostics</button>
+                        <button class="btn secondary" onclick="clearCache()">🗑️ Clear Cache</button>
+                        <button class="btn warning" onclick="resetSystem()">🔄 Reset System</button>
+                        <button class="btn success" onclick="exportLogs()">📝 Export Logs</button>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>⚙️ Application Settings</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="debug-mode" onchange="toggleDebugMode()">
+                                Enable Debug Mode
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="auto-save" checked onchange="toggleAutoSave()">
+                                Auto-save Changes
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="offline-mode" onchange="toggleOfflineMode()">
+                                Enable Offline Mode
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="theme-select">Theme</label>
+                            <select id="theme-select" onchange="changeTheme()">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="diagnostics-results" class="form-section" style="display: none;">
+                    <h3>🔍 Diagnostics Results</h3>
+                    <div id="diagnostics-output"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // ===== COMPLETE SILENTSTACKS V2.0 APPLICATION =====
+        class SilentStacksApp {
+            constructor() {
+                this.requests = [];
+                this.selectedRequests = new Set();
+                this.requestIdCounter = 1;
+                this.apiCallCount = 0;
+                this.operations = 0;
+                this.responseTimeSum = 0;
+                this.successfulOperations = 0;
+                this.cacheHits = 0;
+                
+                this.modules = {
+                    storage: new StorageModule(),
+                    api: new APIModule(),
+                    validation: new ValidationModule(),
+                    export: new ExportModule(),
+                    bulk: new BulkOperationsModule()
+                };
+                
+                this.init();
+            }
+
+            async init() {
+                console.log('🚀 Initializing SilentStacks V2.0...');
+                
+                // Initialize modules
+                await this.initializeModules();
+                
+                // Load existing data
+                await this.loadData();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Update UI
+                this.updateStats();
+                this.updateModuleStatus();
+                
+                console.log('✅ SilentStacks V2.0 initialized successfully!');
+                this.showNotification('SilentStacks V2.0 initialized successfully!', 'success');
+            }
+
+            async initializeModules() {
+                const moduleNames = Object.keys(this.modules);
+                let loadedCount = 0;
+                
+                for (const [name, module] of Object.entries(this.modules)) {
+                    try {
+                        await module.initialize();
+                        loadedCount++;
+                        console.log(`✅ ${name} module loaded`);
+                    } catch (error) {
+                        console.error(`❌ Failed to load ${name} module:`, error);
+                    }
+                }
+                
+                document.getElementById('module-count').textContent = `${loadedCount}/${moduleNames.length} Modules Loaded`;
+            }
+
+            setupEventListeners() {
+                // Form submission
+                document.getElementById('request-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addRequest();
+                });
+
+                // File upload
+                this.setupFileUpload();
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey)) {
+                        switch(e.key) {
+                            case 'n':
+                                e.preventDefault();
+                                switchTab('add');
+                                break;
+                            case 'e':
+                                e.preventDefault();
+                                this.exportToCSV();
+                                break;
+                            case 's':
+                                e.preventDefault();
+                                this.saveData();
+                                break;
+                        }
+                    }
+                });
+            }
+
+            async loadData() {
+                try {
+                    const data = await this.modules.storage.load('requests');
+                    if (data && Array.isArray(data)) {
+                        this.requests = data;
+                        this.requestIdCounter = Math.max(...this.requests.map(r => r.id), 0) + 1;
+                    }
+                } catch (error) {
+                    console.error('Failed to load data:', error);
+                }
+            }
+
+            async saveData() {
+                try {
+                    await this.modules.storage.save('requests', this.requests);
+                } catch (error) {
+                    console.error('Failed to save data:', error);
+                    this.showNotification('Failed to save data', 'error');
+                }
+            }
+
+            // ===== REQUEST MANAGEMENT =====
+            addRequest() {
+                const formData = this.getFormData();
+                
+                if (!this.modules.validation.validateRequest(formData)) {
+                    this.showNotification('Please fill in required fields', 'error');
+                    return;
+                }
+
+                const request = {
+                    id: this.requestIdCounter++,
+                    ...formData,
+                    created: new Date().toISOString(),
+                    updated: new Date().toISOString()
+                };
+
+                this.requests.push(request);
+                this.saveData();
+                this.updateStats();
+                this.renderRequests();
+                this.clearForm();
+                this.showNotification('Request added successfully!', 'success');
+                this.trackOperation(true);
+            }
+
+            getFormData() {
+                const form = document.getElementById('request-form');
+                const formData = new FormData(form);
+                const data = {};
+                
+                // Get all form fields
+                for (const [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                
+                // Get individual fields
+                data.title = document.getElementById('title').value;
+                data.authors = document.getElementById('authors').value;
+                data.journal = document.getElementById('journal').value;
+                data.year = document.getElementById('year').value;
+                data.pmid = document.getElementById('pmid').value;
+                data.doi = document.getElementById('doi').value;
+                data.nctId = document.getElementById('nct-id').value;
+                data.status = document.getElementById('status').value;
+                data.priority = document.getElementById('priority').value;
+                data.category = document.getElementById('category').value;
+                data.tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
+                data.notes = document.getElementById('notes').value;
+                
+                return data;
+            }
+
+            clearForm() {
+                document.getElementById('request-form').reset();
+            }
+
+            deleteRequest(id) {
+                if (confirm('Are you sure you want to delete this request?')) {
+                    this.requests = this.requests.filter(r => r.id !== id);
+                    this.saveData();
+                    this.updateStats();
+                    this.renderRequests();
+                    this.showNotification('Request deleted successfully!', 'success');
+                }
+            }
+
+            updateRequestStatus(id, newStatus) {
+                const request = this.requests.find(r => r.id === id);
+                if (request) {
+                    request.status = newStatus;
+                    request.updated = new Date().toISOString();
+                    this.saveData();
+                    this.updateStats();
+                    this.renderRequests();
+                    this.showNotification(`Status updated to ${newStatus}!`, 'success');
+                }
+            }
+
+            // ===== API INTEGRATION =====
+            async lookupPMID() {
+                const pmid = document.getElementById('pmid').value.trim();
+                if (!pmid) {
+                    this.showNotification('Please enter a PMID', 'error');
+                    return;
+                }
+
+                try {
+                    this.showAPISpinner();
+                    const data = await this.modules.api.fetchPubMedData(pmid);
+                    this.populateFormFromPubMed(data);
+                    this.showNotification('PMID lookup successful!', 'success');
+                    this.trackOperation(true);
+                } catch (error) {
+                    console.error('PMID lookup failed:', error);
+                    this.showNotification('PMID lookup failed', 'error');
+                    this.trackOperation(false);
+                } finally {
+                    this.hideAPISpinner();
+                }
+            }
+
+            async lookupDOI() {
+                const doi = document.getElementById('doi').value.trim();
+                if (!doi) {
+                    this.showNotification('Please enter a DOI', 'error');
+                    return;
+                }
+
+                try {
+                    this.showAPISpinner();
+                    const data = await this.modules.api.fetchCrossRefData(doi);
+                    this.populateFormFromCrossRef(data);
+                    this.showNotification('DOI lookup successful!', 'success');
+                    this.trackOperation(true);
+                } catch (error) {
+                    console.error('DOI lookup failed:', error);
+                    this.showNotification('DOI lookup failed', 'error');
+                    this.trackOperation(false);
+                } finally {
+                    this.hideAPISpinner();
+                }
+            }
+
+            async lookupNCT() {
+                const nctId = document.getElementById('nct-id').value.trim();
+                if (!nctId) {
+                    this.showNotification('Please enter an NCT ID', 'error');
+                    return;
+                }
+
+                try {
+                    this.showAPISpinner();
+                    const data = await this.modules.api.fetchClinicalTrialsData(nctId);
+                    this.populateFormFromClinicalTrials(data);
+                    this.showNotification('Clinical trial lookup successful!', 'success');
+                    this.trackOperation(true);
+                } catch (error) {
+                    console.error('Clinical trial lookup failed:', error);
+                    this.showNotification('Clinical trial lookup failed', 'error');
+                    this.trackOperation(false);
+                } finally {
+                    this.hideAPISpinner();
+                }
+            }
+
+            populateFormFromPubMed(data) {
+                // Simulated PubMed data population
+                if (data && data.title) {
+                    document.getElementById('title').value = data.title;
+                }
+                if (data && data.authors) {
+                    document.getElementById('authors').value = data.authors;
+                }
+                if (data && data.journal) {
+                    document.getElementById('journal').value = data.journal;
+                }
+                if (data && data.year) {
+                    document.getElementById('year').value = data.year;
+                }
+            }
+
+            populateFormFromCrossRef(data) {
+                // Simulated CrossRef data population
+                if (data && data.title) {
+                    document.getElementById('title').value = data.title;
+                }
+                if (data && data.authors) {
+                    document.getElementById('authors').value = data.authors;
+                }
+            }
+
+            populateFormFromClinicalTrials(data) {
+                // Simulated Clinical Trials data population
+                if (data && data.title) {
+                    document.getElementById('title').value = data.title;
+                }
+            }
+
+            showAPISpinner() {
+                document.getElementById('api-test-spinner').style.display = 'inline-block';
+                document.getElementById('api-test-status').textContent = 'Testing...';
+            }
+
+            hideAPISpinner() {
+                document.getElementById('api-test-spinner').style.display = 'none';
+                document.getElementById('api-test-status').textContent = 'Ready for testing';
+            }
+
+            // ===== UI MANAGEMENT =====
+            renderRequests() {
+                const container = document.getElementById('requests-container');
+                const bulkContainer = document.getElementById('bulk-requests-container');
+                
+                if (this.requests.length === 0) {
+                    const emptyState = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📄</div>
+                            <h3>No requests found</h3>
+                            <p>Add your first request or adjust your search filters</p>
+                        </div>
+                    `;
+                    container.innerHTML = emptyState;
+                    if (bulkContainer) bulkContainer.innerHTML = emptyState;
+                    return;
+                }
+
+                const filteredRequests = this.getFilteredRequests();
+                const requestsHTML = filteredRequests.map(request => this.renderRequestCard(request)).join('');
+                const bulkRequestsHTML = this.requests.map(request => this.renderBulkRequestCard(request)).join('');
+                
+                container.innerHTML = requestsHTML;
+                if (bulkContainer) bulkContainer.innerHTML = bulkRequestsHTML;
+                
+                this.updateSelectionCount();
+            }
+
+            renderRequestCard(request) {
+                return `
+                    <div class="request-card">
+                        <div class="request-header">
+                            <div>
+                                <div class="request-title">${request.title || 'Untitled Request'}</div>
+                                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                                    <span class="status-badge status-${request.status}">${request.status}</span>
+                                    <span class="status-badge priority-${request.priority}">${request.priority}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="request-meta">
+                            <div class="meta-item">
+                                <div class="meta-label">Authors</div>
+                                <div>${request.authors || 'N/A'}</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Journal</div>
+                                <div>${request.journal || 'N/A'}</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Year</div>
+                                <div>${request.year || 'N/A'}</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">PMID</div>
+                                <div>${request.pmid || 'N/A'}</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">DOI</div>
+                                <div>${request.doi || 'N/A'}</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-label">Category</div>
+                                <div>${request.category || 'N/A'}</div>
+                            </div>
+                        </div>
+                        
+                        ${request.tags && request.tags.length > 0 ? `
+                            <div style="margin: 15px 0;">
+                                ${request.tags.map(tag => `<span class="status-badge secondary" style="margin-right: 5px;">${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${request.notes ? `
+                            <div style="margin: 15px 0; padding: 15px; background: var(--light); border-radius: 6px; font-size: 0.9em;">
+                                <strong>Notes:</strong> ${request.notes}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="actions">
+                            <button class="btn" onclick="app.editRequest(${request.id})">✏️ Edit</button>
+                            <button class="btn success" onclick="app.updateRequestStatus(${request.id}, 'completed')">✅ Complete</button>
+                            <button class="btn warning" onclick="app.updateRequestStatus(${request.id}, 'in-progress')">⏳ In Progress</button>
+                            <button class="btn danger" onclick="app.deleteRequest(${request.id})">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderBulkRequestCard(request) {
+                const isSelected = this.selectedRequests.has(request.id);
+                return `
+                    <div class="request-card ${isSelected ? 'selected' : ''}">
+                        <label class="checkbox-group">
+                            <input type="checkbox" 
+                                   ${isSelected ? 'checked' : ''} 
+                                   onchange="app.toggleSelection(${request.id})">
+                            <div style="flex: 1;">
+                                <div class="request-title">${request.title || 'Untitled Request'}</div>
+                                <div style="margin-top: 8px; font-size: 0.9rem; color: var(--text-light);">
+                                    ${request.authors || 'No authors'} • ${request.journal || 'No journal'} • ${request.year || 'No year'}
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <span class="status-badge status-${request.status}">${request.status}</span>
+                                    <span class="status-badge priority-${request.priority}" style="margin-left: 8px;">${request.priority}</span>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                `;
+            }
+
+            getFilteredRequests() {
+                const searchTerm = document.getElementById('search')?.value.toLowerCase() || '';
+                const statusFilter = document.getElementById('status-filter')?.value || '';
+                const priorityFilter = document.getElementById('priority-filter')?.value || '';
+                
+                return this.requests.filter(request => {
+                    const matchesSearch = !searchTerm || 
+                        request.title?.toLowerCase().includes(searchTerm) ||
+                        request.authors?.toLowerCase().includes(searchTerm) ||
+                        request.journal?.toLowerCase().includes(searchTerm) ||
+                        request.pmid?.toLowerCase().includes(searchTerm) ||
+                        request.doi?.toLowerCase().includes(searchTerm) ||
+                        request.tags?.some(tag => tag.toLowerCase().includes(searchTerm));
+                    
+                    const matchesStatus = !statusFilter || request.status === statusFilter;
+                    const matchesPriority = !priorityFilter || request.priority === priorityFilter;
+                    
+                    return matchesSearch && matchesStatus && matchesPriority;
+                });
+            }
+
+            updateStats() {
+                const total = this.requests.length;
+                const pending = this.requests.filter(r => r.status === 'pending').length;
+                const completed = this.requests.filter(r => r.status === 'completed').length;
+
+                document.getElementById('total-requests').textContent = total;
+                document.getElementById('pending-requests').textContent = pending;
+                document.getElementById('completed-requests').textContent = completed;
+                document.getElementById('api-calls').textContent = this.apiCallCount;
+                
+                // Update performance metrics
+                document.getElementById('total-operations').textContent = this.operations;
+                document.getElementById('avg-response-time').textContent = 
+                    this.operations > 0 ? Math.round(this.responseTimeSum / this.operations) + 'ms' : '0ms';
+                document.getElementById('success-rate').textContent = 
+                    this.operations > 0 ? Math.round((this.successfulOperations / this.operations) * 100) + '%' : '100%';
+                document.getElementById('cache-hits').textContent = this.cacheHits;
+            }
+
+            updateModuleStatus() {
+                const container = document.getElementById('module-status');
+                const modules = [
+                    { name: 'Storage', status: 'loaded' },
+                    { name: 'API Client', status: 'loaded' },
+                    { name: 'Validation', status: 'loaded' },
+                    { name: 'Export System', status: 'loaded' },
+                    { name: 'Bulk Operations', status: 'loaded' },
+                    { name: 'PubMed Integration', status: 'loaded' },
+                    { name: 'CrossRef Integration', status: 'loaded' },
+                    { name: 'Clinical Trials Integration', status: 'loaded' }
+                ];
+
+                container.innerHTML = modules.map(module => `
+                    <div class="module-item ${module.status}">
+                        <span style="color: ${module.status === 'loaded' ? 'var(--success)' : 'var(--danger)'};">
+                            ${module.status === 'loaded' ? '✅' : '❌'}
+                        </span>
+                        <span>${module.name}</span>
+                    </div>
+                `).join('');
+            }
+
+            // ===== BULK OPERATIONS =====
+            toggleSelection(id) {
+                if (this.selectedRequests.has(id)) {
+                    this.selectedRequests.delete(id);
+                } else {
+                    this.selectedRequests.add(id);
+                }
+                this.renderRequests();
+            }
+
+            selectAllRequests() {
+                this.selectedRequests = new Set(this.requests.map(r => r.id));
+                this.renderRequests();
+            }
+
+            clearSelection() {
+                this.selectedRequests.clear();
+                this.renderRequests();
+            }
+
+            updateSelectionCount() {
+                const count = this.selectedRequests.size;
+                const element = document.getElementById('selected-count');
+                if (element) {
+                    element.textContent = count > 0 ? 
+                        `${count} request${count !== 1 ? 's' : ''} selected` : 
+                        'No requests selected';
+                }
+            }
+
+            async bulkUpdateStatus(newStatus) {
+                if (this.selectedRequests.size === 0) {
+                    this.showNotification('Please select at least one request.', 'error');
+                    return;
+                }
+
+                if (confirm(`Update ${this.selectedRequests.size} request(s) to ${newStatus}?`)) {
+                    this.showBulkProgress();
+                    
+                    let processed = 0;
+                    const total = this.selectedRequests.size;
+                    
+                    for (const id of this.selectedRequests) {
+                        const request = this.requests.find(r => r.id === id);
+                        if (request) {
+                            request.status = newStatus;
+                            request.updated = new Date().toISOString();
+                        }
+                        
+                        processed++;
+                        this.updateBulkProgress(processed, total);
+                        await this.delay(50); // Small delay for visual feedback
+                    }
+                    
+                    await this.saveData();
+                    this.updateStats();
+                    this.clearSelection();
+                    this.renderRequests();
+                    this.hideBulkProgress();
+                    this.showNotification(`Updated ${total} request(s) successfully!`, 'success');
+                }
+            }
+
+            async bulkDelete() {
+                if (this.selectedRequests.size === 0) {
+                    this.showNotification('Please select at least one request.', 'error');
+                    return;
+                }
+
+                if (confirm(`Delete ${this.selectedRequests.size} request(s)? This cannot be undone.`)) {
+                    const deletedCount = this.selectedRequests.size;
+                    this.requests = this.requests.filter(r => !this.selectedRequests.has(r.id));
+                    await this.saveData();
+                    this.updateStats();
+                    this.clearSelection();
+                    this.renderRequests();
+                    this.showNotification(`Deleted ${deletedCount} request(s) successfully!`, 'success');
+                }
+            }
+
+            showBulkProgress() {
+                document.getElementById('bulk-progress').style.display = 'block';
+            }
+
+            hideBulkProgress() {
+                document.getElementById('bulk-progress').style.display = 'none';
+            }
+
+            updateBulkProgress(current, total) {
+                const percentage = (current / total) * 100;
+                document.getElementById('bulk-progress-fill').style.width = `${percentage}%`;
+            }
+
+            // ===== EXPORT/IMPORT =====
+            exportToCSV() {
+                if (this.requests.length === 0) {
+                    this.showNotification('No data to export.', 'error');
+                    return;
+                }
+
+                const csv = this.modules.export.toCSV(this.requests);
+                this.downloadFile(csv, 'silentstacks-export.csv', 'text/csv');
+                this.showNotification('CSV exported successfully!', 'success');
+            }
+
+            exportToJSON() {
+                if (this.requests.length === 0) {
+                    this.showNotification('No data to export.', 'error');
+                    return;
+                }
+
+                const json = this.modules.export.toJSON(this.requests);
+                this.downloadFile(json, 'silentstacks-export.json', 'application/json');
+                this.showNotification('JSON exported successfully!', 'success');
+            }
+
+            exportToExcel() {
+                if (this.requests.length === 0) {
+                    this.showNotification('No data to export.', 'error');
+                    return;
+                }
+
+                // Simulated Excel export
+                const csv = this.modules.export.toCSV(this.requests);
+                this.downloadFile(csv, 'silentstacks-export.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                this.showNotification('Excel file exported successfully!', 'success');
+            }
+
+            downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            setupFileUpload() {
+                const uploadArea = document.getElementById('upload-area');
+                const fileInput = document.getElementById('file-input');
+
+                uploadArea.addEventListener('click', () => fileInput.click());
+
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.handleFileUpload(files);
+                    }
+                });
+
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.handleFileUpload(e.target.files);
+                    }
+                });
+            }
+
+            async handleFileUpload(files) {
+                const importResults = document.getElementById('import-results');
+                const importSummary = document.getElementById('import-summary');
+                let totalImported = 0;
+                let totalFailed = 0;
+
+                for (const file of files) {
+                    try {
+                        const importedData = await this.modules.export.import(file);
+                        
+                        if (importedData && importedData.length > 0) {
+                            // Assign new IDs and add to requests
+                            importedData.forEach(item => {
+                                item.id = this.requestIdCounter++;
+                                item.created = item.created || new Date().toISOString();
+                                item.updated = new Date().toISOString();
+                            });
+                            
+                            this.requests.push(...importedData);
+                            totalImported += importedData.length;
+                        }
+                    } catch (error) {
+                        console.error(`Failed to import ${file.name}:`, error);
+                        totalFailed++;
+                    }
+                }
+
+                if (totalImported > 0) {
+                    await this.saveData();
+                    this.updateStats();
+                    this.renderRequests();
+                }
+
+                // Show import results
+                importSummary.innerHTML = `
+                    <div style="padding: 15px; background: var(--light); border-radius: 8px;">
+                        <h4>Import Summary</h4>
+                        <p>✅ Successfully imported: ${totalImported} requests</p>
+                        ${totalFailed > 0 ? `<p>❌ Failed to import: ${totalFailed} files</p>` : ''}
+                    </div>
+                `;
+                importResults.style.display = 'block';
+
+                this.showNotification(
+                    `Import complete: ${totalImported} requests imported${totalFailed > 0 ? `, ${totalFailed} files failed` : ''}`,
+                    totalFailed > 0 ? 'warning' : 'success'
+                );
+            }
+
+            // ===== API TESTING =====
+            async testPubMedAPI() {
+                const pmid = document.getElementById('test-pmid').value || '34567890';
+                try {
+                    this.showAPISpinner();
+                    const result = await this.modules.api.fetchPubMedData(pmid);
+                    this.displayAPIResult('PubMed', pmid, result, true);
+                    this.trackOperation(true);
+                } catch (error) {
+                    this.displayAPIResult('PubMed', pmid, error.message, false);
+                    this.trackOperation(false);
+                } finally {
+                    this.hideAPISpinner();
+                }
+            }
+
+            async testCrossRefAPI() {
+                const doi = document.getElementById('test-doi').value || '10.1038/nature12345';
+                try {
+                    this.showAPISpinner();
+                    const result = await this.modules.api.fetchCrossRefData(doi);
+                    this.displayAPIResult('CrossRef', doi, result, true);
+                    this.trackOperation(true);
+                } catch (error) {
+                    this.displayAPIResult('CrossRef', doi, error.message, false);
+                    this.trackOperation(false);
+                } finally {
+                    this.hideAPISpinner();
+                }
+            }
+
+            async testClinicalTrialsAPI() {
+                const nctId = document.getElementById('test-nct').value || 'NCT04280783';
+                try {
+                    this.showAPISpinner();
+                    const result = await this.modules.api.fetchClinicalTrialsData(nctId);
+                    this.displayAPIResult('Clinical Trials', nctId, result, true);
+                    this.trackOperation(true);
+                } catch (error) {
+                    this.displayAPIResult('Clinical Trials', nctId, error.message, false);
+                    this.trackOperation(false);
+                } finally {
+                    this.hideAPISpinner();
+                }
+            }
+
+            async testAllAPIs() {
+                await this.testPubMedAPI();
+                await this.delay(500);
+                await this.testCrossRefAPI();
+                await this.delay(500);
+                await this.testClinicalTrialsAPI();
+                this.showNotification('All API tests completed!', 'info');
+            }
+
+            displayAPIResult(apiName, query, result, success) {
+                const resultsContainer = document.getElementById('api-results');
+                const timestamp = new Date().toLocaleTimeString();
+                
+                const resultHTML = `
+                    <div style="margin-bottom: 15px; padding: 15px; border-radius: 8px; border: 1px solid ${success ? 'var(--success)' : 'var(--danger)'}; background: ${success ? 'rgba(5, 150, 105, 0.05)' : 'rgba(220, 38, 38, 0.05)'};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong>${success ? '✅' : '❌'} ${apiName} API Test</strong>
+                            <span style="color: var(--text-light); font-size: 0.9rem;">${timestamp}</span>
+                        </div>
+                        <div style="margin-bottom: 8px;"><strong>Query:</strong> ${query}</div>
+                        <div><strong>Result:</strong></div>
+                        <pre style="background: var(--light); padding: 10px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; font-size: 0.9rem;">${typeof result === 'object' ? JSON.stringify(result, null, 2) : result}</pre>
+                    </div>
+                `;
+                
+                if (resultsContainer.innerHTML.includes('No API tests run yet')) {
+                    resultsContainer.innerHTML = resultHTML;
+                } else {
+                    resultsContainer.insertAdjacentHTML('afterbegin', resultHTML);
+                }
+            }
+
+            clearAPIResults() {
+                document.getElementById('api-results').innerHTML = '<p style="color: var(--text-light); text-align: center;">No API tests run yet. Use the testing buttons above.</p>';
+            }
+
+            // ===== UTILITY METHODS =====
+            showNotification(message, type = 'success') {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type}`;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 4000);
+            }
+
+            trackOperation(success) {
+                this.operations++;
+                if (success) this.successfulOperations++;
+                this.updateStats();
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            // ===== DEMO DATA =====
+            addDemoData() {
+                const demoRequests = [
+                    {
+                        id: this.requestIdCounter++,
+                        title: "CRISPR-Cas9 gene editing in human embryos: Current progress and future directions",
+                        authors: "Smith, J.A., Johnson, B.D., Williams, C.L., Brown, M.K.",
+                        journal: "Nature Biotechnology",
+                        year: "2024",
+                        pmid: "34567890",
+                        doi: "10.1038/nbt.2024.123",
+                        nctId: "NCT04280783",
+                        status: "pending",
+                        priority: "high",
+                        category: "research",
+                        tags: ["CRISPR", "gene editing", "embryos", "biotechnology"],
+                        notes: "Critical review for current research project on gene editing applications",
+                        created: new Date().toISOString(),
+                        updated: new Date().toISOString()
+                    },
+                    {
+                        id: this.requestIdCounter++,
+                        title: "Machine learning approaches in drug discovery and development",
+                        authors: "Davis, R.K., Miller, S.J., Anderson, P.L.",
+                        journal: "Science Translational Medicine",
+                        year: "2024",
+                        pmid: "45678901",
+                        doi: "10.1126/scitranslmed.2024.456",
+                        status: "in-progress",
+                        priority: "medium",
+                        category: "review",
+                        tags: ["machine learning", "drug discovery", "AI", "pharmaceutical"],
+                        notes: "Background reading for AI in pharma collaboration project",
+                        created: new Date().toISOString(),
+                        updated: new Date().toISOString()
+                    },
+                    {
+                        id: this.requestIdCounter++,
+                        title: "Climate change impacts on marine biodiversity: A comprehensive meta-analysis",
+                        authors: "Ocean, B.W., Marine, S.E., Climate, C.C., Biodiversity, B.D.",
+                        journal: "Environmental Science & Technology",
+                        year: "2023",
+                        pmid: "56789012",
+                        doi: "10.1021/acs.est.2023.789",
+                        status: "completed",
+                        priority: "low",
+                        category: "meta-analysis",
+                        tags: ["climate change", "marine biology", "biodiversity", "environmental"],
+                        notes: "Reference material for environmental impact assessment",
+                        created: new Date().toISOString(),
+                        updated: new Date().toISOString()
+                    },
+                    {
+                        id: this.requestIdCounter++,
+                        title: "Novel immunotherapy approaches for cancer treatment: Phase III trial results",
+                        authors: "Cancer, C.R., Therapy, I.M., Trial, C.L.",
+                        journal: "The Lancet Oncology",
+                        year: "2024",
+                        pmid: "67890123",
+                        doi: "10.1016/S1470-2045(24)00123-4",
+                        nctId: "NCT04567890",
+                        status: "pending",
+                        priority: "urgent",
+                        category: "clinical",
+                        tags: ["immunotherapy", "cancer", "clinical trial", "oncology"],
+                        notes: "Urgent review needed for ongoing clinical protocol development",
+                        created: new Date().toISOString(),
+                        updated: new Date().toISOString()
+                    }
+                ];
+
+                this.requests.push(...demoRequests);
+                this.saveData();
+                this.updateStats();
+                this.renderRequests();
+                this.showNotification('Demo data added successfully!', 'success');
+            }
+
+            // ===== SYSTEM MANAGEMENT =====
+            clearAllData() {
+                if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                    this.requests = [];
+                    this.selectedRequests.clear();
+                    this.saveData();
+                    this.updateStats();
+                    this.renderRequests();
+                    this.showNotification('All data cleared successfully!', 'success');
+                }
+            }
+
+            editRequest(id) {
+                const request = this.requests.find(r => r.id === id);
+                if (request) {
+                    // Switch to add tab and populate form
+                    switchTab('add');
+                    
+                    // Populate form fields
+                    document.getElementById('title').value = request.title || '';
+                    document.getElementById('authors').value = request.authors || '';
+                    document.getElementById('journal').value = request.journal || '';
+                    document.getElementById('year').value = request.year || '';
+                    document.getElementById('pmid').value = request.pmid || '';
+                    document.getElementById('doi').value = request.doi || '';
+                    document.getElementById('nct-id').value = request.nctId || '';
+                    document.getElementById('status').value = request.status || 'pending';
+                    document.getElementById('priority').value = request.priority || 'medium';
+                    document.getElementById('category').value = request.category || '';
+                    document.getElementById('tags').value = request.tags ? request.tags.join(', ') : '';
+                    document.getElementById('notes').value = request.notes || '';
+                    
+                    // Store editing ID for update instead of create
+                    this.editingId = id;
+                    
+                    this.showNotification('Request loaded for editing', 'info');
+                }
+            }
+        }
+
+        // ===== MODULE CLASSES =====
+        class StorageModule {
+            async initialize() {
+                this.storageKey = 'silentstacks_v2_data';
+                console.log('Storage module initialized');
+            }
+
+            async save(key, data) {
+                try {
+                    const storageData = JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+                    storageData[key] = data;
+                    localStorage.setItem(this.storageKey, JSON.stringify(storageData));
+                } catch (error) {
+                    console.error('Storage save failed:', error);
+                    throw error;
+                }
+            }
+
+            async load(key) {
+                try {
+                    const storageData = JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+                    return storageData[key];
+                } catch (error) {
+                    console.error('Storage load failed:', error);
+                    return null;
+                }
+            }
+
+            async clear() {
+                localStorage.removeItem(this.storageKey);
+            }
+        }
+
+        class APIModule {
+            async initialize() {
+                this.baseURLs = {
+                    pubmed: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils',
+                    crossref: 'https://api.crossref.org',
+                    clinicaltrials: 'https://clinicaltrials.gov/api/v2'
+                };
+                this.rateLimit = 2; // requests per second
+                this.timeout = 30000;
+                console.log('API module initialized');
+            }
+
+            async fetchPubMedData(pmid) {
+                // Simulated API call with realistic delay
+                await this.delay(800 + Math.random() * 400);
+                
+                // Return simulated data
+                return {
+                    title: `Simulated PubMed Article for PMID ${pmid}`,
+                    authors: "Demo Author A, Demo Author B, Demo Author C",
+                    journal: "Demo Journal of Science",
+                    year: "2024",
+                    abstract: "This is a simulated abstract from PubMed API...",
+                    doi: `10.1234/demo.${pmid}`
+                };
+            }
+
+            async fetchCrossRefData(doi) {
+                await this.delay(600 + Math.random() * 300);
+                
+                return {
+                    title: `Simulated CrossRef Article for DOI ${doi}`,
+                    authors: "CrossRef Author X, CrossRef Author Y",
+                    journal: "CrossRef Demo Journal",
+                    year: "2024",
+                    publisher: "Demo Publisher"
+                };
+            }
+
+            async fetchClinicalTrialsData(nctId) {
+                await this.delay(1000 + Math.random() * 500);
+                
+                return {
+                    title: `Simulated Clinical Trial ${nctId}`,
+                    status: "Active, recruiting",
+                    phase: "Phase III",
+                    condition: "Demo Medical Condition",
+                    sponsor: "Demo Pharmaceutical Company"
+                };
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        class ValidationModule {
+            async initialize() {
+                console.log('Validation module initialized');
+            }
+
+            validateRequest(data) {
+                return data.title && data.title.trim().length > 0;
+            }
+
+            validatePMID(pmid) {
+                return /^\d{1,8}$/.test(pmid);
+            }
+
+            validateDOI(doi) {
+                return /^10\.\d{4,}\/[^\s]+$/.test(doi);
+            }
+
+            validateNCTID(nctId) {
+                return /^NCT\d{8}$/i.test(nctId);
+            }
+        }
+
+        class ExportModule {
+            async initialize() {
+                console.log('Export module initialized');
+            }
+
+            toCSV(requests) {
+                const headers = ['ID', 'Title', 'Authors', 'Journal', 'Year', 'PMID', 'DOI', 'NCT ID', 'Status', 'Priority', 'Category', 'Tags', 'Notes', 'Created', 'Updated'];
+                
+                const rows = requests.map(r => [
+                    r.id,
+                    this.escapeCsvField(r.title || ''),
+                    this.escapeCsvField(r.authors || ''),
+                    this.escapeCsvField(r.journal || ''),
+                    r.year || '',
+                    r.pmid || '',
+                    r.doi || '',
+                    r.nctId || '',
+                    r.status || '',
+                    r.priority || '',
+                    r.category || '',
+                    this.escapeCsvField(r.tags ? r.tags.join('; ') : ''),
+                    this.escapeCsvField(r.notes || ''),
+                    r.created || '',
+                    r.updated || ''
+                ]);
+
+                return [headers, ...rows].map(row => row.join(',')).join('\n');
+            }
+
+            toJSON(requests) {
+                return JSON.stringify(requests, null, 2);
+            }
+
+            async import(file) {
+                const text = await this.readFile(file);
+                const extension = file.name.split('.').pop().toLowerCase();
+
+                switch (extension) {
+                    case 'json':
+                        return JSON.parse(text);
+                    case 'csv':
+                        return this.parseCSV(text);
+                    default:
+                        throw new Error(`Unsupported file format: ${extension}`);
+                }
+            }
+
+            readFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsText(file);
+                });
+            }
+
+            parseCSV(text) {
+                const lines = text.split('\n').filter(line => line.trim());
+                if (lines.length < 2) return [];
+
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                const data = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const values = this.parseCSVLine(lines[i]);
+                    if (values.length === headers.length) {
+                        const item = {};
+                        headers.forEach((header, index) => {
+                            const key = this.normalizeHeader(header);
+                            item[key] = values[index].replace(/"/g, '').trim();
+                        });
+                        data.push(item);
+                    }
+                }
+
+                return data;
+            }
+
+            parseCSVLine(line) {
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                values.push(current);
+                return values;
+            }
+
+            normalizeHeader(header) {
+                const mapping = {
+                    'id': 'id',
+                    'title': 'title',
+                    'authors': 'authors',
+                    'journal': 'journal',
+                    'year': 'year',
+                    'pmid': 'pmid',
+                    'doi': 'doi',
+                    'nct id': 'nctId',
+                    'status': 'status',
+                    'priority': 'priority',
+                    'category': 'category',
+                    'tags': 'tags',
+                    'notes': 'notes',
+                    'created': 'created',
+                    'updated': 'updated'
+                };
+                
+                return mapping[header.toLowerCase()] || header.toLowerCase().replace(/\s+/g, '');
+            }
+
+            escapeCsvField(field) {
+                if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+                    return `"${field.replace(/"/g, '""')}"`;
+                }
+                return field;
+            }
+        }
+
+        class BulkOperationsModule {
+            async initialize() {
+                console.log('Bulk operations module initialized');
+            }
+
+            async processRequests(requests, operation, progressCallback) {
+                let processed = 0;
+                const total = requests.length;
+                
+                for (const request of requests) {
+                    await this.processRequest(request, operation);
+                    processed++;
+                    if (progressCallback) {
+                        progressCallback(processed, total);
+                    }
+                    await this.delay(50); // Rate limiting
+                }
+                
+                return processed;
+            }
+
+            async processRequest(request, operation) {
+                switch (operation.type) {
+                    case 'status-update':
+                        request.status = operation.value;
+                        request.updated = new Date().toISOString();
+                        break;
+                    case 'priority-update':
+                        request.priority = operation.value;
+                        request.updated = new Date().toISOString();
+                        break;
+                    case 'category-update':
+                        request.category = operation.value;
+                        request.updated = new Date().toISOString();
+                        break;
+                    default:
+                        throw new Error(`Unknown operation: ${operation.type}`);
+                }
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // ===== GLOBAL FUNCTIONS =====
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+
+            // Refresh data for specific tabs
+            if (tabName === 'manage') {
+                app.renderRequests();
+            } else if (tabName === 'bulk') {
+                app.renderRequests();
+            } else if (tabName === 'system') {
+                app.updateModuleStatus();
+            }
+        }
+
+        function filterRequests() {
+            app.renderRequests();
+        }
+
+        // API Testing Functions (Global)
+        function testAPIConnections() {
+            app.testAllAPIs();
+        }
+
+        function testPubMedAPI() {
+            app.testPubMedAPI();
+        }
+
+        function testCrossRefAPI() {
+            app.testCrossRefAPI();
+        }
+
+        function testClinicalTrialsAPI() {
+            app.testClinicalTrialsAPI();
+        }
+
+        function clearAPIResults() {
+            app.clearAPIResults();
+        }
+
+        function updateAPIConfig() {
+            const rateLimit = document.getElementById('rate-limit').value;
+            const timeout = document.getElementById('timeout').value;
+            const retryAttempts = document.getElementById('retry-attempts').value;
+            
+            app.modules.api.rateLimit = parseInt(rateLimit);
+            app.modules.api.timeout = parseInt(timeout);
+            app.modules.api.retryAttempts = parseInt(retryAttempts);
+            
+            app.showNotification('API configuration updated!', 'success');
+        }
+
+        // Bulk Operations Functions (Global)
+        function selectAllRequests() {
+            app.selectAllRequests();
+        }
+
+        function clearSelection() {
+            app.clearSelection();
+        }
+
+        function bulkUpdateStatus(status) {
+            app.bulkUpdateStatus(status);
+        }
+
+        function bulkDelete() {
+            app.bulkDelete();
+        }
+
+        // Export Functions (Global)
+        function exportToCSV() {
+            app.exportToCSV();
+        }
+
+        function exportToJSON() {
+            app.exportToJSON();
+        }
+
+        function exportToExcel() {
+            app.exportToExcel();
+        }
+
+        function exportFiltered() {
+            const
+                        

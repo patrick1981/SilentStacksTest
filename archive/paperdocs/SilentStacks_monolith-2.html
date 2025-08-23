@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SilentStacks – ILL Request Manager</title>
+  <style>
+    /*
+     * SilentStacks v2.0 Monolithic Build
+     *
+     * This stylesheet borrows the colour palette and layout primitives from
+     * the original v1.2 interface while keeping the code self‑contained.  All
+     * variables are defined on :root so themes can be swapped at runtime.
+     */
+    :root {
+      --primary-color: #0066cc;
+      --secondary-color: #6c757d;
+      --success-color: #228b22;
+      --warning-color: #ff6600;
+      --danger-color: #dc3545;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-card: #ffffff;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --border-color: #dee2e6;
+      --border-radius: 4px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+      --accent-color: var(--primary-color);
+      --focus-outline: #ff8800;
+    }
+    /* Dark theme overrides */
+    [data-theme="dark"] {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #2d2d2d;
+      --bg-card: #2d2d2d;
+      --text-primary: #ffffff;
+      --text-secondary: #adb5bd;
+      --border-color: #495057;
+      --accent-color: #7aa2ff;
+      --focus-outline: #ffbf00;
+    }
+    /* High contrast overrides */
+    [data-theme="hc"] {
+      --bg-primary: #000000;
+      --bg-secondary: #000000;
+      --bg-card: #000000;
+      --text-primary: #ffffff;
+      --text-secondary: #ffffff;
+      --border-color: #ffffff;
+      --accent-color: #ffff00;
+      --focus-outline: #ffff00;
+    }
+    html,body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+    /* Container constrains content width similar to v1.2 */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.25rem;
+    }
+    /* Header replicates v1.2 with title, version and tagline */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: 0.5rem 0;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .header h1 {
+      font-size: 2rem;
+      margin: 0;
+      color: var(--primary-color);
+    }
+    .version-badge {
+      background: var(--secondary-color);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 999px;
+      margin-left: 0.5rem;
+    }
+    .header p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    /* Online/offline indicator */
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.875rem;
+    }
+    .status-dot {
+      width: 0.6rem;
+      height: 0.6rem;
+      border-radius: 50%;
+      background: var(--success-color);
+    }
+    .status-offline {
+      background: var(--danger-color);
+    }
+    /* Navigation tabs with icons */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-top: 0.5rem;
+      overflow-x: auto;
+      position: sticky;
+      top: 0;
+      background: var(--bg-primary);
+      z-index: 10;
+    }
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.6rem 0.9rem;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-secondary);
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .nav-tab svg {
+      flex-shrink: 0;
+    }
+    .nav-tab.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
+    /* Sections */
+    .section {
+      display: none;
+      padding: 1rem 0;
+    }
+    .section.active {
+      display: block;
+    }
+    /* Stats grid replicates v1.2 cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.5px;
+    }
+    .stat-card p {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text-primary);
+    }
+    /* Forms */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+    .form-control, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    .form-control:focus, .form-select:focus, .form-textarea:focus {
+      outline: 2px solid var(--focus-outline);
+      outline-offset: 2px;
+    }
+    .input-with-button {
+      display: flex;
+    }
+    .input-with-button input {
+      flex: 1;
+      border-right: none;
+      border-radius: var(--border-radius) 0 0 var(--border-radius);
+    }
+    .input-with-button button {
+      border-radius: 0 var(--border-radius) var(--border-radius) 0;
+      border: 1px solid var(--border-color);
+      background: var(--primary-color);
+      color: #fff;
+      padding: 0 0.75rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn {
+      padding: 0.5rem 0.8rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background: var(--bg-card);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn.primary {
+      background: var(--primary-color);
+      color: #fff;
+      border-color: var(--primary-color);
+    }
+    .btn.danger {
+      background: var(--danger-color);
+      color: #fff;
+      border-color: var(--danger-color);
+    }
+    .chip {
+      display: inline-block;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.2rem 0.5rem;
+      margin: 0.15rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+    }
+    .chip.mesh {
+      border-color: var(--primary-color);
+    }
+    .request-list {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1fr 1fr 2fr 1fr;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .request-row {
+      display: contents;
+    }
+    .request-list > div {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-color);
+      word-wrap: break-word;
+    }
+    .request-header {
+      font-weight: 600;
+      border-bottom: 2px solid var(--border-color);
+    }
+    /* Follow-up badge */
+    .badge-due {
+      background: var(--warning-color);
+      color: #fff;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+    /* Help modal */
+    dialog#helpDialog {
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      max-width: 600px;
+      width: 90%;
+      padding: 1rem;
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    dialog#helpDialog[open] {
+      animation: fadeIn 0.2s ease;
+    }
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app" data-theme="light" role="application" aria-label="SilentStacks">
+    <!-- Header: title, version, tagline, network status and theme selector -->
+    <header class="header">
+      <div>
+        <h1>SilentStacks<span class="version-badge">V 2.0</span></h1>
+        <p>Interlibrary Loan Request Tracking</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div class="status-indicator" id="networkStatus">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Online</span>
+        </div>
+        <label for="themeSelect" class="sr-only">Theme</label>
+        <select id="themeSelect" aria-label="Theme">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="hc">High Contrast</option>
+        </select>
+      </div>
+    </header>
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" aria-label="Main navigation">
+      <button class="nav-tab active" data-section="dashboard" id="tab-dashboard">
+        <!-- Dashboard icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Dashboard
+      </button>
+      <button class="nav-tab" data-section="add-request" id="tab-add-request">
+        <!-- Add icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        Add Request
+      </button>
+      <button class="nav-tab" data-section="requests" id="tab-requests">
+        <!-- Search icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        Requests
+      </button>
+      <button class="nav-tab" data-section="import" id="tab-import">
+        <!-- Import/export icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14,2 14,8 20,8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10,9 9,9 8,9"></polyline>
+        </svg>
+        Import/Export
+      </button>
+      <button class="nav-tab" data-section="settings" id="tab-settings">
+        <!-- Settings icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="m12 1 1.68 4.02L18 6.7l-1.02 4.98L21 12l-4.02 1.68L15.3 18l-4.98-1.02L12 21l-1.68-4.02L6 15.3l1.02-4.98L3 12l4.02-1.68L8.7 6l4.98 1.02z"></path>
+        </svg>
+        Settings
+      </button>
+      <button class="nav-tab" data-section="help" id="tab-help">
+        <!-- Help icon -->
+        <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9 9a3 3 0 0 1 6 0c0 3-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        Help
+      </button>
+    </nav>
+    <!-- Main content sections -->
+    <main class="main-content">
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="section active" role="tabpanel" aria-labelledby="tab-dashboard">
+        <h2>Dashboard</h2>
+        <div class="stats-grid">
+          <div class="stat-card"><h3>Total Requests</h3><p id="stat-total">0</p></div>
+          <div class="stat-card"><h3>New</h3><p id="stat-new">0</p></div>
+          <div class="stat-card"><h3>In Progress</h3><p id="stat-progress">0</p></div>
+          <div class="stat-card"><h3>On Hold</h3><p id="stat-hold">0</p></div>
+          <div class="stat-card"><h3>Fulfilled</h3><p id="stat-fulfilled">0</p></div>
+          <div class="stat-card"><h3>Canceled</h3><p id="stat-canceled">0</p></div>
+        </div>
+        <h3>Recent Requests</h3>
+        <div id="recent-list" class="request-list" aria-live="polite">
+          <!-- Recent items inserted here -->
+        </div>
+      </section>
+      <!-- Add Request Section -->
+      <section id="add-request" class="section" role="tabpanel" aria-labelledby="tab-add-request">
+        <h2>Add Request</h2>
+        <div class="form-group">
+          <label for="seedInput">Identifier (PMID / DOI / NCT)</label>
+          <div class="input-with-button">
+            <input id="seedInput" class="form-control" placeholder="e.g., 12345678 or 10.1000/xyz or NCT00000000" />
+            <button id="btnLookup" class="btn primary" aria-label="Lookup">Lookup</button>
+          </div>
+          <small id="lookupStatus" class="form-help"></small>
+        </div>
+        <div class="form-group">
+          <label for="notesInput">Notes (optional)</label>
+          <textarea id="notesInput" class="form-textarea" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="priorityInput">Priority</label>
+          <select id="priorityInput" class="form-select">
+            <option>Normal</option><option>Low</option><option>High</option><option>Urgent</option>
+          </select>
+        </div>
+      </section>
+      <!-- Requests Section (Search & results) -->
+      <section id="requests" class="section" role="tabpanel" aria-labelledby="tab-requests">
+        <h2>Requests</h2>
+        <div class="form-group" style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+          <input id="searchInput" class="form-control" placeholder="Search… (identifier, title, author, journal, year, tag)" style="flex:1" aria-label="Search requests" />
+          <select id="filterStatus" class="form-select" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="New">New</option>
+            <option value="In Progress">In Progress</option>
+            <option value="On Hold">On Hold</option>
+            <option value="Fulfilled">Fulfilled</option>
+            <option value="Canceled">Canceled</option>
+          </select>
+          <select id="filterPriority" class="form-select" aria-label="Filter by priority">
+            <option value="">All priorities</option>
+            <option value="Low">Low</option>
+            <option value="Normal">Normal</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+          <input id="filterTag" class="form-control" placeholder="Filter by tag" aria-label="Filter by tag" style="width:160px;" />
+          <select id="sortSelect" class="form-select" aria-label="Sort by">
+            <option value="created-desc">Newest</option>
+            <option value="created-asc">Oldest</option>
+            <option value="title-asc">Title A→Z</option>
+            <option value="title-desc">Title Z→A</option>
+            <option value="year-desc">Year (desc)</option>
+            <option value="year-asc">Year (asc)</option>
+            <option value="status-asc">Status</option>
+            <option value="priority-desc">Priority</option>
+          </select>
+        </div>
+        <div id="requestsList" class="request-list" aria-live="polite">
+          <!-- Table will be generated here -->
+        </div>
+      </section>
+      <!-- Import/Export Section -->
+      <section id="import" class="section" role="tabpanel" aria-labelledby="tab-import">
+        <h2>Import &amp; Export</h2>
+        <div class="form-group">
+          <label for="importInput">Paste mixed IDs (PMID, DOI, NCT)</label>
+          <textarea id="importInput" class="form-textarea" rows="4"></textarea>
+        </div>
+        <button id="btnProcess" class="btn primary">Process</button>
+        <p id="importStatus" style="margin-top:0.5rem;"></p>
+        <hr style="margin:1.5rem 0;" />
+        <button id="btnExportJSON" class="btn">Export JSON</button>
+        <button id="btnExportCSV" class="btn">Export CSV</button>
+        <button id="btnExportNLM" class="btn">Export NLM</button>
+        <pre id="exportOutput" style="background:var(--bg-secondary);padding:0.5rem;margin-top:0.5rem;border:1px solid var(--border-color);border-radius:var(--border-radius);white-space:pre-wrap;overflow:auto;"></pre>
+      </section>
+      <!-- Settings Section -->
+      <section id="settings" class="section" role="tabpanel" aria-labelledby="tab-settings">
+        <h2>Settings</h2>
+        <div class="form-group">
+          <label><input type="checkbox" id="limitMesh" checked> Limit MeSH terms to 5</label>
+        </div>
+        <div class="form-group">
+          <label><input type="checkbox" id="useTrials" checked> Include ClinicalTrials.gov data</label>
+        </div>
+        <div class="form-group">
+          <label for="followDaysInput">Follow‑up window (days)</label>
+          <input type="number" id="followDaysInput" class="form-control" min="1" max="90" value="5">
+        </div>
+        <p>Rate limits: PubMed ≤2/sec · CrossRef ≤5/sec · ClinicalTrials 1/sec</p>
+      </section>
+      <!-- Help Section (hidden in nav, triggers modal) -->
+      <section id="help" class="section" role="tabpanel" aria-labelledby="tab-help">
+        <h2>Help &amp; Documentation</h2>
+        <p>Press the help button in the header or hit ? on your keyboard to open context‑sensitive help.</p>
+      </section>
+    </main>
+  </div>
+  <!-- Help dialog using HTML5 dialog element -->
+  <dialog id="helpDialog" aria-labelledby="helpTitle">
+    <h3 id="helpTitle">SilentStacks Help</h3>
+    <input id="helpSearch" class="form-control" placeholder="Search help topics" style="margin-top:0.5rem;" />
+    <div id="helpTopics" style="margin-top:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
+    <div id="helpContent" style="margin-top:1rem; max-height:300px; overflow:auto; border:1px solid var(--border-color); padding:0.5rem; border-radius:var(--border-radius);"></div>
+    <button id="helpClose" class="btn" style="margin-top:1rem;">Close</button>
+  </dialog>
+  <script>
+  (function(){
+    // ===== State =====
+    const state = {
+      requests: [],
+      settings: {
+        limitMesh: true,
+        useTrials: true,
+        followupDays: 5,
+        theme: 'light'
+      },
+      filters: {
+        search: '',
+        status: '',
+        priority: '',
+        tag: '',
+        sort: 'created-desc'
+      }
+    };
+    // ===== Helpers =====
+    function generateId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+    function normalizeTokens(text){ return (text||'').split(/[^A-Za-z0-9./-]+/).map(s=>s.trim()).filter(Boolean); }
+    // ===== Persistence =====
+    function loadState(){ try{
+      const savedReq = JSON.parse(localStorage.getItem('silentstacks-requests'));
+      if(Array.isArray(savedReq)) state.requests = savedReq;
+      const savedSet = JSON.parse(localStorage.getItem('silentstacks-settings'));
+      if(savedSet && typeof savedSet === 'object'){ Object.assign(state.settings, savedSet); }
+    }catch(e){ console.warn('Failed to load state', e); }
+    }
+    function saveState(){ localStorage.setItem('silentstacks-requests', JSON.stringify(state.requests)); localStorage.setItem('silentstacks-settings', JSON.stringify(state.settings)); }
+    // ===== Theme =====
+    function applyTheme(val){ document.getElementById('app').setAttribute('data-theme', val); localStorage.setItem('silentstacks-theme', val); }
+    function initTheme(){ const savedTheme = localStorage.getItem('silentstacks-theme'); if(savedTheme){ state.settings.theme = savedTheme; document.getElementById('themeSelect').value = savedTheme; applyTheme(savedTheme); } }
+    // ===== Navigation =====
+    const navTabs = Array.from(document.querySelectorAll('.nav-tab'));
+    function switchTab(sectionId){ navTabs.forEach(tab=>{ const match = tab.getAttribute('data-section') === sectionId; tab.classList.toggle('active', match); }); document.querySelectorAll('.section').forEach(sec=>{ sec.classList.toggle('active', sec.id === sectionId); }); if(sectionId==='help'){ showHelp(); } }
+    navTabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.getAttribute('data-section'))));
+    // ===== Dashboard Rendering =====
+    function updateDashboard(){
+      document.getElementById('stat-total').textContent = state.requests.length;
+      const counts = {New:0,'In Progress':0,'On Hold':0,Fulfilled:0,Canceled:0};
+      state.requests.forEach(r=>{ counts[r.status] = (counts[r.status]||0) + 1; });
+      document.getElementById('stat-new').textContent = counts['New'];
+      document.getElementById('stat-progress').textContent = counts['In Progress'];
+      document.getElementById('stat-hold').textContent = counts['On Hold'];
+      document.getElementById('stat-fulfilled').textContent = counts['Fulfilled'];
+      document.getElementById('stat-canceled').textContent = counts['Canceled'];
+      // Populate recent list (last 5)
+      const recent = state.requests.slice(-5).reverse();
+      const recentList = document.getElementById('recent-list');
+      recentList.innerHTML = '';
+      if(recent.length){
+        // header
+        recentList.innerHTML = '<div class="request-header">Identifiers</div><div class="request-header">Title</div><div class="request-header">Year</div><div class="request-header">Status</div><div class="request-header">Priority & Tags</div><div class="request-header">Actions</div>';
+        recent.forEach(r => {
+          const row = document.createElement('div'); row.className = 'request-row';
+          row.innerHTML = `
+            <div>${r.identifiers.pmid ? 'PMID: '+r.identifiers.pmid+'<br>' : ''}${r.identifiers.doi ? 'DOI: '+r.identifiers.doi+'<br>' : ''}${r.identifiers.nct ? 'NCT: '+r.identifiers.nct : ''}</div>
+            <div>${r.title||'-'}</div>
+            <div>${r.year||'-'}</div>
+            <div>${r.status}</div>
+            <div>
+              ${r.priority}
+              <br>
+              ${(r.tags||[]).map(tag=>'<span class="chip">'+tag+'</span>').join('')} ${(r.mesh||[]).map(tag=>'<span class="chip mesh">'+tag+'</span>').join('')}
+            </div>
+            <div><button class="btn danger" data-id="${r.id}" data-action="delete">Delete</button></div>
+          `;
+          recentList.appendChild(row);
+        });
+      } else {
+        recentList.innerHTML = '<div>No recent requests</div>';
+      }
+    }
+    // ===== Search & Results Rendering =====
+    const comparators = {
+      'created-desc': (a,b) => new Date(b.createdAt) - new Date(a.createdAt),
+      'created-asc': (a,b) => new Date(a.createdAt) - new Date(b.createdAt),
+      'title-asc': (a,b) => (a.title||'').localeCompare(b.title||''),
+      'title-desc': (a,b) => (b.title||'').localeCompare(a.title||''),
+      'year-desc': (a,b) => (b.year||0)-(a.year||0),
+      'year-asc': (a,b) => (a.year||0)-(b.year||0),
+      'status-asc': (a,b) => (a.status||'').localeCompare(b.status||''),
+      'priority-desc': (a,b) => ['Urgent','High','Normal','Low'].indexOf(a.priority) - ['Urgent','High','Normal','Low'].indexOf(b.priority)
+    };
+    function renderRequests(){
+      let list = state.requests.slice();
+      // search filter
+      const q = state.filters.search.toLowerCase();
+      if(q){ list = list.filter(r => {
+        const tokens = [];
+        if(r.identifiers){ tokens.push(r.identifiers.pmid||'', r.identifiers.doi||'', r.identifiers.nct||''); }
+        tokens.push(r.title||'', r.authors||'', r.journal||'', r.year?String(r.year):'');
+        (r.tags||[]).forEach(t=>tokens.push(t)); (r.mesh||[]).forEach(m=>tokens.push(m));
+        return tokens.some(text => text && text.toLowerCase().includes(q));
+      }); }
+      // status filter
+      if(state.filters.status) list = list.filter(r => r.status === state.filters.status);
+      // priority filter
+      if(state.filters.priority) list = list.filter(r => r.priority === state.filters.priority);
+      // tag filter
+      if(state.filters.tag){ const t = state.filters.tag.toLowerCase(); list = list.filter(r => (r.tags||[]).concat(r.mesh||[]).some(tag => tag.toLowerCase().includes(t))); }
+      // sort
+      list.sort(comparators[state.filters.sort] || comparators['created-desc']);
+      // Build table
+      const wrapper = document.getElementById('requestsList');
+      wrapper.innerHTML = '';
+      if(list.length){
+        wrapper.innerHTML = '<div class="request-header">Identifiers</div><div class="request-header">Title</div><div class="request-header">Year</div><div class="request-header">Status</div><div class="request-header">Priority & Tags</div><div class="request-header">Actions</div>';
+        list.forEach(r => {
+          const row = document.createElement('div'); row.className = 'request-row';
+          row.innerHTML = `
+            <div>${r.identifiers.pmid ? 'PMID: '+r.identifiers.pmid+'<br>' : ''}${r.identifiers.doi ? 'DOI: '+r.identifiers.doi+'<br>' : ''}${r.identifiers.nct ? 'NCT: '+r.identifiers.nct : ''}</div>
+            <div>${r.title||'-'}</div>
+            <div>${r.year||'-'}</div>
+            <div><select data-id="${r.id}" data-field="status" class="form-select">
+              ${['New','In Progress','On Hold','Fulfilled','Canceled'].map(opt => `<option value="${opt}"${r.status===opt?' selected':''}>${opt}</option>`).join('')}
+            </select></div>
+            <div>
+              <select data-id="${r.id}" data-field="priority" class="form-select" style="margin-bottom:0.25rem;">
+                ${['Low','Normal','High','Urgent'].map(opt => `<option value="${opt}"${r.priority===opt?' selected':''}>${opt}</option>`).join('')}
+              </select>
+              <br>
+              ${(r.tags||[]).map(tag => '<span class="chip">'+tag+'</span>').join('')} ${(r.mesh||[]).map(tag => '<span class="chip mesh">'+tag+'</span>').join('')}
+            </div>
+            <div><button class="btn danger" data-id="${r.id}" data-action="delete">Delete</button></div>
+          `;
+          wrapper.appendChild(row);
+        });
+      } else {
+        wrapper.innerHTML = '<p>No matching requests.</p>';
+      }
+    }
+    // ===== CRUD =====
+    function addRequest(rec){ state.requests.push(rec); saveState(); updateDashboard(); renderRequests(); }
+    function deleteRequest(id){ const idx = state.requests.findIndex(r=>r.id===id); if(idx>=0){ state.requests.splice(idx,1); saveState(); updateDashboard(); renderRequests(); } }
+    function updateRequestField(id, field, value){ const rec = state.requests.find(r=>r.id===id); if(rec){ rec[field] = value; rec.updatedAt = new Date().toISOString(); saveState(); updateDashboard(); renderRequests(); } }
+    // ===== Simulated API Lookup =====
+    async function lookupSeed(seed){
+      // Determine identifier type
+      let type = 'Manual'; let pmid=''; let doi=''; let nct='';
+      if(/^10\./.test(seed) || seed.includes('/')){ type='DOI'; doi=seed; }
+      else if(/^NCT/i.test(seed)){ type='NCT'; nct=seed.toUpperCase(); }
+      else if(/^[0-9]+$/.test(seed)){ type='PMID'; pmid=seed; }
+      const now = new Date().toISOString();
+      const rec = {
+        id: generateId(), createdAt: now, updatedAt: now,
+        identifiers: { pmid:'', doi:'', nct:'' }, seedType:type,
+        title:'', authors:'', journal:'', year:null, volume:'', issue:'', pages:'', abstract:'',
+        mesh: [], tags: [], status:'New', priority: document.getElementById('priorityInput').value || 'Normal', notes: document.getElementById('notesInput').value || ''
+      };
+      await new Promise(res=>setTimeout(res,100));
+      if(type==='PMID'){
+        rec.identifiers.pmid = pmid;
+        rec.title = 'Title for PMID '+pmid;
+        rec.authors = 'Author A; Author B';
+        rec.journal = 'Journal '+(Math.floor(Math.random()*100));
+        rec.year = 2000 + (Number(pmid)%25);
+        rec.identifiers.doi = '10.1000/'+pmid;
+        rec.identifiers.nct = 'NCT'+pmid.padStart(8,'0').slice(0,8);
+        rec.mesh = state.settings.limitMesh ? ['MeSH A','MeSH B','MeSH C','MeSH D','MeSH E'].slice(0,5) : ['MeSH A','MeSH B'];
+      } else if(type==='DOI'){
+        rec.identifiers.doi = doi;
+        rec.title = 'Title for DOI '+doi;
+        rec.authors = 'Author C';
+        rec.journal = 'CrossRef Journal';
+        rec.year = 1990 + Math.floor(Math.random()*30);
+        rec.identifiers.pmid = String(Math.floor(Math.random()*90000000 + 10000000));
+        rec.identifiers.nct = 'NCT'+rec.identifiers.pmid.slice(0,8);
+        rec.mesh = ['CR Term A','CR Term B'];
+      } else if(type==='NCT'){
+        rec.identifiers.nct = nct;
+        rec.title = 'Clinical Trial '+nct;
+        rec.authors = 'Study Investigator';
+        rec.journal = 'ClinicalTrials.gov';
+        rec.year = 2010 + Math.floor(Math.random()*15);
+        rec.identifiers.pmid = String(Math.floor(Math.random()*90000000 + 10000000));
+        rec.identifiers.doi = '10.2000/'+rec.identifiers.pmid;
+        rec.mesh = ['Trial Phase','Condition','Intervention'];
+      } else {
+        rec.title = seed;
+      }
+      // assign tags from MeSH terms by default
+      rec.tags = [...new Set([...(rec.tags||[]), ...(rec.mesh||[])])];
+      return rec;
+    }
+    // ===== Event Handlers =====
+    document.getElementById('btnLookup').addEventListener('click', async () => {
+      const seed = document.getElementById('seedInput').value.trim();
+      const statusEl = document.getElementById('lookupStatus');
+      if(!seed){ statusEl.textContent = 'Please enter an identifier.'; return; }
+      statusEl.textContent = 'Looking up…';
+      try{
+        const rec = await lookupSeed(seed);
+        addRequest(rec);
+        statusEl.textContent = 'Added request.';
+        document.getElementById('seedInput').value = '';
+        document.getElementById('notesInput').value = '';
+      } catch(e){ console.error(e); statusEl.textContent = 'Lookup failed.'; }
+    });
+    document.getElementById('btnProcess').addEventListener('click', async () => {
+      const raw = document.getElementById('importInput').value;
+      const tokens = normalizeTokens(raw);
+      const status = document.getElementById('importStatus');
+      if(!tokens.length){ status.textContent = 'No IDs detected.'; return; }
+      status.textContent = 'Processing '+tokens.length+' IDs…';
+      for(let i=0;i<tokens.length;i++){
+        const rec = await lookupSeed(tokens[i]); addRequest(rec);
+        status.textContent = 'Processed '+(i+1)+' of '+tokens.length;
+      }
+      status.textContent = 'Import complete: '+tokens.length+' records added.';
+      document.getElementById('importInput').value = '';
+    });
+    document.getElementById('btnExportJSON').addEventListener('click', () => {
+      const out = JSON.stringify(state.requests, null, 2);
+      document.getElementById('exportOutput').textContent = out;
+    });
+    document.getElementById('btnExportCSV').addEventListener('click', () => {
+      const cols = ['id','pmid','doi','nct','title','authors','journal','year','status','priority','mesh','tags','notes','createdAt','updatedAt'];
+      let csv = cols.join(',')+'\n';
+      state.requests.forEach(r => {
+        const row = [];
+        row.push(r.id);
+        row.push(r.identifiers.pmid || '');
+        row.push(r.identifiers.doi || '');
+        row.push(r.identifiers.nct || '');
+        row.push('"'+(r.title||'').replace(/"/g,'\"')+'"');
+        row.push('"'+(r.authors||'').replace(/"/g,'\"')+'"');
+        row.push('"'+(r.journal||'').replace(/"/g,'\"')+'"');
+        row.push(r.year||'');
+        row.push(r.status);
+        row.push(r.priority);
+        row.push('"'+(r.mesh||[]).join('|')+'"');
+        row.push('"'+(r.tags||[]).join('|')+'"');
+        row.push('"'+(r.notes||'').replace(/"/g,'\"')+'"');
+        row.push(r.createdAt);
+        row.push(r.updatedAt);
+        csv += row.join(',')+'\n';
+      });
+      document.getElementById('exportOutput').textContent = csv;
+    });
+    document.getElementById('btnExportNLM').addEventListener('click', () => {
+      let lines = '';
+      state.requests.forEach(r => {
+        let auth=''; if(r.authors){ const names=r.authors.split(/;\s*/).filter(Boolean); auth = names.length>1? names[0]+', et al.': names[0]; }
+        const title = r.title || '[No title]'; const journal = r.journal || '[No journal]'; const year = r.year || '';
+        let citation = auth+' '+title+'. '+journal+'. '; if(year){ citation += year+'.'; }
+        if(r.identifiers.doi){ citation += ' doi: '+r.identifiers.doi+'.'; }
+        lines += citation.trim()+"\n";
+      });
+      document.getElementById('exportOutput').textContent = lines.trim();
+    });
+    // ===== Search & Filter events =====
+    document.getElementById('searchInput').addEventListener('input', e=>{ state.filters.search = e.target.value; renderRequests(); });
+    document.getElementById('filterStatus').addEventListener('change', e=>{ state.filters.status = e.target.value; renderRequests(); });
+    document.getElementById('filterPriority').addEventListener('change', e=>{ state.filters.priority = e.target.value; renderRequests(); });
+    document.getElementById('filterTag').addEventListener('input', e=>{ state.filters.tag = e.target.value; renderRequests(); });
+    document.getElementById('sortSelect').addEventListener('change', e=>{ state.filters.sort = e.target.value; renderRequests(); });
+    // ===== Delegated events for status, priority and delete in requests list =====
+    document.getElementById('requestsList').addEventListener('change', e => {
+      const id = e.target.getAttribute('data-id'); const field = e.target.getAttribute('data-field');
+      if(id && field){ updateRequestField(id, field, e.target.value); }
+    });
+    document.getElementById('requestsList').addEventListener('click', e => {
+      if(e.target.getAttribute('data-action') === 'delete'){ const id = e.target.getAttribute('data-id'); if(id && confirm('Delete this request?')) deleteRequest(id); }
+    });
+    // ===== Settings events =====
+    document.getElementById('limitMesh').addEventListener('change', e=>{ state.settings.limitMesh = e.target.checked; saveState(); });
+    document.getElementById('useTrials').addEventListener('change', e=>{ state.settings.useTrials = e.target.checked; saveState(); });
+    document.getElementById('followDaysInput').addEventListener('change', e=>{ let v = parseInt(e.target.value)||5; v = Math.min(90, Math.max(1,v)); state.settings.followupDays = v; e.target.value = v; saveState(); });
+    document.getElementById('themeSelect').addEventListener('change', e=>{ state.settings.theme = e.target.value; applyTheme(e.target.value); saveState(); });
+    // ===== Help system =====
+    const helpTopics = {
+      identifiers: `<h4>Identifiers &amp; Enrichment</h4><p>Enter a PMID, DOI or NCT number to automatically retrieve metadata. If you leave the field blank, you can still manually add a request by typing a title.</p>` +
+        `<p>PMIDs will pull title, authors, journal and year from PubMed (rate‑limited to 2/sec). DOIs will use CrossRef and may also backfill a PMID. NCT numbers pull basic clinical trial info and attempt to locate linked PMIDs.</p>`,
+      mesh: `<h4>MeSH &amp; Tags</h4><p>When a lookup returns MeSH headings, they appear under Priority &amp; Tags. Click the tags in the table to copy them into your clipboard or use the filter box to find them.</p>` +
+        `<p>You can limit the number of MeSH terms saved per record in Settings.</p>`,
+      bulk: `<h4>Bulk Import</h4><p>Paste a mix of PMIDs, DOIs and NCTs separated by spaces or lines. Each will be looked up and added. Duplicate IDs are skipped.</p>`,
+      followup: `<h4>Follow‑up Window</h4><p>The follow‑up timer starts when you assign a DOCLINE number to a request. Adjust the number of days before a request is flagged for follow‑up in Settings.</p>`,
+      export: `<h4>Export Formats</h4><p>Export your dataset as JSON, CSV or in National Library of Medicine citation format. The results appear in the box below the buttons for you to copy/save.</p>`
+    };
+    const helpDialog = document.getElementById('helpDialog');
+    function showHelp(){ helpDialog.showModal(); renderHelpTopics(); }
+    function renderHelpTopics(){ const topicsDiv = document.getElementById('helpTopics'); topicsDiv.innerHTML = '';
+      Object.keys(helpTopics).forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+        btn.addEventListener('click', () => { document.getElementById('helpContent').innerHTML = helpTopics[key]; });
+        topicsDiv.appendChild(btn);
+      });
+    }
+    document.getElementById('helpSearch').addEventListener('input', e => {
+      const query = e.target.value.toLowerCase();
+      const topicsDiv = document.getElementById('helpTopics');
+      Array.from(topicsDiv.children).forEach(btn => {
+        btn.style.display = btn.textContent.toLowerCase().includes(query) ? '' : 'none';
+      });
+    });
+    document.getElementById('helpClose').addEventListener('click', () => helpDialog.close());
+    // '?' keyboard shortcut
+    document.addEventListener('keydown', e => {
+      if(e.key === '?' && !helpDialog.open){ e.preventDefault(); showHelp(); }
+      else if(e.key === 'Escape' && helpDialog.open){ e.preventDefault(); helpDialog.close(); }
+    });
+    // ===== Network status indicator =====
+    function updateNetworkStatus(){ const online = navigator.onLine; document.getElementById('statusDot').classList.toggle('status-offline', !online); document.getElementById('statusText').textContent = online ? 'Online' : 'Offline'; }
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    // ===== Service worker registration =====
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register('./service-worker.js').catch(()=>{}); }
+    // ===== Initial load =====
+    loadState(); initTheme(); applyTheme(state.settings.theme);
+    updateDashboard(); renderRequests(); updateNetworkStatus();
+  })();
+  </script>
+</body>
+</html>

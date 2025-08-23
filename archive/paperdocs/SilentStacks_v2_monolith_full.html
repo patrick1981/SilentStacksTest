@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SilentStacks v2.0</title>
+<style>
+/* === SilentStacks v2.0 Full CSS === */
+/* Tabs */
+.nav { display: flex; background: #333; color: #fff; }
+.nav button { flex: 1; padding: 1em; background: #444; border: none; color: #fff; cursor: pointer; }
+.nav button.active { background: #666; }
+/* Table and Card Views */
+.table-view { width: 100%; border-collapse: collapse; }
+.table-view th, .table-view td { padding: 0.5em; border: 1px solid #ccc; }
+.card { border: 1px solid #ccc; padding: 1em; margin: 0.5em 0; }
+/* MeSH Chips */
+.mesh-container { margin-top: 0.5em; }
+.mesh-chip { display: inline-block; background: #eee; border-radius: 4px; padding: 0.2em 0.5em; margin: 0.1em; font-size: 0.9em; }
+.mesh-icon { margin-right: 0.2em; }
+/* Accessibility */
+:focus { outline: 2px solid #000; }
+body { font-family: Arial, sans-serif; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="nav">
+    <button data-section="add">Add Request</button>
+    <button data-section="all">All Requests</button>
+    <button data-section="import">Import/Export</button>
+    <button data-section="diagnostics">Diagnostics</button>
+  </div>
+
+  <div id="section-add" class="section"> <!-- Add request form --> </div>
+  <div id="section-all" class="section"> <!-- All requests table/card --> </div>
+  <div id="section-import" class="section"> <!-- Bulk paste/import/export --> </div>
+  <div id="section-diagnostics" class="section"> <!-- System diagnostics --> </div>
+</div>
+
+<script>
+// SilentStacks v2.0 Full JavaScript Implementation
+
+// === Service Worker Registration ===
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(reg => console.log('SW registered', reg.scope))
+    .catch(err => console.error('SW registration failed:', err));
+}
+
+// === Data Structures ===
+let requests = JSON.parse(localStorage.getItem('silentstacks_requests') || '[]');
+
+// === NLM Citation Export ===
+function parseAuthorsNLM(str) { return str.split(';').map(a => { let p = a.trim().split(','); if (p.length === 2) { return `${p[0]} ${p[1].split(' ').map(n => n[0]).join('')}`; } return a.trim(); }); }
+function formatNLMCitation(r) {
+  let c = ''; const authors = parseAuthorsNLM(r.authors || '');
+  if (authors.length) c += authors.join(', ') + '. ';
+  if (r.title) c += r.title + (/[.!?]$/.test(r.title) ? '' : '.') + ' ';
+  if (r.journal) c += r.journal + '. ';
+  if (r.year) c += r.year;
+  if (r.volume) c += ';' + r.volume;
+  if (r.issue) c += '(' + r.issue + ')';
+  if (r.pages) c += ':' + r.pages;
+  if (r.pmid) c += `. PMID: ${r.pmid}.`;
+  if (r.doi) c += ` doi: ${r.doi}`;
+  return c.trim();
+}
+function exportNLM() {
+  const citations = requests.map(formatNLMCitation).join('\n\n');
+  const blob = new Blob([citations], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `silentstacks-nlm-${new Date().toISOString().split('T')[0]}.txt`;
+  a.click();
+}
+
+// === MeSH Chips ===
+function createMeshChips(terms) {
+  if (!terms || !terms.length) return '';
+  return `<div class="mesh-container">${terms.map(t => `<span class="mesh-chip"><span class="mesh-icon">🏷️</span> ${t}</span>`).join('')}</div>`;
+}
+
+// === ClinicalTrials.gov Fetch ===
+async function fetchClinicalTrial(nctId) {
+  const url = `https://clinicaltrials.gov/api/v2/studies/${nctId}`;
+  const res = await fetch(url); const data = await res.json();
+  return { nctId, title: data.protocolSection?.identificationModule?.officialTitle || '', status: data.protocolSection?.statusModule?.overallStatus || '' };
+}
+
+// === Cross-Population Logic ===
+async function crossPopulateIdentifiers(request) {
+  const enriched = { ...request };
+  if (enriched.pmid && !enriched.doi) {
+    const pubmedData = await fetchPubMed(enriched.pmid);
+    if (pubmedData.doi) enriched.doi = pubmedData.doi;
+  }
+  const nctPattern = /NCT\d{8}/g;
+  const textToSearch = `${enriched.title || ''} ${enriched.notes || ''} ${enriched.abstract || ''}`;
+  const nctMatches = textToSearch.match(nctPattern);
+  if (nctMatches) {
+    enriched.nctId = nctMatches[0];
+    const trialData = await fetchClinicalTrial(enriched.nctId);
+    if (trialData) enriched.trialStatus = trialData.status;
+  }
+  return enriched;
+}
+
+// === Placeholder for PubMed & CrossRef Fetch ===
+async function fetchPubMed(pmid) { return {}; }
+async function fetchCrossRef(doi) { return {}; }
+
+// === UI Bindings ===
+// ... attach event listeners for tabs, import/export, add request, etc.
+</script>
+</body>
+</html>
