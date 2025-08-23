@@ -1,3 +1,19 @@
+| Date       | P0 Failure                                                    | Impact                                | Corrective Action                                            |
+| ---------- | ------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------ |
+| 2025-08-12 | v2.0 catastrophic failure: **CORS blocked CT.gov enrichment** | API broke; system non-functional.     | Removed CT.gov enrichment; pivoted to NCT linkout.           |
+| 2025-08-12 | **Service Worker instability**                                | Offline unreliable; cache corruption. | SW simplified to cache shell only; background sync deferred. |
+| 2025-08-13 | **Bulk ops unbounded**                                        | Browser crash risk.                   | Enforced ≤50k cutoff; queue + throttle.                      |
+| 2025-08-14 | **Job loss on crash/network**                                 | Librarian work lost.                  | Implemented IndexedDB checkpoint/resume.                     |
+| 2025-08-15 | **Dirty rows silently dropped**                               | Data integrity risk; lost requests.   | Forced `"n/a"` fillers; dirty rows highlighted; export path. |
+| 2025-08-16 | **Commit logic unclear**                                      | Ambiguity in librarian workflows.     | Added Commit Clean / Commit All toggle.                      |
+| 2025-08-16 | **Exports not re-import safe**                                | Round-trip failures.                  | Enforced canonical headers + `"n/a"` + strict NLM format.    |
+| 2025-08-17 | **Accessibility below AAA**                                   | Risk of non-adoption.                 | Elevated AAA to P0; Playbook matrix tracks compliance.       |
+| 2025-08-18 | **Header drift**                                              | Schema inconsistencies across docs.   | Locked canonical headers + Playbook enforcement.             |
+| 2025-08-19 | **Worst-case scenarios non-canonical**                        | Risk of regression.                   | Created dedicated Worst-Case doc + Playbook linkage.         |
+| 2025-08-20 | **Docs drift (Playbook vs GAP)**                              | Mismatched governance.                | Unified Playbook; embedded GAP with live TOC.                |
+
+---
+
 | #  | Date       | Order (approx.)       | Gate / Step           | P0 Failure Event            | What Happened                                                        | Status / Corrective Action              |
 | -- | ---------- | --------------------- | --------------------- | --------------------------- | -------------------------------------------------------------------- | --------------------------------------- |
 | 1  | 2025-08-22 | T+0 (session start)   | Wind-Down / Step G    | Inline docs missing         | Playbook, SOP, Continuity, Gate 0 *listed* instead of printed inline | ✅ Canon enforced: inline = display      |
