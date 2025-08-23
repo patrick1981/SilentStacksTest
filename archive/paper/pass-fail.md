@@ -1,3 +1,5 @@
+2.1 gate failure rate over 6 sessions 
+
 | Session   | P0 Failures | Total Checks | Passes | Pass Rate (%) |
 | --------- | ----------- | ------------ | ------ | ------------- |
 | Session 1 | 7           | 25           | 18     | 72.00         |
