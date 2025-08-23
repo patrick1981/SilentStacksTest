@@ -24,3 +24,12 @@
 | 2025-08-19 | Worst-case scenarios doc (40 cases) created; Playbook linked. | `Worst_Case_Scenarios.md`                                     |
 | 2025-08-20 | GAP Report embedded in Playbook.                              | `Playbook_v2.1.md`                                            |
 | 2025-08-21 | Peer-review article + case study prepared.                    | `Conference_Case_Study_v2.1.md`, `PeerReview_Article_v2.1.md` |
+
+| Gate                                       | Enforcement Trigger                                                       | Date First Applied                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Gate 0** (Operational Stability)         | On session reset or ZIP upload, restore canon + run Upload Audit.         | 2025-08-20 (re-affirmed after interpreter restarts). |
+| **Gate 1** (Baseline Canon)                | CSV-only, CORS-safe, PubMed/Crossref-only, no CT.gov.                     | 2025-08-20–23.                                       |
+| **Gate 2** (Completeness & Manifest)       | Docs carry live TOCs; 10-col schema required; Bulk Parser present.        | 2025-08-22–23.                                       |
+| **Gate 3** (Regression Matrix)             | P0 Benchmarks must pass: data flow, offline-first, AAA, export integrity. | 2025-08-23.                                          |
+| **Gate 4** (Concurrency & Final Packaging) | Playbook print/approve first; packaging last.                             | 2025-08-20 fix.                                      |
+
