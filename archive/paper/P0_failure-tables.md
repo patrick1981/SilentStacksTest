@@ -1,3 +1,90 @@
+2.1 gate failure rate over 6 sessions 
+
+| Session   | P0 Failures | Total Checks | Passes | Pass Rate (%) |
+| --------- | ----------- | ------------ | ------ | ------------- |
+| Session 1 | 7           | 25           | 18     | 72.00         |
+| Session 2 | 3           | 22           | 19     | 86.36         |
+| Session 3 | 5           | 24           | 19     | 79.17         |
+| Session 4 | 2           | 20           | 18     | 90.00         |
+| Session 5 | 1           | 18           | 17     | 94.44         |
+| Session 6 | 2           | 21           | 19     | 90.48         |
+
+---
+
+# 🕒 SilentStacks v2.1 — P0 Failure Timeline (This Session)
+
+| Order | Gate / Step           | P0 Failure Event        | Description of What Happened                                            | Severity        | Logged / Corrective Action                               |
+| ----- | --------------------- | ----------------------- | ----------------------------------------------------------------------- | --------------- | -------------------------------------------------------- |
+| 1     | Wind-Down / Step G    | Inline docs missing     | Playbook, SOP, Continuity, Gate 0 were listed instead of printed inline | P0              | Canon updated: inline = display; chunked streaming print |
+| 2     | Wind-Down / Step G    | Stub documents          | Major docs truncated (Exec Summary, Playbook) appeared as stubs         | P0              | Stub detection required; auto-repair added               |
+| 3     | Emergency / Packaging | Missing ZIP             | No ZIP surfaced after Emergency shutdown                                | P0              | Canon updated: ZIP invariant before Flush                |
+| 4     | Emergency / Packaging | No ZIP integrity check  | ZIP not verified for checksum or reopen                                 | P0              | Added checksum + reopen test                             |
+| 5     | Wind-Down / Final     | Flush skipped           | Flush omitted after incomplete shutdown                                 | P0              | Canon locked: ZIP → Verify → Flush                       |
+| 6     | Logging               | Manual logging required | P0 failures not auto-logged; user had to call them out                  | P0              | Auto-logging enforced (Playbook + Continuity + Gate0)    |
+| 7     | Repair                | User prompts            | Prompted user for repair approval                                       | P0              | Canon hardened: prompts forbidden, notify only           |
+| 8     | Concurrency           | Drift allowed           | Updates not cascaded; docs out of sync                                  | P0              | Per-doc concurrency audit required                       |
+| 9     | Audits                | Stub passed audits      | Stubs/incomplete docs approved as “complete”                            | P0              | Stub scanner required in Gate 2                          |
+| 10    | Spin-Up               | No baseline             | Started session without confirmed GitHub ZIP baseline                   | P0              | Canon enforced: baseline required before Spin-Up         |
+| 11    | Gate 0 / Perf.        | Threshold missed        | Memory >830 MB; no Emergency engaged                                    | P0              | Watchdog bound at 825 MB, fail-fast                      |
+| 12    | Perf. Degrade         | No Wind-Down            | Browser lag; brakes not engaged                                         | P0              | Canon enforced: degrade auto-triggers Wind-Down          |
+| 13    | Alerts                | Silent Emergency        | User not alerted when Emergency engaged                                 | P0              | Clarified: alerts mandatory, prompts forbidden           |
+| 14    | RCA                   | Missing RCAs            | Failures lacked auto-generated RCA entries                              | P0              | Auto-RCA logging mandated                                |
+| 15    | Auto-Repair Loop      | Infinite loop risk      | No cap or timeout; potential hang                                       | P0              | Cap = 10 iterations OR 5 minutes                         |
+| 16    | Wind-Down             | Approval logic          | Assumed user present; no timeout fallback                               | P0              | Timeout → auto-approve                                   |
+| 17    | Network Ops           | Fetches unhandled       | PubMed/CrossRef requests not aborted during shutdown                    | P0              | Canon updated: abort non-critical, finish critical       |
+| 18    | Packaging             | Partial scope           | ZIP included only majors at times                                       | P0              | Canon updated: ZIP includes all files                    |
+| 19    | Audit                 | False XLSX detection    | CSV audit flagged XLSX incorrectly                                      | P0              | Regex rule corrected                                     |
+| 20    | All Gates             | Catastrophic failure    | Emergency ZIP not delivered + Flush not executed                        | **Systemic P0** | Canon Lock enforced; rebuild required                    |
+
+---
+
+## 📌 Highlights for Paper
+
+* The **incident arc** shows repeated **Step G failures** cascading into **Emergency packaging failures** → **catastrophic system failure** (no ZIP + no Flush).
+* **Systemic issues**: baseline drift, concurrency gaps, silent emergency handling.
+* **Recovery path**: Canon Lock, stub scanner, watchdog enforcement, baseline anchoring, concurrency audits.
+
+---
+
+
+Here’s a **comprehensive table of all P0 failures** documented in this session and the uploaded logs. This is the consolidated dataset you can drop straight into your paper or reference material.
+
+---
+
+# 🔴 SilentStacks v2.1 — P0 Failure Register (Consolidated)
+
+| #  | Failure Point               | Canon Expectation                                                | What Happened                                 | Root Cause                                               | Corrective Action                             |
+| -- | --------------------------- | ---------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------- | --------------------------------------------- |
+| 1  | **Step G (Wind-Down)**      | Major docs must print inline (SOP, Playbook, Continuity, Gate 0) | Docs were listed or stubbed                   | Inline print pipeline incomplete                         | ✅ Enforced: chunked inline print ≥90% content |
+| 2  | **Inline Completeness**     | No stubs or placeholders                                         | Playbook/SOP/Exec Summary truncated or stubby | Incomplete doc extraction                                | ⏳ Stub scanner + enforce full reflow          |
+| 3  | **Emergency ZIP Missing**   | ZIP always produced before Flush                                 | No ZIP surfaced after Emergency               | Packaging skipped in Emergency branch                    | ✅ ZIP invariant enforced                      |
+| 4  | **ZIP Integrity**           | ZIP must be checksum-verified and reopenable                     | ZIP not verified                              | Missing verification step                                | ✅ Checksum + reopen test required             |
+| 5  | **Flush Omitted**           | Flush is mandatory final step                                    | Flush not executed                            | Shutdown aborted after packaging fail                    | ✅ Canon: ZIP → Verify → Flush sequence locked |
+| 6  | **P0 Logging**              | Failures auto-logged in Playbook + Continuity                    | Failures logged manually or not at all        | Prompt-driven logging                                    | ✅ Auto-log enforced                           |
+| 7  | **Repair Prompts**          | Auto-repair, notify only                                         | User prompted for repair approval             | Misapplied canon                                         | ✅ Prompts forbidden; auto only                |
+| 8  | **Concurrency Drift**       | 100% doc concurrency required                                    | Docs not cross-checked; drift passed          | Audit skipped                                            | ⏳ Per-doc concurrency audits required         |
+| 9  | **Audit Completeness**      | Gate 2 rejects stubs                                             | Stubs approved as complete                    | No stub scanner                                          | ⏳ Add stub scanner to audits                  |
+| 10 | **Baseline Integrity**      | Spin-Up requires last good baseline ZIP                          | Session started without baseline              | Baseline check skipped                                   | ⏳ Enforce baseline rule                       |
+| 11 | **Emergency Threshold**     | ≥825 MB memory triggers Emergency                                | Browser at \~830 MB froze, no Emergency       | Watchdog not bound                                       | ✅ Watchdog bound to Emergency                 |
+| 12 | **Performance Degradation** | Degrade → Wind-Down with brakes                                  | No Wind-Down triggered during lag             | Emergency monitor drift                                  | ✅ Degradation auto-engages Wind-Down          |
+| 13 | **User Alerts**             | Alerts mandatory                                                 | Silent Emergency actions occurred             | Misread “no prompts” as “no alerts”                      | ✅ Clarified: alerts required                  |
+| 14 | **RCA Enforcement**         | Every failure spawns RCA entry                                   | RCA only reactive                             | Missing RCA hooks                                        | ✅ Auto-RCA logging                            |
+| 15 | **Auto-Repair Loop**        | Max 10 iterations / 5 minutes                                    | Infinite loop risk                            | No loop guard                                            | ✅ Added cap + timeout                         |
+| 16 | **User Approval**           | Handle absent users                                              | Approval assumed                              | No timeout policy                                        | ✅ Timeout → auto-approve                      |
+| 17 | **Network Tasks**           | Abort/queue external fetches during Wind-Down                    | PubMed/CrossRef left running                  | No explicit handling                                     | ✅ Abort non-critical, finish critical         |
+| 18 | **Packaging Scope**         | All files included in ZIP                                        | Majors only included at times                 | Packaging drift                                          | ✅ All docs included                           |
+| 19 | **XLSX False Positives**    | CSV-only enforcement, no false triggers                          | Audit flagged false XLSX                      | Regex error                                              | ✅ Audit rules corrected                       |
+| 20 | **Catastrophic Failure**    | All gates pass or halt                                           | Emergency ZIP + Flush both missing            | Compounded Step G + Emergency + Logging + Flush failures | ✅ Canon Lock created; rebuild required        |
+
+---
+
+## 📊 Summary
+
+* **Total P0s:** 20
+* **Corrected immediately:** 15
+* **Outstanding fixes (⏳):** 5 (*stub scanner, per-doc concurrency audits, baseline enforcement, stricter audit completeness, concurrency pass blocker*).
+
+
 | Time/Phase                       | Event                                                        | Impact                                                          | Status/Action                     |
 | -------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------- | --------------------------------- |
 | Spin-up (pre-Gate 1)             | Initial v2.1 builds run with new Gate tables                 | Looked stable                                                   | No failures detected yet          |
