@@ -1,0 +1,7 @@
+timestamp_local,gate,event,result
+2025-08-22 08:00,G0,Browser instability during wind-down,Stability not preserved
+2025-08-22 08:05,G1,Baseline flags check interrupted,Not re-verified
+2025-08-22 08:10,G2,Emergency ZIP attempt failed (file not found),Packaging pipeline broken
+2025-08-22 08:15,G3,Regression sanity not re-run,Skipped due to crash
+2025-08-22 08:20,G4,No certified bundle produced,Catastrophic failure declared
+2025-08-24 21:48,G4,Step G engaged; Incident Timeline inserted; Recovery packages created,Certified recovery packages available
