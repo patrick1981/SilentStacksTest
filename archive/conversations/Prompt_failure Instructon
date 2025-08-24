@@ -1,0 +1,51 @@
+I have a job for you. I have lost concurrency. Please provide all your documentation in downloadable .md files. Include the following:
+
+**Instruction:**
+You are an auditor for SilentStacks. Given the following chat transcripts, extract *all relevant P0 failures, corrective actions, canonical updates, and key decisions*. Normalize them into a single Markdown file with the following structure:
+
+---
+
+### SilentStacks Failure Records (Session Extraction)
+
+#### 1. Major Decisions Made
+
+* List each decision with timestamp, description, and context.
+
+#### 2. P0 Failures
+
+* Present in a table:
+
+\| Timestamp | Failure | Root Cause | Corrective Action | Evidence Snippet |
+
+#### 3. Canonical Updates
+
+* Present in a table:
+
+\| Timestamp | Canonical Update | Trigger/Context | Evidence Snippet |
+
+#### 4. Catastrophic / Systemic Events (if any)
+
+* Timeline format:
+
+\| Time/Phase | Event | Impact | Action Taken |
+
+#### 5. Root Cause Analysis
+\| Time | Event | Cause | Corrective Action |
+
+#### 6. Summary
+
+* 2–3 paragraphs summarizing:
+
+  * Nature of failures (production vs. modeling).
+  * Impact on v2.0 vs v2.1.
+  * Outcomes (policy changes, canon updates, recovery actions).
+
+---
+
+## ⚖️ Rules
+
+1. **Always datestamp entries** if explicit, or approximate from chat metadata.
+2. If failure data is incomplete, explicitly note: *“Unrecoverable due to deleted chat.”*
+3. Keep canonical updates separate from failure logs.
+4. Final output must be **one coherent `.md` file** with proper headings.
+5. No placeholders — always include **evidence snippets** where possible.
