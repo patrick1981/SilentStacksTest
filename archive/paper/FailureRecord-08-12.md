@@ -81,6 +81,21 @@ SilentStacks v2.1 has not failed in production. Instead, it encountered **modeli
 
 As a result, the canon evolved: linkout-only policy, strict 50k bulk cap, API throttling, “n/a” normalization, and mandatory Gate 0–3 checks. Together these changes transformed SilentStacks from a brittle v2.0 production system into a **hardened, compliance-ready v2.1 modeling framework**.
 
----
+ 2. P0 Failures
 
-Do you want me to package this corrected `.md` file as a **downloadable artifact** (so you can drop it straight into your repo), or just keep it inline like this?
+| Timestamp   | Failure | Root Cause | Corrective Action | Evidence Snippet |
+|-------------|---------|------------|-------------------|------------------|
+| 2025-08-12  | v2.0 catastrophic failure | CT.gov CORS restrictions blocked enrichment | Removed enrichment; pivot to v2.1 with NCT linkout | "CORS blocked CT.gov enrichment … unrecoverable" |
+| 2025-08-12  | Service worker instability | Cache corruption, brittle lifecycle | Simplified SW to cache shell only | "SW instability broke offline caching … corrective: SW simplified" |
+| 2025-08-13  | Browser crash on bulk ops | No bulk limits | Enforced ≤50k cap | "Bulk ops unbounded … enforced 50k cutoff" |
+| 2025-08-14  | Data loss on network/tab crash | No persistence of bulk jobs | IndexedDB checkpoint/resume added | "Job loss … implemented checkpoint/resume" |
+| 2025-08-15  | Dirty rows dropped | Invalid data silently omitted | “n/a” rule enforced; dirty export enabled | "Dirty rows silently dropped … forced 'n/a'" |
+| 2025-08-16  | Ambiguous commit semantics | No distinction between clean vs dirty ingestion | Commit Clean vs All added | "Commit logic unclear … toggle added" |
+| 2025-08-16  | Exports failed round-trip | Header drift, blank cells | Enforced canonical headers + strict NLM | "Exports not re-import safe … fixed" |
+| 2025-08-17  | Accessibility below AAA | Only AA compliance | AAA matrix added; AAA made P0 | "Accessibility below AAA … elevated AAA" |
+| 2025-08-18  | Header schema drift | Docs and exports inconsistent | Locked canonical headers | "Header drift … canonicalized headers" |
+| 2025-08-19  | Worst-case scenarios non-canonical | Spec drifted; lost in modeling | Dedicated doc + Playbook linkage | "Worst-case scenarios … made canonical" |
+| 2025-08-20  | Docs drift (Playbook vs GAP) | GAP and Playbook out of sync | GAP embedded in Playbook | "Docs drift … unified Playbook" |
+| Various     | Lost bulk ops session | Overwritten chat logs | Declared unrecoverable | "Unrecoverable due to deleted chat" |
+
+
