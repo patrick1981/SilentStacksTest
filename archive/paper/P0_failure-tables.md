@@ -129,3 +129,47 @@ Here’s a **comprehensive table of all P0 failures** documented in this session
 | **2025-08-23** | **CSP warning**                 | Prior edit mangled CSP meta (`none` option).              | Console pollution; potential security review blocker.     | Restored valid CSP header in HTML.                                                                        | Reload → no warnings.                                                       |
 | **2025-08-23** | **Export schema drift**         | Code still expected NCT column.                           | CSV export misaligned; QA test failed.                    | Locked schema to 10 headers.                                                                              | CSV outputs validated in regression matrix.                                 |
 | **2025-08-23** | **Dirty data ingestion risk**   | Free-text inputs unchecked.                               | “Dumpster-fire” rows could pollute DB/exports.            | Canonized Bulk Parser: normalize → validate → dedupe → confidence → quarantine.                           | Bulk ops test run with noisy input → clean 10-col exports + quarantine bin. |
+
+
+| Timestamp  | Failure                      | Root Cause                      | Corrective Action                         | Evidence Snippet              |
+| ---------- | ---------------------------- | ------------------------------- | ----------------------------------------- | ----------------------------- |
+| 2025-08-12 | CT.gov enrichment blocked    | CORS policy                     | Switch to linkout-only                    | “CORS error from CT.gov API”  |
+| 2025-08-12 | v2.0 startup crash           | RequestManager never registered | Removed enrichment, stabilized load order | Init log: 0/13 modules loaded |
+| 2025-08-13 | Bulk ops >100k rows          | Browser instability             | Hard cap at 50k                           | IndexedDB crash trace         |
+| 2025-08-13 | PubMed API flood             | Too many requests/sec           | Throttled to ≤2/sec                       | API 429 log                   |
+| 2025-08-14 | Crash mid-job                | No resume                       | Added checkpoint/resume                   | Session flush recovery        |
+| 2025-08-15 | Dirty rows dropped silently  | Missing normalization           | Enforced “n/a” rule                       | Audit flagged missing fields  |
+| 2025-08-16 | Placeholder doc              | Scaffolding left in repo        | Gate 2 placeholder scan                   | Empty Playbook output         |
+| 2025-08-17 | XLSX usage                   | Anti-canon format               | Dropped XLSX, CSV-only                    | Charter update                |
+| 2025-08-18 | Playbook not printed         | Gate order wrong                | Moved Playbook print to Gate 4            | Wind-down log                 |
+| 2025-08-19 | Accessibility drift          | WCAG < AAA                      | Re-audited, enforced AAA                  | Contrast ratio failure        |
+| 2025-08-20 | Missing manifest flags       | Incomplete audit                | Regenerated manifest                      | MANIFEST gap                  |
+| 2025-08-21 | Session degradation          | Memory flush                    | Gate 0 Stability Safety added             | Recovery log                  |
+| 2025-08-21 | Gate cascade fail            | Gates not sequential            | Reordered enforcement                     | Canon update                  |
+| 2025-08-21 | Emergency file not written   | Catastrophic gate collapse      | Emergency snapshot to IndexedDB           | File-not-written incident     |
+| 2025-08-22 | No TOC links                 | Docs incomplete                 | Canon update: all docs require live TOCs  | User feedback                 |
+| 2025-08-22 | Resume bullets missing       | Wind-down incomplete            | Added Resume.md output                    | Wind-down audit               |
+| 2025-08-23 | File tree drift              | Docs misplaced                  | Re-org: docs/modeling                     | File tree fix                 |
+| 2025-08-23 | Cross-ref gaps               | Broken anchors                  | Canon update: enforce live links          | Audit result                  |
+| 2025-08-23 | Packaging concurrency errors | Multiple zips                   | Enforce Gate 4 concurrency                | Gate 4 log                    |
+| 2025-08-23 | P0 logs missing in Playbook  | Governance gap                  | Integrated P0 logs into Playbook          | This doc                      |
+
+| Date/Time (UTC) | Failure Point              | What Happened                             | Root Cause                             | Evidence Snippet                                     |
+| --------------- | -------------------------- | ----------------------------------------- | -------------------------------------- | ---------------------------------------------------- |
+| 2025-08-12      | v2.0 Catastrophic Failure  | System crashed, unrecoverable state       | CT.gov CORS block + brittle SW caching | “v2.0 catastrophic failure … unrecoverable data”     |
+| 2025-08-12      | Service Worker Instability | Offline cache failed                      | Cache corruption                       | “SW instability broke offline caching”               |
+| 2025-08-13      | Bulk Ops Crash             | Browser froze on bulk >100k               | No bulk limit                          | “Bulk ops unbounded … enforced 50k cutoff”           |
+| 2025-08-13      | API Block                  | PubMed/CrossRef calls throttled           | No rate limit in place                 | “Aligns with NCBI recs … ≤2/sec”                     |
+| 2025-08-14      | Job Loss on Crash          | Data lost mid-run                         | No persistence                         | “Checkpoint/resume added to IndexedDB”               |
+| 2025-08-15      | Dirty Rows Dropped         | Invalid entries silently removed          | Missing normalization                  | “Dirty rows silently dropped … forced ‘n/a’ fillers” |
+| 2025-08-16      | Commit Ambiguity           | No clear commit semantics                 | Poor workflow design                   | “Commit logic unclear … added Clean vs All”          |
+| 2025-08-16      | CSV Round-trip Failures    | Exports not re-import safe                | Header drift                           | “Exports not re-import safe … canonical headers”     |
+| 2025-08-17      | Accessibility Failure      | Only AA achieved                          | AAA not enforced                       | “Accessibility below AAA … elevated to P0”           |
+| 2025-08-18      | Schema Drift               | Docs vs exports misaligned                | No locked schema                       | “Header drift … locked canonical headers”            |
+| 2025-08-19      | Worst-case Scenarios Lost  | WCS drifted in modeling                   | No canonical library                   | “Worst-case scenarios … doc created”                 |
+| 2025-08-20      | Doc Drift                  | GAP not synced with Playbook              | Documentation split                    | “Docs drift … unified Playbook + GAP”                |
+| 2025-08-21      | v2.1 Catastrophic Meltdown | All gates failed, no flush, stubs shipped | Gate sequencing failure                | “ZIP skipped, flush never executed”                  |
+| 2025-08-23      | Stub Docs Released         | Playbook, WCS shipped as stubs            | Stub detection missing                 | “Stub docs passed audit”                             |
+| 2025-08-23      | Migration ZIP Incomplete   | Missing monolith, app.min.js, PDFs        | Packaging incomplete                   | “Migration ZIP incomplete”                           |
+| 2025-08-23      | Prompt Failures            | User was asked to repair                  | Canon violation                        | “Would you like me to regenerate …”                  |
+
