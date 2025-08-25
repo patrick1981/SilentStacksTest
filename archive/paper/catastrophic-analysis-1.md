@@ -1,3 +1,5 @@
+# 🟥 CF-1 Catastrophic Failure Report (Markdown)
+---
 ## 1) Incident Timeline (Local: America/New\_York)
 
 * 2025-08-22 08:00 — **G0** — Browser instability during wind-down → Stability not preserved
