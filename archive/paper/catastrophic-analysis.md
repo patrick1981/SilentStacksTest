@@ -1,9 +1,3 @@
-* **CF-1 Catastrophic Failure Report (Markdown):**
-  [CF-1\_Catastrophic\_Failure\_Report.md](sandbox:/mnt/data/SilentStacks_recovery/CF-1_Catastrophic_Failure_Report.md)
-  *(Includes the timeline, gate matrix, package hashes, five-whys RCA, corrective actions, preventive controls, and references. CSVs are saved under `__audit__/`.)*
-
-# 🔎 Key tables (also displayed as interactive tables above)
-
 ## 1) Incident Timeline (Local: America/New\_York)
 
 * 2025-08-22 08:00 — **G0** — Browser instability during wind-down → Stability not preserved
