@@ -1,15 +1,3 @@
-Perfect — I see what you need: each catastrophic failure should have a **self-contained Markdown report** with:
-
-* Incident Timeline (with timestamps + Gate outcomes)
-* Gate Status Matrix
-* Package Hashes (if available)
-* Corrective Actions & Verification
-* Final classification, impact, recovery, and prevention
-
-We already logged **CF-1** in that structure. Let’s do the same for **CF-2**.
-
----
-
 # 🟥 CF-2 Catastrophic Failure Report (Markdown)
 
 **File:** `CF-2_Catastrophic_Failure_Report.md`
