@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilentStacks - ILL Request Tracking</title>
+    
+    <!-- FIXED: Correct CSS file path -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/x-icon" href="logo/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="logo/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="logo/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="logo/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="logo/android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="logo/android-chrome-512x512.png">
+    
+    <!-- Local Dependencies for Offline Support -->
+    <script src="assets/js/lib/fuse.min.js"></script>
+    <script src="assets/js/lib/papaparse.min.js"></script>
+    <script src="assets/js/offline-manager.js"></script>
+    <!--<script src="assets/js/documentation.js"></script>-->
+    
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+    <div class="header-content">
+        <div class="logo-container">
+            <img src="logo/silentstacks-logo.svg" alt="SilentStacks Logo" class="app-logo">
+            <div class="header-text">
+                <h1>SilentStacks <span class="version-badge">Beta</span></h1>
+                <p>Interlibrary Loan Request Tracking</p>
+            </div>
+        </div>
+        
+        <!-- Online/Offline Status Indicator -->
+        <div class="status-indicator-container">
+            <div  class="online-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Online</span>
+            </div>
+        </div>
+    </div>
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-section="dashboard">
+                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Dashboard
+            </button>
+            <button class="nav-tab" data-section="add-request">
+                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                Add Request
+            </button>
+            <button class="nav-tab" data-section="all-requests">
+                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                All Requests
+            </button>
+            <button class="nav-tab" data-section="import-export">
+                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+                Import/Export
+            </button>
+            <button class="nav-tab" data-section="settings">
+                <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="m12 1 1.68 4.02L18 6.7l-1.02 4.98L21 12l-4.02 1.68L15.3 18l-4.98-1.02L12 21l-1.68-4.02L6 15.3l1.02-4.98L3 12l4.02-1.68L8.7 6l4.98 1.02z"></path>
+                </svg>
+                Settings
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Requests</h3>
+                        <p class="stat-number" id="total-requests">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending</h3>
+                        <p class="stat-number" id="pending-requests">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Fulfilled</h3>
+                        <p class="stat-number" id="fulfilled-requests">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Follow-up Needed</h3>
+                        <p class="stat-number" id="followup-requests">0</p>
+                    </div>
+                </div>
+                
+                <h3>Recent Requests</h3>
+                <div id="recent-requests" class="request-list">
+                    <p class="empty-message">No recent requests</p>
+                </div>
+            </section>
+
+            <!-- Add Request Section -->
+            <section id="add-request" class="section">
+                <h2>Add New Request</h2>
+                <form id="request-form" class="request-form">
+                    <!-- Progress Indicator -->
+                    <div class="form-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
+                        <div class="progress-steps">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 33%"></div>
+                            </div>
+                            <div class="progress-step active" data-step="1" data-target="identifiers-section">
+                                <span class="step-number">1</span>
+                                <span class="step-label">Identifiers</span>
+                            </div>
+                            <div class="progress-step" data-step="2" data-target="details-section">
+                                <span class="step-number">2</span>
+                                <span class="step-label">Details</span>
+                            </div>
+                            <div class="progress-step" data-step="3" data-target="request-section">
+                                <span class="step-number">3</span>
+                                <span class="step-label">Complete</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Identifiers -->
+                    <fieldset class="fieldset-enhanced" id="identifiers-section">
+                        <legend>Identifiers</legend>
+                        
+                        <div class="form-group">
+                            <label for="pmid" class="form-label optional">
+                                PMID (PubMed ID) 
+                                <span class="field-priority preferred">Preferred</span>
+                            </label>
+                            <div class="input-with-button enhanced">
+                                <input type="text" id="pmid" name="pmid" class="form-control identifier-field" 
+                                       placeholder="e.g., 23842776" pattern="[0-9]+" 
+                                       aria-describedby="pmid-help">
+                                <button type="button" id="lookup-pmid" class="btn btn-primary lookup-btn">
+                                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <path d="m21 21-4.35-4.35"></path>
+                                    </svg>
+                                    Lookup
+                                </button>
+                            </div>
+                            <small id="pmid-help" class="form-help">Enter PubMed ID for automatic title, author, and journal retrieval</small>
+                            
+                            <!-- FIXED: Status message moved here for PMID -->
+                            <div id="pmid-status" class="lookup-status"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="doi" class="form-label optional">
+                                DOI (Digital Object Identifier) 
+                                <span class="field-priority optional">Alternative</span>
+                            </label>
+                            <div class="input-with-button enhanced">
+                                <input type="text" id="doi" name="doi" class="form-control identifier-field" 
+                                       placeholder="e.g., 10.1038/nature12373" 
+                                       aria-describedby="doi-help">
+                                <button type="button" id="lookup-doi" class="btn btn-primary lookup-btn">
+                                    <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                    </svg>
+                                    Lookup
+                                </button>
+                            </div>
+                            <small id="doi-help" class="form-help">CrossRef lookup for bibliographic metadata</small>
+                            
+                            <!-- FIXED: Status message moved here for DOI -->
+                            <div id="doi-status" class="lookup-status"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="docline" class="form-label optional">DOCLINE Request Number</label>
+                            <input type="text" id="docline" name="docline" class="form-control tracking-field" 
+                                   placeholder="e.g., 138ABC123" aria-describedby="docline-help">
+                            <small id="docline-help" class="form-help">ILL tracking number for existing DOCLINE requests</small>
+                        </div>
+                    </fieldset>
+
+                    <!-- Publication Details -->
+                    <fieldset class="fieldset-enhanced" id="details-section">
+                        <legend>Publication Details</legend>
+                        
+                        <div class="form-group">
+                            <label for="title" class="form-label required">Publication Title</label>
+                            <input type="text" id="title" name="title" class="form-control title-field" 
+                                   required aria-describedby="title-help" 
+                                   placeholder="Complete title of the requested publication">
+                            <small id="title-help" class="form-help required">Full title as it appears in the source publication</small>
+                            <div class="field-validation-icon"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="authors" class="form-label optional">Author(s)</label>
+                            <input type="text" id="authors" name="authors" class="form-control author-field" 
+                                   placeholder="Smith, J.; Johnson, A.; et al." 
+                                   aria-describedby="authors-help">
+                            <small id="authors-help" class="form-help">Author names in Last, First Initial format separated by semicolons</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="journal" class="form-label optional">Journal/Publication Source</label>
+                            <input type="text" id="journal" name="journal" class="form-control journal-field" 
+                                   placeholder="Journal of Medical Research" 
+                                   aria-describedby="journal-help">
+                            <small id="journal-help" class="form-help">Full journal name, book title, or publication source</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="year" class="form-label optional">Publication Year</label>
+                            <input type="number" id="year" name="year" class="form-control year-field" 
+                                   min="1900" max="2030" placeholder="2024" 
+                                   aria-describedby="year-help">
+                            <small id="year-help" class="form-help">4-digit publication year</small>
+                        </div>
+                    </fieldset>
+
+                    <!-- Request Details -->
+                    <fieldset class="fieldset-enhanced" id="request-section">
+                        <legend>Request Details</legend>
+                        
+                        <div class="form-group">
+                            <label for="patron-email" class="form-label optional">Patron Email</label>
+                            <input type="email" id="patron-email" name="patronEmail" class="form-control" 
+                                   placeholder="patron@example.com" 
+                                   aria-describedby="email-help">
+                            <small id="email-help" class="form-help">Contact email for the requesting patron</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="priority" class="form-label required">Request Priority</label>
+                            <select id="priority" name="priority" class="form-control priority-select" required aria-describedby="priority-help">
+                                <option value="">Select Priority...</option>
+                                <option value="urgent">Urgent - Critical Patient Care</option>
+                                <option value="rush">Rush - Expedited Timeline</option>
+                                <option value="normal">Normal - Standard Processing</option>
+                            </select>
+                            <small id="priority-help" class="form-help required">Priority determines processing timeline and resource allocation</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status" class="form-label optional">Request Status</label>
+                            <select id="status" name="status" class="form-control request-status-select" aria-describedby="status-help">
+                                <option value="pending">Pending - Awaiting Processing</option>
+                                <option value="in-progress">In Progress - Actively Working</option>
+                                <option value="fulfilled">Fulfilled - Successfully Completed</option>
+                                <option value="cancelled">Cancelled - Request Withdrawn</option>
+                            </select>
+                            <small id="status-help" class="form-help">Current status of the ILL request</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tags" class="form-label optional">Subject Tags</label>
+                            <input type="text" id="tags" name="tags" class="form-control" 
+                                   placeholder="e.g., cardiology, review, systematic" 
+                                   aria-describedby="tags-help">
+                            <small id="tags-help" class="form-help">Enter tags separated by commas. Click tags in request cards to change their colors.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes" class="form-label optional">Additional Notes</label>
+                            <textarea id="notes" name="notes" rows="3" class="form-control" 
+                                      placeholder="Any special instructions or notes..." 
+                                      aria-describedby="notes-help"></textarea>
+                            <small id="notes-help" class="form-help">Internal notes about this request</small>
+                        </div>
+                    </fieldset>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            Save Request
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clear-form">
+                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18l-2 13H5L3 6z"></path>
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Clear Form
+                        </button>
+                    </div>
+                </form>
+
+                <!-- REMOVED: Old lookup status - now inline with each lookup -->
+            </section>
+
+            <!-- Enhanced All Requests Section -->
+            <section id="all-requests" class="section">
+                <h2>All Requests</h2>
+                
+                <!-- Enhanced Filters -->
+                <div class="enhanced-filters">
+                    <div class="filter-row">
+                        <input type="text" id="search-requests" placeholder="Search requests..." class="search-input">
+                        <select id="filter-status" class="filter-select">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="fulfilled">Fulfilled</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select id="priority-filter" class="filter-select priority-filter">
+                            <option value="">All Priorities</option>
+                            <option value="urgent">Urgent</option>
+                            <option value="rush">Rush</option>
+                            <option value="normal">Normal</option>
+                        </select>
+                        <select id="date-range" class="filter-select">
+                            <option value="">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
+                        <button id="filter-followup" class="btn btn-secondary">
+                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            Follow-up Needed
+                        </button>
+                    </div>
+                    
+                    <!-- Sort and Results -->
+                    <div class="filter-row">
+                        <div class="sort-controls">
+                            <span class="sort-label">Sort by:</span>
+                            <button class="sort-btn sort-desc" data-field="createdAt">📅 Date</button>
+                            <button class="sort-btn" data-field="priority">🚨 Priority</button>
+                            <button class="sort-btn" data-field="title">📄 Title</button>
+                            <button class="sort-btn" data-field="journal">📚 Journal</button>
+                            <button class="sort-btn" data-field="status">📊 Status</button>
+                        </div>
+                        <div class="results-info">
+                            <span id="results-count">0 requests</span>
+                            <label class="select-all-label">
+                                <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)"> Select All
+                            </label>
+                            <!-- FIXED: Added btn-danger class -->
+                            <button onclick="deleteSelectedRequests()" class="btn btn-danger btn-small" id="delete-selected-btn" style="display: none;">
+                                🗑️ Delete Selected
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request List -->
+                <div id="request-list" class="request-list">
+                    <p class="empty-message">No requests found</p>
+                </div>
+            </section>
+
+            <!-- Import/Export Section -->
+            <section id="import-export" class="section">
+                <h2>Import/Export Data</h2>
+                
+                <div class="import-export-grid">
+                    <!-- Export Card -->
+                    <div class="card">
+                        <h3>
+                            <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10,9 9,9 8,9"></polyline>
+                            </svg>
+                            Export Data
+                        </h3>
+                        <p>Download your ILL requests as CSV or JSON</p>
+                        <div class="button-group">
+                            <button id="export-csv" class="btn btn-primary">
+                                <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                </svg>
+                                Export as CSV
+                            </button>
+                            <button id="export-json" class="btn btn-primary">
+                                <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                </svg>
+                                Export as JSON
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Import Card -->
+                    <div class="card">
+                        <h3>
+                            <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10,9 9,9 8,9"></polyline>
+                            </svg>
+                            Import Data
+                        </h3>
+                        <p>Upload CSV or JSON file with ILL requests</p>
+                        <input type="file" id="import-file" accept=".csv,.json" class="file-input">
+                        <div id="import-status" class="import-status"></div>
+                    </div>
+                </div>
+                
+                <!-- Bulk Paste Section -->
+                <div class="bulk-paste-section">
+                    <h3>
+                        <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
+                        Bulk Paste Data
+                    </h3>
+                    <p class="bulk-paste-help">Paste CSV data directly from your clipboard (Excel, Google Sheets, etc.)</p>
+                    <textarea id="bulk-paste-data" placeholder="Paste CSV data here with headers like: PMID, Title, Authors, Journal, Year, Priority..."></textarea>
+                    <p class="bulk-paste-help"><strong>Supported headers:</strong> PMID/pmid, DOI/doi, Title/title, Authors/authors, Journal/journal, Year/year, Priority/priority, Notes/notes</p>
+                    <button id="bulk-paste-btn" class="btn btn-primary">
+                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        Import Pasted Data
+                    </button>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section">
+                <h2>Settings</h2>
+                
+                <form id="settings-form" class="settings-form">
+                    <div class="form-group">
+                        <label for="followup-days">Follow-up Days</label>
+                        <input type="number" id="followup-days" min="1" max="30" value="5">
+                        <small>Mark requests as needing follow-up after this many days</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="theme">Theme</label>
+                        <select id="theme">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="high-contrast">High Contrast</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="api-key">PubMed API Key (Optional)</label>
+                        <input type="text" id="api-key" placeholder="Enter your NCBI API key">
+                        <small>Provides higher rate limits for PubMed lookups</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="crossref-email">Crossref Email (Optional)</label>
+                        <input type="email" id="crossref-email" placeholder="your@email.com">
+                        <small>Enables polite pool access for DOI lookups</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="m12 1 1.68 4.02L18 6.7l-1.02 4.98L21 12l-4.02 1.68L15.3 18l-4.98-1.02L12 21l-1.68-4.02L6 15.3l1.02-4.98L3 12l4.02-1.68L8.7 6l4.98 1.02z"></path>
+                        </svg>
+                        Save Settings
+                    </button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

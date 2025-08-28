@@ -1,0 +1,901 @@
+
+/*! SilentStacks app.min.js (unified) - v2.2.0
+ *  - CT.gov v2 API with graceful v1 fallback
+ *  - Robust DOI decode (hex/dec entities) & normalize
+ *  - PMID→NCT pipeline (DataBank, IDs, text, ELink)
+ *  - Notes auto-append with NCT summary
+ *  - CSP-safe tag chips; settings load/save; save to localStorage
+ *  - Keyboard: Enter on #pmid triggers lookup
+ *  - Friendly CORS messaging; side panel builder
+ *  (c) 2025
+ */
+(function(){
+  "use strict";
+
+  // -----------------------------
+  // Utilities
+  // -----------------------------
+  const _rate = new Map();
+  async function _sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+  async function _limit(bucket){
+    const limits = { pubmed:200, clinicaltrials:1000 };
+    const cap = limits[bucket] || 500;
+    const last = _rate.get(bucket) || 0;
+    const elapsed = Date.now() - last;
+    if(elapsed < cap) await _sleep(cap - elapsed);
+    _rate.set(bucket, Date.now());
+  }
+
+  function decodeHTMLEntities(str){
+    if(!str) return "";
+    // hex entities: &#xNN;
+    str = str.replace(/&#x([0-9a-f]+);/gi, (_,h)=> String.fromCharCode(parseInt(h,16)));
+    // decimal entities: &#NN;
+    str = str.replace(/&#(\d+);/g, (_,d)=> String.fromCharCode(parseInt(d,10)));
+    return str;
+  }
+
+  function decodeDOI(raw){
+    if(!raw) return "";
+    let s = String(raw).trim();
+    // Strip prefixes
+    s = s.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
+    s = s.replace(/^doi:\s*/i, "");
+    // Common named entities
+    s = s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+         .replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+    // Numeric/hex entities
+    s = decodeHTMLEntities(s);
+    // URL decoding
+    try { s = decodeURIComponent(s); } catch(_) {}
+    // Normalize encodings
+    s = s.replace(/%2F/gi,'/').replace(/%3A/gi,':');
+    // Defensive charset
+    s = s.replace(/[^0-9A-Za-z./;()_:-]/g,'').trim();
+    // DOI heuristic
+    const m = s.match(/10\.\d{4,9}\/[-._;()/:A-Z0-9]+/i);
+    return m ? m[0] : s;
+  }
+  function normalizeDOI(input){ return decodeDOI(input).toLowerCase(); }
+  function q(id){ return document.getElementById(id); }
+
+  function setStatus(message, type){
+    const el = q("status");
+    if(!el) return;
+    el.textContent = message;
+    el.className = "status " + (type||"");
+  }
+
+  function setLoadingState(isLoading){
+    const btn = q("lookup-pmid");
+    if(!btn) return;
+    const txt = btn.querySelector(".btn-text");
+    const spin = btn.querySelector(".loading-spinner");
+    if(isLoading){
+      btn.disabled = true;
+      if(txt) txt.textContent = "Analyzing...";
+      if(spin) spin.style.display = "inline-block";
+    }else{
+      btn.disabled = false;
+      if(txt) txt.textContent = "Analyze & Enrich";
+      if(spin) spin.style.display = "none";
+    }
+  }
+
+  // -----------------------------
+  // PMID Enrichment Pipeline
+  // -----------------------------
+  class PMIDEnrichmentPipeline{
+    constructor(opts={}){
+      this.apiKey = opts.apiKey || "";
+      this.crossrefEmail = opts.crossrefEmail || "";
+      this.cache = new Map();
+    }
+
+    async enrichPMID(pmid){
+      const out = { pmid, status:"processing", pubmed:null, clinicalTrial:null, unified:null, errors:[], timing:{ start:Date.now() } };
+      try{
+        out.pubmed = await this.fetchPubMedData(pmid);
+        out.timing.pubmedComplete = Date.now();
+        if(out.pubmed.nct){
+          try{
+            out.clinicalTrial = await this.fetchEnhancedClinicalTrialData(out.pubmed.nct);
+            out.timing.clinicalTrialComplete = Date.now();
+          }catch(e){
+            out.errors.push("Clinical trial lookup failed: " + e.message);
+          }
+        }
+        out.unified = this.mergeData(out.pubmed, out.clinicalTrial);
+        out.status = "complete";
+        out.timing.complete = Date.now();
+      }catch(e){
+        out.status = "failed";
+        out.errors.push(e.message);
+      }
+      return out;
+    }
+
+    async fetchPubMedData(pmid){
+      await _limit("pubmed");
+      const keyParam = this.apiKey ? ("&api_key="+encodeURIComponent(this.apiKey)+"&tool=SilentStacks&email=contact@example.com")
+                                   : "&tool=SilentStacks&email=contact@example.com";
+      const [summary, xmlDoc] = await Promise.all([
+        this.fetchPubMedSummary(pmid, keyParam),
+        this.fetchPubMedXML(pmid, keyParam)
+      ]);
+
+      const doiFromXML = this.extractDOIFromXML(xmlDoc);
+      const result = {
+        pmid,
+        title: summary.title || "",
+        authors: this.formatAuthors(summary.authors || []),
+        journal: summary.fulljournalname || summary.source || "",
+        year: this.extractYear(summary.pubdate || ""),
+        doi: normalizeDOI(summary.elocationid || doiFromXML || ""),
+        abstract: this.extractAbstractFromXML(xmlDoc),
+        mesh: this.extractMeshFromXML(xmlDoc),
+        nct: await this.extractNCTFromAll(summary, xmlDoc, pmid),
+        pubTypes: summary.pubtypelist || [],
+        provenance: { pubmedSummary:true, pubmedXML:true, fetchedAt:new Date().toISOString() }
+      };
+      return result;
+    }
+
+    async fetchPubMedSummary(pmid, keyParam){
+      const url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id="+pmid+"&retmode=json"+keyParam;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error("PubMed summary failed: "+res.status+" "+res.statusText);
+      const data = await res.json();
+      const rec = data.result && data.result[pmid];
+      if(!rec || rec.error) throw new Error("PMID "+pmid+" not found or invalid");
+      return rec;
+    }
+
+    async fetchPubMedXML(pmid, keyParam){
+      const url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id="+pmid+"&retmode=xml"+keyParam;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error("PubMed XML failed: "+res.status+" "+res.statusText);
+      const xml = await res.text();
+      return new DOMParser().parseFromString(xml, "application/xml");
+    }
+
+    async extractNCTFromAll(summaryData, xmlDoc, pmid){
+      // DataBank entries
+      const dataBanks = xmlDoc.querySelectorAll("DataBank");
+      for(const bank of dataBanks){
+        const bankName = (bank.querySelector("DataBankName")||{}).textContent || "";
+        if(bankName.toLowerCase().includes("clinical")){
+          const accs = bank.querySelectorAll("AccessionNumber");
+          for(const a of accs){
+            const n = this.extractNCTFromText(a.textContent||"");
+            if(n) return n;
+          }
+        }
+      }
+      // Secondary IDs / ArticleId
+      const idSelectors = ["OtherID","SecondaryId","ArticleId"];
+      for(const sel of idSelectors){
+        const ids = xmlDoc.querySelectorAll(sel);
+        for(const id of ids){
+          const n = this.extractNCTFromText(id.textContent||"");
+          if(n) return n;
+        }
+      }
+      // Title + Abstract text
+      const title = summaryData.title || "";
+      const absText = Array.from(xmlDoc.querySelectorAll("AbstractText")).map(n=>n.textContent||"").join(" ");
+      const text = (title+" "+absText);
+      const fromText = this.extractNCTFromText(text);
+      if(fromText) return fromText;
+      // ELink
+      const fromELink = await this.fetchNCTViaELink(pmid);
+      if(fromELink) return fromELink;
+      return null;
+    }
+
+    extractNCTFromText(text){
+      if(!text) return null;
+      const m = text.match(/NCT\d{8}/i);
+      return m ? m[0].toUpperCase() : null;
+    }
+
+    async fetchNCTViaELink(pmid){
+      try{
+        await _limit("pubmed");
+        const url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&db=clinicaltrials&id="+pmid+"&tool=SilentStacks&email=contact@example.com";
+        const res = await fetch(url);
+        if(!res.ok) return null;
+        const xml = await res.text();
+        const m = xml.match(/NCT\d{8}/i);
+        return m ? m[0].toUpperCase() : null;
+      }catch(e){ return null; }
+    }
+
+    // CT.gov v2 with graceful v1 fallback
+    async fetchEnhancedClinicalTrialData(nctId){
+      if(!nctId || !/^NCT\d{8}$/i.test(nctId)) throw new Error("Invalid NCT ID: "+nctId);
+      await _limit("clinicaltrials");
+      const endpoints = [
+        { url: "https://clinicaltrials.gov/api/v2/studies/"+nctId, version: "v2" },
+        { url: "https://clinicaltrials.gov/api/query/full_studies?expr="+nctId+"&min_rnk=1&max_rnk=1&fmt=json", version: "v1" }
+      ];
+      for(const ep of endpoints){
+        try{
+          const r = await fetch(ep.url);
+          if(!r.ok) continue;
+          const data = await r.json();
+          const parsed = this.parseEnhancedClinicalTrialData(data, nctId, ep.version);
+          if(parsed) return parsed;
+        }catch(e){ /* try next */ }
+      }
+      throw new Error("CT.gov lookup failed (v2 & v1). This can be a CORS limitation in the browser or a network block.");
+    }
+
+    parseEnhancedClinicalTrialData(data, nctId, apiVersion){
+      let study = null;
+      if(apiVersion === "v2"){
+        study = data.study || (data.studies && data.studies[0]);
+      }else if(apiVersion === "v1"){
+        study = (((data||{}).FullStudiesResponse||{}).FullStudies||[])[0];
+        study = study ? study.Study : null;
+      }
+      if(!study) return null;
+      const res = {
+        nctId,
+        title: this.getStudyField(study, [
+          "protocolSection.identificationModule.officialTitle",
+          "ProtocolSection.IdentificationModule.OfficialTitle",
+          "protocolSection.identificationModule.briefTitle",
+          "ProtocolSection.IdentificationModule.BriefTitle"
+        ]),
+        briefTitle: this.getStudyField(study, [
+          "protocolSection.identificationModule.briefTitle",
+          "ProtocolSection.IdentificationModule.BriefTitle"
+        ]),
+        phase: this.getStudyField(study, [
+          "protocolSection.designModule.phases.0",
+          "ProtocolSection.DesignModule.PhaseList.Phase.0",
+          "ProtocolSection.DesignModule.PhaseList.Phase"
+        ]),
+        studyType: this.getStudyField(study, [
+          "protocolSection.designModule.studyType",
+          "ProtocolSection.DesignModule.StudyType"
+        ]),
+        interventionModel: this.getStudyField(study, [
+          "protocolSection.designModule.designInfo.interventionModel",
+          "ProtocolSection.DesignModule.DesignInfo.InterventionModel"
+        ]),
+        allocation: this.getStudyField(study, [
+          "protocolSection.designModule.designInfo.allocation",
+          "ProtocolSection.DesignModule.DesignInfo.Allocation"
+        ]),
+        masking: this.getStudyField(study, [
+          "protocolSection.designModule.designInfo.maskingInfo.masking",
+          "ProtocolSection.DesignModule.DesignInfo.MaskingInfo.Masking"
+        ]),
+        primaryPurpose: this.getStudyField(study, [
+          "protocolSection.designModule.designInfo.primaryPurpose",
+          "ProtocolSection.DesignModule.DesignInfo.PrimaryPurpose"
+        ]),
+        status: this.getStudyField(study, [
+          "protocolSection.statusModule.overallStatus",
+          "ProtocolSection.StatusModule.OverallStatus"
+        ]),
+        whyStopped: this.getStudyField(study, [
+          "protocolSection.statusModule.whyStopped",
+          "ProtocolSection.StatusModule.WhyStopped"
+        ]),
+        startDate: this.getStudyField(study, [
+          "protocolSection.statusModule.startDateStruct.date",
+          "ProtocolSection.StatusModule.StartDateStruct.StartDate"
+        ]),
+        completionDate: this.getStudyField(study, [
+          "protocolSection.statusModule.completionDateStruct.date",
+          "ProtocolSection.StatusModule.CompletionDateStruct.CompletionDate"
+        ]),
+        conditions: this.getStudyFieldArray(study, [
+          "protocolSection.conditionsModule.conditions",
+          "ProtocolSection.ConditionsModule.ConditionList.Condition"
+        ]),
+        interventions: this.extractInterventions(study),
+        enrollmentCount: this.getStudyField(study, [
+          "protocolSection.designModule.enrollmentInfo.count",
+          "ProtocolSection.DesignModule.EnrollmentInfo.EnrollmentCount"
+        ]),
+        enrollmentType: this.getStudyField(study, [
+          "protocolSection.designModule.enrollmentInfo.type",
+          "ProtocolSection.DesignModule.EnrollmentInfo.EnrollmentType"
+        ]),
+        sponsor: this.getStudyField(study, [
+          "protocolSection.sponsorCollaboratorsModule.leadSponsor.name",
+          "ProtocolSection.SponsorCollaboratorsModule.LeadSponsor.LeadSponsorName"
+        ]),
+        sponsorClass: this.getStudyField(study, [
+          "protocolSection.sponsorCollaboratorsModule.leadSponsor.class",
+          "ProtocolSection.SponsorCollaboratorsModule.LeadSponsor.LeadSponsorClass"
+        ]),
+        collaborators: this.getStudyFieldArray(study, [
+          "protocolSection.sponsorCollaboratorsModule.collaborators",
+          "ProtocolSection.SponsorCollaboratorsModule.CollaboratorList.Collaborator"
+        ]),
+        primaryOutcomes: this.extractOutcomes(study, "primary"),
+        secondaryOutcomes: this.extractOutcomes(study, "secondary"),
+        eligibility: this.extractEligibility(study),
+        locations: this.extractLocations(study),
+        studyUrl: "https://clinicaltrials.gov/ct2/show/"+nctId,
+        apiVersion,
+        provenance: { source:"clinicaltrials.gov", apiVersion, fetchedAt:new Date().toISOString() }
+      };
+      return res;
+    }
+
+    extractInterventions(study){
+      const out = [];
+      const paths = [
+        "protocolSection.armsInterventionsModule.interventions",
+        "ProtocolSection.ArmsInterventionsModule.InterventionList.Intervention"
+      ];
+      for(const p of paths){
+        const arr = this.getNestedValue(study, p);
+        if(Array.isArray(arr)){
+          arr.forEach(iv=>out.push({
+            type: iv.type || iv.InterventionType,
+            name: iv.name || iv.InterventionName,
+            description: iv.description || iv.InterventionDescription
+          }));
+          break;
+        }
+      }
+      return out;
+    }
+
+    extractOutcomes(study, type){
+      const list = [];
+      const field = (type==="primary") ? "primaryOutcomes" : "secondaryOutcomes";
+      const paths = [
+        "protocolSection.outcomesModule."+field,
+        "ProtocolSection.OutcomesModule."+ (field==="primaryOutcomes" ? "PrimaryOutcomeList.PrimaryOutcome" : "SecondaryOutcomeList.SecondaryOutcome")
+      ];
+      for(const p of paths){
+        const arr = this.getNestedValue(study, p);
+        if(Array.isArray(arr)){
+          arr.forEach(o=>list.push({
+            measure: o.measure || o.OutcomeMeasure,
+            timeFrame: o.timeFrame || o.OutcomeTimeFrame,
+            description: o.description || o.OutcomeDescription
+          }));
+          break;
+        }
+      }
+      return list;
+    }
+
+    extractEligibility(study){
+      const paths = ["protocolSection.eligibilityModule", "ProtocolSection.EligibilityModule"];
+      for(const p of paths){
+        const e = this.getNestedValue(study, p);
+        if(e){
+          return {
+            criteria: e.eligibilityCriteria || e.EligibilityCriteria,
+            gender: e.sex || e.Gender,
+            minimumAge: e.minimumAge || e.MinimumAge,
+            maximumAge: e.maximumAge || e.MaximumAge,
+            healthyVolunteers: e.healthyVolunteers || e.HealthyVolunteers
+          };
+        }
+      }
+      return null;
+    }
+
+    extractLocations(study){
+      const out = [];
+      const paths = [
+        "protocolSection.contactsLocationsModule.locations",
+        "ProtocolSection.ContactsLocationsModule.LocationList.Location"
+      ];
+      for(const p of paths){
+        const arr = this.getNestedValue(study, p);
+        if(Array.isArray(arr)){
+          arr.slice(0,5).forEach(loc=>{
+            out.push({
+              facility: loc.facility || loc.LocationFacility,
+              city: loc.city || loc.LocationCity,
+              state: loc.state || loc.LocationState,
+              country: loc.country || loc.LocationCountry
+            });
+          });
+          break;
+        }
+      }
+      return out;
+    }
+
+    getStudyField(study, paths){
+      for(const p of paths){
+        const v = this.getNestedValue(study, p);
+        if(v!==undefined && v!==null && v!==""){
+          const r = Array.isArray(v) ? v[0] : v;
+          if(r && typeof r === "string"){ const t = r.trim(); if(t!=="") return t; }
+          if(r && typeof r !== "string") return r;
+        }
+      }
+      return null;
+    }
+    getStudyFieldArray(study, paths){
+      for(const p of paths){
+        const v = this.getNestedValue(study, p);
+        if(Array.isArray(v)) return v;
+      }
+      return [];
+    }
+    getNestedValue(obj, path){
+      return path.split(".").reduce((cur,key)=> (cur && cur[key]!==undefined) ? cur[key] : undefined, obj);
+    }
+
+    mergeData(pubmed, ct){
+      const tags = [];
+      if(pubmed.mesh){
+        pubmed.mesh.slice(0,6).forEach(term=>{
+          tags.push({ name: term, type: "mesh", source: "pubmed", color: "#dbeafe" });
+        });
+      }
+      if(ct){
+        if(ct.phase && tags.length<8) tags.push({ name:"Phase "+ct.phase, type:"phase", source:"clinicaltrials", color:"#fef3c7" });
+        if(ct.sponsorClass && tags.length<8) tags.push({ name: ct.sponsorClass, type:"sponsor", source:"clinicaltrials", color:"#e5e7eb" });
+        if(ct.interventions && ct.interventions.length){
+          ct.interventions.slice(0,2).forEach(iv=>{
+            if(tags.length<8) tags.push({ name: iv.type || "Intervention", type:"intervention", source:"clinicaltrials", color:"#dcfce7" });
+          });
+        }
+      }
+      return {
+        pmid: pubmed.pmid,
+        nct: (ct && ct.nctId) || pubmed.nct || null,
+        doi: pubmed.doi,
+        title: pubmed.title,
+        authors: pubmed.authors,
+        journal: pubmed.journal,
+        year: pubmed.year,
+        abstract: pubmed.abstract,
+        clinicalTrial: ct || null,
+        tags,
+        status: "pending",
+        priority: "normal",
+        patronEmail: "",
+        notes: (function(){
+          if(!ct) return "";
+          const parts = [
+            "CLINICAL TRIAL: " + ((ct.nctId)||""),
+            ct.title ? ("Title: "+ct.title) : "",
+            ct.sponsor ? ("Sponsor: "+ct.sponsor) : "",
+            "URL: https://clinicaltrials.gov/ct2/show/"+(ct.nctId||"")
+          ].filter(Boolean);
+          return parts.join("\\n");
+        })(),
+        enrichmentDate: new Date().toISOString(),
+        sources: { pubmed: true, clinicalTrials: !!ct }
+      };
+    }
+
+    formatAuthors(authors){ return Array.isArray(authors) ? authors.map(a=>a.name||a).join("; ") : ""; }
+    extractYear(s){ if(!s) return ""; const m = String(s).match(/\d{4}/); return m?m[0]:""; }
+    extractMeshFromXML(xml){
+      const list = [];
+      const nodes = xml.querySelectorAll("MeshHeading > DescriptorName");
+      nodes.forEach(n=>{ const t = (n.textContent||"").trim(); if(t && list.length<8) list.push(t); });
+      return list;
+    }
+    extractDOIFromXML(xml){
+      const sels = ['ArticleId[IdType="doi"]','ELocationID[EIdType="doi"]','ArticleId'];
+      for(const sel of sels){
+        const nodes = xml.querySelectorAll(sel);
+        for(const node of nodes){
+          const t = (node.textContent||"").trim();
+          if(t && t.includes("10.")) return t;
+        }
+      }
+      return "";
+    }
+    extractAbstractFromXML(xml){
+      return Array.from(xml.querySelectorAll("AbstractText")).map(n=>(n.textContent||"").trim()).join("\\n\\n");
+    }
+  }
+
+  // -----------------------------
+  // UI glue
+  // -----------------------------
+  function addEnrichedTags(tags){
+    const box = q("tag-chips");
+    if(!box) return;
+    Array.from(box.querySelectorAll('.tag[data-auto="true"]')).forEach(e=>e.remove());
+    tags.forEach(t=>{
+      const chip = document.createElement("span");
+      chip.className = "tag tag-"+t.type;
+      chip.textContent = t.name;
+      chip.dataset.auto = "true";
+      chip.dataset.source = t.source;
+      chip.title = t.name + " (from " + t.source + ")";
+      box.appendChild(chip);
+    });
+  }
+
+  function updateTagChips(){
+    const tagsInput = q("tags");
+    const container = q("tag-chips");
+    if(!tagsInput || !container) return;
+    container.querySelectorAll('.tag:not([data-auto="true"])').forEach(n=>n.remove());
+    const value = (tagsInput.value || "").trim();
+    if(!value) return;
+    const set = Array.from(new Set(value.split(",").map(t=>t.trim()).filter(Boolean)));
+    set.forEach(name=>{
+      const autoDup = Array.from(container.querySelectorAll('.tag[data-auto="true"]')).some(t=>t.textContent===name);
+      if(autoDup) return;
+      const chip = document.createElement("span");
+      chip.className = "tag";
+      chip.textContent = name + " ";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tag-remove";
+      btn.setAttribute("aria-label", `Remove ${name}`);
+      btn.textContent = "×";
+      btn.addEventListener("click", function(){ removeTag(btn); });
+      chip.appendChild(btn);
+      container.appendChild(chip);
+    });
+  }
+
+  function removeTag(el){
+    const chip = el.closest(".tag");
+    if(!chip) return;
+    const name = chip.textContent.replace("×","").trim();
+    const input = q("tags");
+    if(input){
+      const parts = (input.value||"").split(",").map(t=>t.trim()).filter(Boolean);
+      const filtered = parts.filter(t=>t!==name);
+      input.value = filtered.join(", ");
+    }
+    chip.remove();
+  }
+
+  function showMetadataStatus(unified){
+    let wrap = q("metadata-status");
+    if(!wrap){
+      wrap = document.createElement("div");
+      wrap.id = "metadata-status";
+      wrap.style.cssText = "background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #10b981;border-radius:12px;padding:16px;margin:16px 0;font-size:.9rem;";
+      const statusEl = q("status");
+      if(statusEl && statusEl.parentNode) statusEl.parentNode.insertBefore(wrap, statusEl.nextSibling);
+    }
+    const mesh = (unified.tags||[]).filter(t=>t.type==="mesh");
+    let html = '<div style="font-weight:700;color:#059669;margin-bottom:8px;">📊 METADATA ENRICHMENT STATUS</div>';
+    if(mesh.length) html += "<div><strong>✅ MeSH Headings:</strong> "+mesh.length+" terms extracted ("+mesh.map(t=>t.name).join(", ")+")</div>";
+    if(unified.clinicalTrial){
+      const ct = unified.clinicalTrial;
+      html += "<div><strong>✅ Clinical Trial:</strong> "+(unified.nct||ct.nctId)+" linked</div>";
+      if(ct.title) html += "<div><strong>📋 Trial Title:</strong> "+ct.title+"</div>";
+      if(ct.phase) html += "<div><strong>🧪 Phase:</strong> "+ct.phase+"</div>";
+      if(ct.status) html += "<div><strong>📈 Status:</strong> "+ct.status+"</div>";
+      if(ct.sponsor) html += "<div><strong>🏢 Sponsor:</strong> "+ct.sponsor+"</div>";
+    }
+    wrap.innerHTML = html;
+  }
+
+  function populateBasicFields(data){
+    if(data.title) q("title") && (q("title").value = data.title);
+    if(data.authors) q("authors") && (q("authors").value = data.authors);
+    if(data.journal) q("journal") && (q("journal").value = data.journal);
+    if(data.year) q("year") && (q("year").value = data.year);
+    if(data.doi) q("doi") && (q("doi").value = data.doi);
+  }
+
+  function populateFormWithEnrichedData(unified){
+    populateBasicFields(unified);
+    const nctField = q("nct"); if(nctField && unified.nct) nctField.value = unified.nct;
+    // Append/merge notes block
+    let notes = (q("notes") && q("notes").value) || "";
+    if(unified.clinicalTrial){
+      const ct = unified.clinicalTrial;
+      const lines = [
+        "CLINICAL TRIAL: " + (unified.nct || ct.nctId),
+        ct.title ? ("Title: "+ct.title) : "",
+        ct.sponsor ? ("Sponsor: "+ct.sponsor) : "",
+        "URL: https://clinicaltrials.gov/ct2/show/"+(ct.nctId||unified.nct||"")
+      ].filter(Boolean).join("\\n");
+      notes = notes ? (notes+"\\n\\n"+lines) : lines;
+    }
+    if(q("notes")) q("notes").value = notes;
+
+    if(unified.tags && unified.tags.length){
+      addEnrichedTags(unified.tags);
+      const input = q("tags");
+      if(input){
+        const existing = input.value.split(",").map(t=>t.trim()).filter(Boolean);
+        const add = unified.tags.map(t=>t.name);
+        const all = Array.from(new Set(existing.concat(add)));
+        input.value = all.join(", ");
+        updateTagChips();
+      }
+    }
+    if(unified.clinicalTrial || (unified.tags||[]).some(t=>t.type==="mesh")) showMetadataStatus(unified);
+  }
+
+  function showEnhancedNCTSidebar(ct){
+    const sidebar = q("nct-sidebar");
+    const content = q("nct-content");
+    if(!sidebar || !content || !ct) return;
+    sidebar.style.display = "block";
+    let html = '<div class="nct-header"><div class="nct-id">🧪 '+(ct.nctId||"")+'</div>' +
+               (ct.phase ? '<div class="nct-phase">Phase '+ct.phase+'</div>' : '') + '</div>';
+    if(ct.title){
+      html += '<div style="background:#f0f9ff;border-radius:12px;padding:16px;margin:16px 0;border-left:4px solid #3b82f6;">' +
+              '<div style="font-size:.75rem;font-weight:600;color:#1e40af;text-transform:uppercase;margin-bottom:6px;">STUDY TITLE</div>' +
+              '<div style="font-size:.9rem;font-weight:600;color:#1f2937;line-height:1.4;">'+ct.title+'</div></div>';
+    }
+    html += '<div class="nct-details">';
+    function row(label, value){ if(!value) return ""; return '<div class="nct-detail-row"><div class="nct-detail-label">'+label+'</div><div class="nct-detail-value"><strong>'+value+'</strong></div></div>'; }
+    html += row("Status", ct.status);
+    if(ct.phase) html += row("Phase", "Phase "+ct.phase);
+    html += row("Lead Sponsor", ct.sponsor);
+    if(ct.sponsorClass) html += row("Sponsor Type", ct.sponsorClass);
+    html += row("Study Type", ct.studyType);
+    html += row("Purpose", ct.primaryPurpose);
+    if(ct.enrollmentCount) html += row("Enrollment", String(ct.enrollmentCount) + (ct.enrollmentType ? " ("+ct.enrollmentType+")": ""));
+    html += row("Start Date", ct.startDate);
+    html += row("Completion", ct.completionDate);
+    html += "</div>";
+    if(Array.isArray(ct.conditions) && ct.conditions.length){
+      html += '<div style="background:#f0fdf4;border-radius:12px;padding:16px;margin:16px 0;border-left:4px solid #22c55e;">' +
+              '<div style="font-size:.75rem;font-weight:600;color:#15803d;text-transform:uppercase;margin-bottom:8px;">CONDITIONS STUDIED</div>' +
+              '<div style="font-size:.9rem;color:#1f2937;">'+ct.conditions.slice(0,5).map(c=>'• '+c).join("<br>")+'</div></div>';
+    }
+    if(Array.isArray(ct.interventions) && ct.interventions.length){
+      html += '<div style="background:#fffbeb;border-radius:12px;padding:16px;margin:16px 0;border-left:4px solid #f59e0b;">' +
+              '<div style="font-size:.75rem;font-weight:600;color:#92400e;text-transform:uppercase;margin-bottom:8px;">INTERVENTIONS</div>' +
+              '<div style="font-size:.9rem;color:#1f2937;">';
+      ct.interventions.slice(0,4).forEach(iv=>{
+        html += '<div style="margin-bottom:8px;"><strong>'+(iv.type||"Intervention")+":</strong> "+(iv.name||"") +
+                (iv.description ? '<div style="font-size:.8rem;color:#6b7280;margin-top:2px;">'+String(iv.description).substring(0,100)+(String(iv.description).length>100?"...":"")+'</div>' : '') +
+                '</div>';
+      });
+      html += '</div></div>';
+    }
+    if(Array.isArray(ct.primaryOutcomes) && ct.primaryOutcomes.length){
+      html += '<div style="background:#fef2f2;border-radius:12px;padding:16px;margin:16px 0;border-left:4px solid #ef4444;">' +
+              '<div style="font-size:.75rem;font-weight:600;color:#dc2626;text-transform:uppercase;margin-bottom:8px;">PRIMARY OUTCOMES</div>';
+      ct.primaryOutcomes.slice(0,3).forEach((o,i)=>{
+        html += '<div style="margin-bottom:12px;'+(i>0?'border-top:1px solid rgba(239,68,68,.1);padding-top:8px;':'')+'">' +
+                '<div style="font-weight:600;font-size:.85rem;color:#1f2937;margin-bottom:4px;">'+(o.measure||"Primary Outcome")+'</div>' +
+                (o.timeFrame ? '<div style="font-size:.8rem;color:#6b7280;"><strong>Time Frame:</strong> '+o.timeFrame+'</div>' : '') +
+                (o.description ? '<div style="font-size:.8rem;color:#6b7280;margin-top:4px;">'+String(o.description).substring(0,150)+(String(o.description).length>150?"...":"")+'</div>' : '') +
+                '</div>';
+      });
+      html += '</div>';
+    }
+    if(Array.isArray(ct.secondaryOutcomes) && ct.secondaryOutcomes.length){
+      html += '<div style="background:#eef2ff;border-radius:12px;padding:16px;margin:16px 0;border-left:4px solid #6366f1;">' +
+              '<div style="font-size:.75rem;font-weight:600;color:#3730a3;text-transform:uppercase;margin-bottom:8px;">SECONDARY OUTCOMES</div>';
+      ct.secondaryOutcomes.slice(0,3).forEach((o,i)=>{
+        html += '<div style="margin-bottom:12px;'+(i>0?'border-top:1px solid rgba(99,102,241,.15);padding-top:8px;':'')+'">' +
+                '<div style="font-weight:600;font-size:.85rem;color:#1f2937;margin-bottom:4px;">'+(o.measure||"Secondary Outcome")+'</div>' +
+                (o.timeFrame ? '<div style="font-size:.8rem;color:#6b7280;"><strong>Time Frame:</strong> '+o.timeFrame+'</div>' : '') +
+                (o.description ? '<div style="font-size:.8rem;color:#6b7280;margin-top:4px;">'+String(o.description).substring(0,150)+(String(o.description).length>150?"...":"")+'</div>' : '') +
+                '</div>';
+      });
+      html += '</div>';
+    }
+    content.innerHTML = html;
+  }
+
+  function saveSettings(){
+    const s = {
+      apiKey: (q("api-key") && q("api-key").value) || "",
+      crossrefEmail: (q("crossref-email") && q("crossref-email").value) || ""
+    };
+    localStorage.setItem("silentstacks_settings", JSON.stringify(s));
+    setStatus("⚙️ Settings saved", "success");
+  }
+  function loadSettings(){
+    const settings = JSON.parse(localStorage.getItem("silentstacks_settings") || "{}");
+    if(settings.apiKey && q("api-key")) q("api-key").value = settings.apiKey;
+    if(settings.crossrefEmail && q("crossref-email")) q("crossref-email").value = settings.crossrefEmail;
+  }
+  function clearForm(){
+    ["title","authors","journal","year","doi","nct","tags","patron-email","notes"].forEach(id=>{ if(q(id)) q(id).value=""; });
+    const chips = q("tag-chips"); if(chips) chips.innerHTML = "";
+    const meta = q("metadata-status"); if(meta && meta.parentNode) meta.remove();
+    setStatus("✅ Form cleared", "success");
+  }
+  function savePaper(evt){
+    if(evt && evt.preventDefault) evt.preventDefault();
+    const formData = {
+      pmid: (q("pmid")?.value)||"",
+      title: (q("title")?.value)||"",
+      authors: (q("authors")?.value)||"",
+      journal: (q("journal")?.value)||"",
+      year: (q("year")?.value)||"",
+      doi: (q("doi")?.value)||"",
+      nct: (q("nct")?.value)||"",
+      status: (q("status")?.value)||"",
+      priority: (q("priority")?.value)||"",
+      patronEmail: (q("patron-email")?.value)||"",
+      tags: (q("tags")?.value)||"",
+      notes: (q("notes")?.value)||"",
+      savedAt: new Date().toISOString()
+    };
+    const saved = JSON.parse(localStorage.getItem("silentstacks_papers")||"[]");
+    saved.push(formData);
+    localStorage.setItem("silentstacks_papers", JSON.stringify(saved));
+    setStatus("💾 Research entry saved successfully!", "success");
+  }
+
+  // -----------------------------
+  // PMID lookup handler
+  // -----------------------------
+  async function enhancedPMIDLookup(){
+    const pmidInput = q("pmid");
+    const pmid = (pmidInput && pmidInput.value ? pmidInput.value.trim() : "");
+    if(!pmid){ setStatus("Please enter a PMID", "error"); return; }
+    if(!/^\d{6,9}$/.test(pmid)){ setStatus("PMID must be 6-9 digits", "error"); return; }
+
+    // Demo mode
+    if(pmid==="18539917" || pmid==="23842776"){
+      setLoadingState(true);
+      setStatus("🔍 Analyzing PubMed database...", "loading");
+      await _sleep(800);
+      const demo = window.SilentStacks && window.SilentStacks._demoData ? window.SilentStacks._demoData(pmid) : null;
+      if(demo){
+        populateFormWithEnrichedData(demo);
+        if(demo.clinicalTrial) showEnhancedNCTSidebar(demo.clinicalTrial);
+        setStatus("🎯 DEMO complete • ✅ PubMed • 🧪 Trial • 🏷️ MeSH", "success");
+      }else{
+        setStatus("Demo data unavailable", "warning");
+      }
+      setLoadingState(false);
+      return;
+    }
+
+    const settings = JSON.parse(localStorage.getItem("silentstacks_settings") || "{}");
+    const pipe = new PMIDEnrichmentPipeline({ apiKey: settings.apiKey || "", crossrefEmail: settings.crossrefEmail || "" });
+
+    try{
+      setLoadingState(true);
+      setStatus("🔍 Analyzing PubMed database...", "loading");
+      const result = await pipe.enrichPMID(pmid);
+      if(result.status==="complete" && result.unified){
+        populateFormWithEnrichedData(result.unified);
+        const ok = ["✅ PubMed data retrieved"];
+        if(result.unified.clinicalTrial){ ok.push("🧪 Clinical trial "+(result.unified.nct||"")+" analyzed"); showEnhancedNCTSidebar(result.unified.clinicalTrial); }
+        if((result.unified.tags||[]).length>0) ok.push("🏷️ "+result.unified.tags.length+" tags added");
+        setStatus(ok.join(" • "), "success");
+      }else if(result.pubmed){
+        populateBasicFields(result.pubmed);
+        setStatus("✅ PubMed data retrieved • ⚠️ "+result.errors.join("; "), "warning");
+      }else{
+        setStatus("❌ PMID lookup failed: "+result.errors.join("; "), "error");
+      }
+    }catch(e){
+      if((e.message||"").includes("Network") || (e.message||"").includes("fetch")){
+        setStatus("⚠️ CT.gov/PubMed calls blocked by network/CORS/SW. Try demo PMIDs 18539917 / 23842776 or run on an https origin.", "warning");
+      }else{
+        setStatus("❌ PMID lookup failed: "+e.message, "error");
+      }
+    }finally{
+      setLoadingState(false);
+    }
+  }
+
+  // -----------------------------
+  // Wire up handlers on load
+  // -----------------------------
+  document.addEventListener("DOMContentLoaded", function(){
+    // Buttons
+    const btn = q("lookup-pmid"); if(btn) btn.addEventListener("click", enhancedPMIDLookup);
+    const saveBtn = q("save-settings"); if(saveBtn) saveBtn.addEventListener("click", saveSettings);
+    const clearBtn = q("clear-form"); if(clearBtn) clearBtn.addEventListener("click", clearForm);
+    const savePaperBtn = q("save-paper"); if(savePaperBtn) savePaperBtn.addEventListener("click", savePaper);
+
+    // Inputs
+    const tagsInput = q("tags"); if(tagsInput) tagsInput.addEventListener("input", updateTagChips);
+    const pmidInput = q("pmid"); if(pmidInput){
+      pmidInput.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); enhancedPMIDLookup(); } });
+      pmidInput.addEventListener("input", function(){ this.value = this.value.replace(/\D/g,""); });
+    }
+
+    // Settings load
+    loadSettings();
+
+    // Init log
+    try{ console.log("🧬 SilentStacks v2.2 initialized"); }catch(_){}
+  });
+
+  // Expose API
+  window.SilentStacks = Object.assign(window.SilentStacks||{}, {
+    PMIDEnrichmentPipeline,
+    enhancedPMIDLookup,
+    setStatus,
+    setLoadingState,
+    populateFormWithEnrichedData,
+    populateBasicFields,
+    addEnrichedTags,
+    showEnhancedNCTSidebar,
+    decodeDOI,
+    normalizeDOI,
+    updateTagChips,
+    removeTag,
+    saveSettings,
+    loadSettings,
+    clearForm,
+    savePaper,
+    _demoData: function(pmid){
+      if(pmid==="18539917"){
+        return {
+          pmid:"18539917",
+          nct:"NCT00048516",
+          doi:"10.1056/NEJMoa0803399",
+          title:"Sorafenib in patients with advanced hepatocellular carcinoma: a randomized, double-blind, placebo-controlled phase 3 trial",
+          authors:"Llovet JM; Ricci S; Mazzaferro V; Hilgard P; Gane E; Blanc JF; de Oliveira AC; Santoro A; Raoul JL; Forner A; Schwartz M; Porta C; Zeuzem S; Bolondi L; Greten TF; Galle PR; Seitz JF; Borbath I; Häussinger D; Giannaris T; Shan M; Moscovici M; Voliotis D; Bruix J",
+          journal:"New England Journal of Medicine",
+          year:"2008",
+          tags:[
+            { name:"Hepatocellular Carcinoma", type:"mesh", source:"pubmed", color:"#dbeafe" },
+            { name:"Antineoplastic Agents", type:"mesh", source:"pubmed", color:"#dbeafe" },
+            { name:"Sorafenib", type:"mesh", source:"pubmed", color:"#dbeafe" },
+            { name:"Phase III", type:"phase", source:"clinicaltrials", color:"#fef3c7" },
+            { name:"Industry", type:"sponsor", source:"clinicaltrials", color:"#e5e7eb" },
+            { name:"Drug", type:"intervention", source:"clinicaltrials", color:"#dcfce7" }
+          ],
+          clinicalTrial:{
+            nctId:"NCT00048516",
+            title:"Sorafenib in Patients With Advanced Hepatocellular Carcinoma",
+            briefTitle:"Sorafenib vs Placebo in HCC",
+            phase:"III",
+            studyType:"Interventional",
+            interventionModel:"Parallel Assignment",
+            allocation:"Randomized",
+            masking:"Double (Participant, Investigator)",
+            primaryPurpose:"Treatment",
+            status:"Completed",
+            startDate:"March 2003",
+            completionDate:"April 2007",
+            conditions:["Hepatocellular Carcinoma","Liver Cancer"],
+            interventions:[
+              { type:"Drug", name:"Sorafenib", description:"Sorafenib 400 mg twice daily orally" },
+              { type:"Drug", name:"Placebo", description:"Matching placebo twice daily orally" }
+            ],
+            enrollmentCount:602, enrollmentType:"Actual",
+            sponsor:"Bayer Healthcare Pharmaceuticals Inc./Onyx Pharmaceuticals",
+            sponsorClass:"Industry",
+            collaborators:[{ name:"Onyx Therapeutics, Inc." }],
+            primaryOutcomes:[{ measure:"Overall Survival", timeFrame:"Up to 5 years", description:"Time from randomization to death from any cause" }],
+            secondaryOutcomes:[{ measure:"Progression-Free Survival", timeFrame:"Up to 5 years" }, { measure:"Time to Progression", timeFrame:"Up to 5 years" }],
+            eligibility:{ criteria:"Advanced HCC not amenable to resection", gender:"All", minimumAge:"18 Years", maximumAge:"N/A", healthyVolunteers:"No" },
+            locations:[
+              { facility:"Hospital Clinic de Barcelona", city:"Barcelona", country:"Spain" },
+              { facility:"Mount Sinai Medical Center", city:"New York", state:"NY", country:"United States" }
+            ],
+            studyUrl:"https://clinicaltrials.gov/ct2/show/NCT00048516",
+            apiVersion:"demo", provenance:{ source:"clinicaltrials.gov", apiVersion:"demo", fetchedAt:new Date().toISOString() }
+          },
+          status:"pending", priority:"normal", patronEmail:"", notes:"", enrichmentDate:new Date().toISOString(),
+          sources:{ pubmed:true, clinicalTrials:true }
+        };
+      }
+      return {
+        pmid:"23842776",
+        nct:null,
+        doi:"10.1016/j.cell.2013.06.020",
+        title:"Single-cell RNA-seq reveals dynamic paracrine control of cellular variation",
+        authors:"Shalek AK; Satija R; Adiconis X; Gertner RS; Gaublomme JT; Raychowdhury R; Schwartz S; Yosef N; Malboeuf C; Lu D; Trombetta JJ; Gennert D; Gnirke A; Goren A; Hacohen N; Levin JZ; Park H; Regev A",
+        journal:"Cell", year:"2013",
+        tags:[
+          { name:"Single-Cell Analysis", type:"mesh", source:"pubmed", color:"#dbeafe" },
+          { name:"RNA-Seq", type:"mesh", source:"pubmed", color:"#dbeafe" },
+          { name:"Gene Expression Profiling", type:"mesh", source:"pubmed", color:"#dbeafe" },
+          { name:"Transcriptome", type:"mesh", source:"pubmed", color:"#dbeafe" }
+        ],
+        clinicalTrial:null, status:"pending", priority:"normal", patronEmail:"", notes:"", enrichmentDate:new Date().toISOString(),
+        sources:{ pubmed:true, clinicalTrials:false }
+      };
+    }
+  });
+})();

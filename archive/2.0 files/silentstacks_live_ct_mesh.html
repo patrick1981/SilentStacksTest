@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SilentStacks – Live Prototype: PMID + NCT + Tags</title>
+  <!-- Reddit Sans (Google Fonts) -->
+  <link href="https://fonts.googleapis.com/css2?family=Reddit+Sans:wdth,wght@75..125,100..900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Base palette (neutral UI) */
+      --bg: #ffffff;
+      --bg-muted: #f6f7f8;
+      --text: #111418;
+      --muted-text: #3a3f45;
+      --surface: #ffffff;
+      --surface-alt: #f2f4f7;
+      --border: #d6dbe1;
+      --focus: #0040ff; /* AAA focus outline on white */
+      --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
+
+      /* Priority colors (traffic light semantics) */
+      --prio-high: #8B0A10;   /* deep red - accessible */
+      --prio-med:  #8C5A00;   /* dark amber */
+      --prio-low:  #0B6B2A;   /* dark green */
+
+      /* Generic tag colors (5) */
+      --tag-research:   #0B63B6; /* blue */
+      --tag-patient:    #1C7C54; /* soft green */
+      --tag-regulatory: #5B2E91; /* purple */
+      --tag-admin:      #37474F; /* blue-grey */
+      --tag-user:       #0D7671; /* teal */
+
+      /* MeSH chips – use same hues; major vs minor by weight/shape */
+      --mesh-major-bg: #12202A; /* very dark slate for filled major */
+      --mesh-minor-br: #1C7C54; /* border for minor */
+
+      /* Status */
+      --ok: #0B6B2A;
+      --warn: #8C5A00;
+      --err: #8B0A10;
+    }
+
+    /* Dark theme (preview) */
+    [data-theme="dark"] {
+      --bg: #0b0d10;
+      --bg-muted: #121519;
+      --text: #f5f7fa;
+      --muted-text: #c3c9d0;
+      --surface: #121519;
+      --surface-alt: #171b21;
+      --border: #2a3139;
+      --focus: #7aa2ff;
+      --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 28px rgba(0,0,0,.35);
+    }
+
+    /* High-contrast theme (preview) */
+    [data-theme="hc"] {
+      --bg: #ffffff;
+      --bg-muted: #ffffff;
+      --text: #000000;
+      --muted-text: #000000;
+      --surface: #ffffff;
+      --surface-alt: #ffffff;
+      --border: #000000;
+      --focus: #000000;
+      /* Use outline chips with solid color left-bars to ensure AAA */
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: "Reddit Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+    }
+
+    .app { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    .skip-link {
+      position: absolute; left: -9999px; top: -9999px;
+    }
+    .skip-link:focus { left: 16px; top: 16px; background: var(--focus); color: #fff; padding: 8px 12px; border-radius: 6px; }
+
+    header {
+      display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;
+      padding: 16px 0 8px; border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand .mark {
+      width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #0B63B6, #0D7671); box-shadow: var(--shadow);
+    }
+    .brand h1 { font-weight: 700; font-size: 1.125rem; margin: 0; letter-spacing: .2px; }
+    .brand small { color: var(--muted-text); }
+
+    .toolbar { display: flex; gap: 8px; align-items: center; }
+    .toolbar button, .toolbar .seg {
+      border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      padding: 8px 12px; border-radius: 10px; cursor: pointer; box-shadow: var(--shadow);
+    }
+    .seg { display: inline-flex; overflow: hidden; border-radius: 10px; }
+    .seg button { border: none; border-right: 1px solid var(--border); background: var(--surface-alt); }
+    .seg button[aria-pressed="true"] { outline: 3px solid var(--focus); outline-offset: 1px; }
+
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+    @media (min-width: 1024px) { .grid { grid-template-columns: 1.2fr .8fr; } }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+    .card h2 { font-size: 1rem; margin: 0; padding: 16px; border-bottom: 1px solid var(--border); }
+    .card .content { padding: 16px; }
+
+    .row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 720px) { .row { grid-template-columns: repeat(2, 1fr); } }
+
+    label { display: inline-block; font-weight: 600; margin-bottom: 6px; }
+    input[type="text"], input[type="search"], select, textarea {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text);
+    }
+    textarea { min-height: 96px; resize: vertical; }
+
+    fieldset { border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    legend { font-weight: 700; padding: 0 6px; }
+
+    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      padding: 10px 14px; border-radius: 10px; cursor: pointer; box-shadow: var(--shadow);
+    }
+    .btn.primary { background: #0B63B6; border-color: #094a88; color: #fff; }
+    .btn.ghost { background: transparent; }
+
+    /* Tag chips */
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      --chip-bg: var(--surface);
+      --chip-br: var(--border);
+      --chip-fg: var(--text);
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1.5px solid var(--chip-br);
+      border-left-width: 8px; /* color code without sacrificing AAA contrast */
+      background: var(--chip-bg);
+      color: var(--chip-fg);
+      padding: 6px 10px; border-radius: 1000px; font-size: .9rem; line-height: 1;
+    }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .chip[role="switch"] { cursor: pointer; }
+    .chip[aria-checked="true"] { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .chip .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+    /* Priority variants */
+    .prio-high  { --chip-br: var(--prio-high); }
+    .prio-med   { --chip-br: var(--prio-med); }
+    .prio-low   { --chip-br: var(--prio-low); }
+
+    /* Generic tag variants */
+    .tag-research   { --chip-br: var(--tag-research); }
+    .tag-patient    { --chip-br: var(--tag-patient); }
+    .tag-regulatory { --chip-br: var(--tag-regulatory); }
+    .tag-admin      { --chip-br: var(--tag-admin); }
+    .tag-user       { --chip-br: var(--tag-user); }
+
+    /* MeSH variants */
+    .mesh-major { --chip-bg: var(--mesh-major-bg); --chip-br: var(--mesh-major-bg); --chip-fg: #ffffff; }
+    .mesh-minor { --chip-br: var(--mesh-minor-br); }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { font-size: .9rem; color: var(--muted-text); font-weight: 700; }
+    tr:hover td { background: var(--surface-alt); }
+
+    .kicker { font-size: .8rem; color: var(--muted-text); }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); }
+
+    footer { margin-top: 24px; color: var(--muted-text); font-size: .85rem; }
+
+    /* Tabs for views */ 
+    .views { display: flex; gap: 8px; margin-top: 12px; }
+    .view { display: none; }
+    .view[aria-hidden="false"] { display: block; }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <div class="app" id="app" data-theme="light">
+    <header>
+      <div class="brand" aria-label="SilentStacks">
+        <div class="mark" aria-hidden="true"></div>
+        <div>
+          <h1>SilentStacks <small class="kicker">Live Prototype — PMID ⇄ NCT + Tags</small></h1>
+          <small class="kicker">Front‑end only. Demo lookup for a couple of PMIDs; otherwise manual.</small>
+        </div>
+      </div>
+      <div class="toolbar" role="toolbar" aria-label="Preview controls">
+        <div class="seg" role="group" aria-label="Theme">
+          <button type="button" data-theme="light" aria-pressed="true">Light</button>
+          <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
+          <button type="button" data-theme="hc" aria-pressed="false">High Contrast</button>
+        </div>
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" data-view="form" aria-pressed="true">Add Request</button>
+          <button type="button" data-view="cards" aria-pressed="false">Card Grid</button>
+          <button type="button" data-view="table" aria-pressed="false">Table</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <div class="views">
+        <!-- FORM VIEW -->
+        <section class="view" id="view-form" aria-hidden="false">
+          <div class="grid">
+            <!-- LEFT: PMID Data with NCT beneath (per request) -->
+            <div class="card">
+              <h2>PMID Data</h2>
+              <div class="content">
+                <div class="row">
+                  <div>
+                    <label for="pmid">PMID</label>
+                    <div class="actions">
+                      <input id="pmid" name="pmid" type="text" placeholder="e.g., 18539917" aria-describedby="pmid-hint" inputmode="numeric" pattern="\\d{6,9}">
+                      <button id="lookup" class="btn">Lookup (demo)</button>
+                    </div>
+                    <div class="kicker" id="pmid-hint">Demo lookup supports 18539917 and 23842776; otherwise, fill manually.</div>
+                  </div>
+                  <div>
+                    <label for="doi">DOI</label>
+                    <input id="doi" name="doi" type="text" placeholder="10.1000/xyz123">
+                  </div>
+                </div>
+                <div class="row">
+                  <div>
+                    <label for="title">Article Title</label>
+                    <input id="title" name="title" type="text" placeholder="Auto-populated by lookup or enter manually">
+                  </div>
+                  <div>
+                    <label for="authors">Authors</label>
+                    <input id="authors" name="authors" type="text" placeholder="Last FM; Last FM; …">
+                  </div>
+                </div>
+                <div class="row">
+                  <div>
+                    <label for="journal">Journal</label>
+                    <input id="journal" name="journal" type="text" placeholder="Journal, Year;Vol(Issue):Pages">
+                  </div>
+                  <div>
+                    <label for="nct">NCT Number</label>
+                    <input id="nct" name="nct" type="text" placeholder="NCT01234567" aria-describedby="nct-hint">
+                    <div class="kicker" id="nct-hint">Will auto-fill on lookup when linked to PMID (demo).</div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div>
+                    <label for="nct-title">Clinical Trial Title</label>
+                    <input id="nct-title" name="nct-title" type="text" placeholder="Auto-populated by lookup or enter manually">
+                  </div>
+                  <div>
+                    <label for="nct-sponsor">Sponsor</label>
+                    <input id="nct-sponsor" name="nct-sponsor" type="text" placeholder="NIH / Sponsor (mock)">
+                  </div>
+                </div>
+                <div class="row">
+                  <div>
+                    <label for="nct-author">Lead Investigator</label>
+                    <input id="nct-author" name="nct-author" type="text" placeholder="Lastname, First">
+                  </div>
+                  <div>
+                    <label for="nct-status">Overall Status</label>
+                    <input id="nct-status" name="nct-status" type="text" placeholder="Recruiting / Completed">
+                  </div>
+                </div>
+                <div class="row">
+                  <div>
+                    <label for="nct-phase">Phase</label>
+                    <input id="nct-phase" name="nct-phase" type="text" placeholder="Phase 2">
+                  </div>
+                  <div>
+                    <label>&nbsp;</label>
+                    <div class="kicker">NCT fields shown beneath PMID, as requested.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: Tags + SilentStacks table meta (per order: Urgency, Docline #, Patron, Notes) -->
+            <div class="card">
+              <h2>Request Meta & Tags</h2>
+              <div class="content">
+                <!-- Urgency first -->
+                <div class="row">
+                  <div>
+                    <label for="urgency">Urgency</label>
+                    <div class="chip-row" role="group" aria-label="Priority (Urgency)">
+                      <button class="chip prio-high" role="switch" aria-checked="false" data-urgency="High" aria-label="High urgency">
+                        <span aria-hidden="true" class="dot" style="color:var(--prio-high)"></span> High
+                      </button>
+                      <button class="chip prio-med" role="switch" aria-checked="true" data-urgency="Medium" aria-label="Medium urgency">
+                        <span aria-hidden="true" class="dot" style="color:var(--prio-med)"></span> Medium
+                      </button>
+                      <button class="chip prio-low" role="switch" aria-checked="false" data-urgency="Low" aria-label="Low urgency">
+                        <span aria-hidden="true" class="dot" style="color:var(--prio-low)"></span> Low
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="docline">Docline Number</label>
+                    <input id="docline" name="docline" type="text" inputmode="numeric" placeholder="e.g., 123456">
+                  </div>
+                </div>
+                <div class="row">
+                  <div>
+                    <label for="patron">Patron Name</label>
+                    <input id="patron" name="patron" type="text" placeholder="Patron full name">
+                  </div>
+                  <div>
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" name="notes" placeholder="Special instructions, context, etc."></textarea>
+                  </div>
+                </div>
+
+                <!-- NCT Keywords (selectable) -->
+                <div style="margin-top:12px">
+                  <label class="kicker" for="nct-keywords">NCT Keywords</label>
+                  <div id="nct-keywords" class="chip-row" role="group" aria-label="NCT Keywords">
+                    <button class="chip tag-research" role="switch" aria-checked="false" aria-label="Randomized">
+                      <span aria-hidden="true" class="dot" style="color:var(--tag-research)"></span> Randomized
+                    </button>
+                    <button class="chip tag-patient" role="switch" aria-checked="false" aria-label="Placebo-Controlled">
+                      <span aria-hidden="true" class="dot" style="color:var(--tag-patient)"></span> Placebo-Controlled
+                    </button>
+                    <button class="chip tag-regulatory" role="switch" aria-checked="false" aria-label="Blinded">
+                      <span aria-hidden="true" class="dot" style="color:var(--tag-regulatory)"></span> Blinded
+                    </button>
+                    <button class="chip tag-admin" role="switch" aria-checked="false" aria-label="Multicenter">
+                      <span aria-hidden="true" class="dot" style="color:var(--tag-admin)"></span> Multicenter
+                    </button>
+                    <button class="chip tag-user" role="switch" aria-checked="false" aria-label="Open-Label">
+                      <span aria-hidden="true" class="dot" style="color:var(--tag-user)"></span> Open-Label
+                    </button>
+                  </div>
+                </div>
+
+                <!-- MeSH Headings (major vs minor) -->
+                <div style="margin-top:12px">
+                  <label class="kicker" for="mesh-tags">MeSH Headings</label>
+                  <div id="mesh-tags" class="chip-row" role="group" aria-label="MeSH Headings">
+                    <!-- Dynamic from lookup or user can toggle/select; start empty for live demo -->
+                  </div>
+                </div>
+
+                <!-- User Tags -->
+                <div style="margin-top:12px">
+                  <label for="user-tag-input" class="kicker">User Tags</label>
+                  <div class="actions">
+                    <input id="user-tag-input" type="text" placeholder="Add a tag and press Enter" aria-label="Add user tag">
+                    <button id="add-user-tag" class="btn">Add</button>
+                  </div>
+                  <div id="user-tag-row" class="chip-row" aria-label="Current user tags"></div>
+                </div>
+
+                <div class="actions" style="margin-top:16px">
+                  <button id="add-request" class="btn primary">Add to Requests</button>
+                  <button id="reset-form" class="btn ghost">Reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CARDS VIEW -->
+        <section class="view" id="view-cards" aria-hidden="true">
+          <div class="card">
+            <h2>Card Grid — Requests</h2>
+            <div id="cards-container" class="content" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+              <!-- Cards injected here -->
+            </div>
+          </div>
+        </section>
+
+        <!-- TABLE VIEW -->
+        <section class="view" id="view-table" aria-hidden="true">
+          <div class="card">
+            <h2>All Requests — Table</h2>
+            <div class="content">
+              <table aria-label="Requests table">
+                <thead>
+                  <tr>
+                    <th>Urgency</th>
+                    <th>Docline #</th>
+                    <th>PMID</th>
+                    <th>Citation</th>
+                    <th>Patron</th>
+                    <th>Status</th>
+                    <th>MeSH / NCT Tags</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="table-body">
+                  <!-- Rows injected here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <p><strong>Note:</strong> This is a <em>live</em> front‑end prototype. The “Lookup” button uses demo data for two PMIDs to show auto‑population and chip generation. Everything else is fully interactive and persisted in‑memory during the session.</p>
+    </footer>
+  </div>
+
+  <script>
+    // --- Simple theme + view toggles ---
+    const app = document.getElementById('app');
+    const themeButtons = document.querySelectorAll('.seg [data-theme]');
+    themeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        themeButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        app.setAttribute('data-theme', btn.dataset.theme);
+      });
+    });
+
+    const viewButtons = document.querySelectorAll('.seg [data-view]');
+    const views = {
+      form: document.getElementById('view-form'),
+      cards: document.getElementById('view-cards'),
+      table: document.getElementById('view-table')
+    };
+    viewButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        viewButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+        btn.setAttribute('aria-pressed', 'true');
+        const v = btn.dataset.view;
+        Object.keys(views).forEach(k => views[k].setAttribute('aria-hidden', String(k !== v)));
+      });
+    });
+
+    // --- Chip selection toggles & capture ---
+    function setupChipSwitches(root=document) {
+      root.querySelectorAll('.chip[role="switch"]').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const current = chip.getAttribute('aria-checked') === 'true';
+          chip.setAttribute('aria-checked', String(!current));
+        });
+        chip.addEventListener('keydown', (e) => {
+          if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); chip.click(); }
+        });
+        chip.tabIndex = 0;
+      });
+    }
+    setupChipSwitches();
+
+    // --- Demo dataset for lookup ---
+    const demo = {
+      "18539917": {
+        pmid: "18539917",
+        doi: "10.1056/NEJMoa000000",
+        title: "Randomized Trial of Something on Something Else",
+        authors: "Last A; Second B; Third C",
+        journal: "NEJM, 2008;358(1):1-10",
+        nct: "NCT01234567",
+        nctTitle: "A Randomized, Double‑Blind, Placebo‑Controlled Study of X",
+        sponsor: "NIH / Example Sponsor",
+        lead: "Doe, Jane",
+        status: "Recruiting",
+        phase: "Phase 2",
+        meshMajor: ["Neoplasms"],
+        meshMinor: ["Chemotherapy", "Biomarkers", "Clinical Protocols"],
+        nctKeywords: ["Randomized", "Placebo-Controlled", "Blinded"]
+      },
+      "23842776": {
+        pmid: "23842776",
+        doi: "10.1001/jama.2013.0000",
+        title: "Observational Cohort Outcomes in Oncology",
+        authors: "Smith A; Lee B; Patel C",
+        journal: "JAMA, 2013;310(2):200-210",
+        nct: "",
+        nctTitle: "",
+        sponsor: "University Health",
+        lead: "Smith, Alex",
+        status: "Completed",
+        phase: "N/A",
+        meshMajor: ["Neoplasms"],
+        meshMinor: ["Cohort Studies", "Prognosis"],
+        nctKeywords: ["Multicenter"]
+      }
+    };
+
+    // --- Elements ---
+    const el = (id) => document.getElementById(id);
+    const pmid = el('pmid'); const doi = el('doi'); const title = el('title'); const authors = el('authors'); const journal = el('journal');
+    const nct = el('nct'); const nctTitle = el('nct-title'); const nctSponsor = el('nct-sponsor'); const nctAuthor = el('nct-author');
+    const nctStatus = el('nct-status'); const nctPhase = el('nct-phase');
+    const userTagInput = el('user-tag-input'); const userTagRow = el('user-tag-row');
+    const meshRow = el('mesh-tags');
+    const nctKeywordRow = el('nct-keywords');
+    const docline = el('docline'); const patron = el('patron'); const notes = el('notes');
+    const addBtn = el('add-request'); const resetBtn = el('reset-form'); const lookupBtn = el('lookup');
+    const cards = document.getElementById('cards-container'); const tableBody = document.getElementById('table-body');
+
+    // --- Helpers ---
+    function clearChildren(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+    function addChip(container, label, classes=[], checked=false, ariaLabel=null) {
+      const chip = document.createElement('button');
+      chip.className = 'chip ' + classes.join(' ');
+      chip.setAttribute('role', 'switch');
+      chip.setAttribute('aria-checked', checked ? 'true' : 'false');
+      chip.innerHTML = `<span aria-hidden="true" class="dot"></span> ${label}`;
+      if (ariaLabel) chip.setAttribute('aria-label', ariaLabel);
+      container.appendChild(chip);
+      setupChipSwitches(chip.parentElement);
+      return chip;
+    }
+
+    function addMeshChip(container, label, isMajor=false) {
+      const el = document.createElement(isMajor ? 'span' : 'button');
+      el.className = 'chip ' + (isMajor ? 'mesh-major' : 'mesh-minor');
+      if (isMajor) {
+        el.setAttribute('role','switch'); el.setAttribute('aria-checked','true');
+        el.innerHTML = '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"></polygon></svg> ' + label + ' <span class="visually-hidden">(major topic)</span>';
+      } else {
+        el.setAttribute('role','switch'); el.setAttribute('aria-checked','false');
+        el.innerHTML = '<span aria-hidden="true" class="dot" style="color:var(--mesh-minor-br)"></span> ' + label;
+      }
+      container.appendChild(el);
+      setupChipSwitches(container);
+    }
+
+    function selectedChips(node) {
+      return Array.from(node.querySelectorAll('.chip[role="switch"][aria-checked="true"]')).map(c => c.textContent.trim());
+    }
+
+    function selectedUrgency() {
+      const u = document.querySelectorAll('[data-urgency]');
+      let sel = 'Medium';
+      u.forEach(ch => { if (ch.getAttribute('aria-checked') === 'true') sel = ch.dataset.urgency; });
+      return sel;
+    }
+
+    // --- User tag adding ---
+    document.getElementById('add-user-tag').addEventListener('click', () => {
+      const val = userTagInput.value.trim();
+      if (!val) return;
+      const span = document.createElement('span');
+      span.className = 'chip tag-user';
+      span.setAttribute('role','switch'); span.setAttribute('aria-checked','true');
+      span.innerHTML = '<span aria-hidden="true" class="dot" style="color:var(--tag-user)"></span> ' + val;
+      userTagRow.appendChild(span);
+      setupChipSwitches(userTagRow);
+      userTagInput.value='';
+      userTagInput.focus();
+    });
+    userTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('add-user-tag').click(); }
+    });
+
+    // --- Demo lookup ---
+    lookupBtn.addEventListener('click', () => {
+      const id = pmid.value.trim();
+      if (!id) return;
+      const data = demo[id];
+      if (!data) { alert('Demo lookup supports PMIDs 18539917 or 23842776.'); return; }
+      // Fill fields
+      doi.value = data.doi || ''; title.value = data.title || ''; authors.value = data.authors || ''; journal.value = data.journal || '';
+      nct.value = data.nct || ''; nctTitle.value = data.nctTitle || ''; nctSponsor.value = data.sponsor || '';
+      nctAuthor.value = data.lead || ''; nctStatus.value = data.status || ''; nctPhase.value = data.phase || '';
+      // MeSH tags
+      clearChildren(meshRow);
+      (data.meshMajor || []).forEach(m => addMeshChip(meshRow, m, true));
+      (data.meshMinor || []).forEach(m => addMeshChip(meshRow, m, false));
+      // NCT keywords
+      Array.from(nctKeywordRow.querySelectorAll('.chip[role="switch"]')).forEach(c => c.setAttribute('aria-checked','false'));
+      (data.nctKeywords || []).forEach(k => {
+        const chip = Array.from(nctKeywordRow.querySelectorAll('.chip')).find(c => c.textContent.trim() === k);
+        if (chip) chip.setAttribute('aria-checked','true');
+      });
+    });
+
+    // --- In-memory store + renderers ---
+    const store = [];
+
+    function renderCard(item) {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.setAttribute('aria-label','Request card');
+      const tagHtml = [...item.meshMajor.map(t => `<span class="chip mesh-major"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"></polygon></svg>${t}</span>`),
+                       ...item.meshMinor.map(t => `<span class="chip mesh-minor"><span class="dot" style="color:var(--mesh-minor-br)"></span>${t}</span>`),
+                       ...item.nctKeywords.map(t => `<span class="chip tag-research"><span class="dot" style="color:var(--tag-research)"></span>${t}</span>`),
+                       ...item.userTags.map(t => `<span class="chip tag-user"><span class="dot" style="color:var(--tag-user)"></span>${t}</span>`)
+                      ].join(' ');
+      card.innerHTML = `
+        <div class="content" style="display:grid; gap:10px;">
+          <div class="pill">
+            <strong>PMID</strong> ${item.pmid || '—'}
+            <span class="chip ${item.urgencyClass}" aria-hidden="true" style="margin-left:auto"><span class="dot"></span>${item.urgency}</span>
+          </div>
+          <div>
+            <div style="font-weight:700">${item.title || 'Untitled'}</div>
+            <div class="kicker">NCT: ${item.nct || '—'} · ${item.phase || '—'} · ${item.status || '—'}</div>
+          </div>
+          <div class="kicker">Docline: ${item.docline || '—'} · Patron: ${item.patron || '—'}</div>
+          <div class="chip-row">${tagHtml}</div>
+        </div>`;
+      return card;
+    }
+
+    function renderRow(item) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="chip ${item.urgencyClass}"><span class="dot"></span>${item.urgency}</span></td>
+        <td>${item.docline || '—'}</td>
+        <td>${item.pmid || '—'}</td>
+        <td>${item.title || '—'}<div class="kicker">NCT ${item.nct || '—'} · ${item.phase || '—'} · ${item.status || '—'}</div></td>
+        <td>${item.patron || '—'}</td>
+        <td>Open</td>
+        <td>
+          <div class="chip-row">
+            ${item.meshMajor.map(t => `<span class="chip mesh-major"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"></polygon></svg>${t}</span>`).join(' ')}
+            ${item.meshMinor.map(t => `<span class="chip mesh-minor"><span class="dot" style="color:var(--mesh-minor-br)"></span>${t}</span>`).join(' ')}
+            ${item.nctKeywords.map(t => `<span class="chip tag-research"><span class="dot" style="color:var(--tag-research)"></span>${t}</span>`).join(' ')}
+            ${item.userTags.map(t => `<span class="chip tag-user"><span class="dot" style="color:var(--tag-user)"></span>${t}</span>`).join(' ')}
+          </div>
+        </td>
+        <td>${item.notes ? item.notes.replace(/</g,'&lt;') : '—'}</td>
+      `;
+      return tr;
+    }
+
+    function urgencyToClass(u) {
+      if (u === 'High') return 'prio-high';
+      if (u === 'Low') return 'prio-low';
+      return 'prio-med';
+    }
+
+    function collectForm() {
+      const item = {
+        pmid: pmid.value.trim(),
+        doi: doi.value.trim(),
+        title: title.value.trim(),
+        authors: authors.value.trim(),
+        journal: journal.value.trim(),
+        nct: nct.value.trim(),
+        nctTitle: nctTitle.value.trim(),
+        sponsor: nctSponsor.value.trim(),
+        lead: nctAuthor.value.trim(),
+        status: nctStatus.value.trim(),
+        phase: nctPhase.value.trim(),
+        nctKeywords: selectedChips(nctKeywordRow),
+        meshMajor: selectedChips(meshRow).filter(t => t), // majors are selected by default if present
+        meshMinor: Array.from(meshRow.querySelectorAll('.mesh-minor[aria-checked="true"]')).map(c => c.textContent.trim()),
+        userTags: selectedChips(userTagRow),
+        urgency: selectedUrgency(),
+        urgencyClass: urgencyToClass(selectedUrgency()),
+        docline: docline.value.trim(),
+        patron: patron.value.trim(),
+        notes: notes.value.trim()
+      };
+      return item;
+    }
+
+    function addRequest() {
+      const item = collectForm();
+      store.push(item);
+      // Render
+      cards.appendChild(renderCard(item));
+      tableBody.appendChild(renderRow(item));
+      // Switch to cards to show result
+      document.querySelector('[data-view="cards"]').click();
+    }
+
+    addBtn.addEventListener('click', addRequest);
+
+    resetBtn.addEventListener('click', () => {
+      [pmid, doi, title, authors, journal, nct, nctTitle, nctSponsor, nctAuthor, nctStatus, nctPhase, docline, patron, notes].forEach(i => i.value='');
+      Array.from(document.querySelectorAll('.chip[role="switch"]')).forEach(c => c.setAttribute('aria-checked','false'));
+      // Default urgency to Medium
+      document.querySelectorAll('[data-urgency]').forEach(c => c.setAttribute('aria-checked', c.dataset.urgency === 'Medium' ? 'true' : 'false'));
+      clearChildren(meshRow); clearChildren(userTagRow);
+    });
+
+    // Keyboard nav focus for main
+    document.addEventListener('keydown', (e) => {
+      if (e.altKey && e.key.toLowerCase() === 'm') document.getElementById('main').focus();
+    });
+  </script>
+</body>
+</html>

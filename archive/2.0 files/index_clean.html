@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://eutils.ncbi.nlm.nih.gov https://api.crossref.org  base-uri 'none'; form-action 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="no-referrer">
+    <title>SilentStacks v2.0 - ILL Management System</title>
+    
+    <link rel="preload" href="fonts/main-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/main-bold.woff2" as="font" type="font/woff2" crossorigin>
+    
+    <style>
+        @font-face {
+            font-family: SilentStacks;
+            src: url(fonts/main-regular.woff2) format('woff2');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        @font-face {
+            font-family: SilentStacks;
+            src: url(fonts/main-bold.woff2) format('woff2');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        :root {
+            --font-stack: 'SilentStacks', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --primary: #333;
+            --light-gray: #666;
+            --border-gray: #ccc;
+            --bg-white: #fff;
+            --bg-light: #f9f9f9;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --transition: all 0.2s ease;
+        }
+        
+        [data-theme="dark"] {
+            --primary: #f8fafc;
+            --light-gray: #cbd5e1;
+            --border-gray: #475569;
+            --bg-white: #1e293b;
+            --bg-light: #0f172a;
+        }
+        
+        [data-theme="high-contrast"] {
+            --primary: #000;
+            --light-gray: #000;
+            --border-gray: #000;
+            --bg-white: #fff;
+            --bg-light: #f0f0f0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: var(--font-stack);
+            background: var(--bg-light);
+            color: var(--primary);
+            line-height: 1.6;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 260px;
+            background: var(--bg-white);
+            border-right: 1px solid var(--border-gray);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            transform: translateX(-100%);
+            transition: var(--transition);
+        }
+        
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        
+        @media (min-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                transform: translateX(0);
+            }
+        }
+        
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-gray);
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+        
+        .nav-tabs {
+            flex: 1;
+            padding: 16px 0;
+        }
+        
+        .nav-tab {
+            display: block;
+            padding: 12px 24px;
+            color: var(--light-gray);
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        
+        .nav-tab:hover {
+            background: var(--bg-light);
+            color: var(--primary);
+        }
+        
+        .nav-tab.active {
+            background: var(--primary);
+            color: #fff;
+        }
+        
+        .sidebar-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-gray);
+            font-size: 0.85rem;
+            color: var(--light-gray);
+        }
+        
+        .nav-toggle {
+            display: block;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 200;
+            background: var(--bg-white);
+            border: 1px solid var(--border-gray);
+            padding: 8px;
+            cursor: pointer;
+        }
+        
+        @media (min-width: 1024px) {
+            .nav-toggle {
+                display: none;
+            }
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 0;
+            transition: var(--transition);
+        }
+        
+        @media (min-width: 1024px) {
+            .main-content {
+                margin-left: 260px;
+            }
+        }
+        
+        .content-header {
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border-gray);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+        
+        .content-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .content-body {
+            padding: 32px;
+            max-width: 1200px;
+        }
+        
+        .form-container {
+            background: var(--bg-white);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        
+        .form-section h2 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            color: var(--primary);
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--light-gray);
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid var(--border-gray);
+            background: transparent;
+            padding: 12px 0;
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-family: var(--font-stack);
+            transition: var(--transition);
+            outline: none;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .form-group input.valid {
+            border-bottom-color: var(--success);
+        }
+        
+        .form-group input.invalid {
+            border-bottom-color: var(--error);
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: grid;
+            gap: 24px;
+        }
+        
+        .form-row.cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .form-row.cols-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+        
+        .input-with-button {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        
+        .input-with-button input {
+            flex: 1;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-stack);
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: var(--bg-white);
+            color: var(--primary);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-white);
+            color: var(--primary);
+            border-color: var(--border-gray);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+        
+        .btn-success:hover {
+            background: var(--bg-white);
+            color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .btn-danger {
+            background: var(--error);
+            border-color: var(--error);
+            color: #fff;
+        }
+        
+        .btn-danger:hover {
+            background: var(--bg-white);
+            color: var(--error);
+            border-color: var(--error);
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+        
+        .status {
+            padding: 12px 0;
+            margin: 12px 0;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            color: var(--success);
+        }
+        
+        .status.error {
+            color: var(--error);
+        }
+        
+        .status.loading {
+            color: var(--light-gray);
+        }
+        
+        .view-toggle {
+            display: flex;
+            border: 1px solid var(--border-gray);
+            overflow: hidden;
+        }
+        
+        .view-toggle button {
+            padding: 8px 16px;
+            border: none;
+            background: var(--bg-white);
+            color: var(--light-gray);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+        
+        .view-toggle button.active {
+            background: var(--primary);
+            color: #fff;
+        }
+        
+        .table-container {
+            background: var(--bg-white);
+            border: 1px solid var(--border-gray);
+            overflow-x: auto;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background: var(--bg-light);
+            padding: 16px;
+            text-align: left;
+            font-weight: 500;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border-gray);
+        }
+        
+        .table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-gray);
+            color: var(--primary);
+        }
+        
+        .table tr:hover {
+            background: var(--bg-light);
+        }
+        
+        .table th button {
+            background: transparent;
+            border: none;
+            color: inherit;
+            font-weight: inherit;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+        
+        .request-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-gray);
+            padding: 24px;
+        }
+        
+        .request-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .request-id {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--light-gray);
+        }
+        
+        .request-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .request-meta {
+            font-size: 0.875rem;
+            color: var(--light-gray);
+            margin-bottom: 16px;
+        }
+        
+        .request-meta div {
+            margin-bottom: 4px;
+        }
+        
+        .request-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--primary);
+            border: 1px solid var(--border-gray);
+        }
+        
+        .status-badge.order {
+            background: #fffbeb;
+            color: #92400e;
+            border-color: #fbbf24;
+        }
+        
+        .status-badge.received {
+            background: #eff6ff;
+            color: #1e40af;
+            border-color: #3b82f6;
+        }
+        
+        .status-badge.processing {
+            background: #fef3c7;
+            color: #d97706;
+            border-color: #f59e0b;
+        }
+        
+        .status-badge.completed {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #22c55e;
+        }
+        
+        .status-badge.cancelled {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+        
+        .priority-badge {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid var(--border-gray);
+        }
+        
+        .priority-badge.low {
+            background: #f0fdf4;
+            color: #166534;
+        }
+        
+        .priority-badge.normal {
+            background: var(--bg-light);
+            color: var(--light-gray);
+        }
+        
+        .priority-badge.high {
+            background: #fffbeb;
+            color: #92400e;
+        }
+        
+        .priority-badge.urgent {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        
+        .mesh-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .mesh-tag {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: 12px;
+            border: 1px solid;
+        }
+        
+        .mesh-tag:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mesh-tag-mesh {
+            background: #f0f9ff;
+            color: #1e40af;
+            border-color: #93c5fd;
+        }
+        
+        .mesh-tag-trial {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fbbf24;
+        }
+        
+        .mesh-tag-condition {
+            background: #fce7f3;
+            color: #be185d;
+            border-color: #f9a8d4;
+        }
+        
+        .mesh-tag-intervention {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #4ade80;
+        }
+        
+        .mesh-tag-phase {
+            background: #ede9fe;
+            color: #7c3aed;
+            border-color: #c4b5fd;
+        }
+        
+        .mesh-tag-sponsor {
+            background: #f3f4f6;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+        
+        .search-filters {
+            background: var(--bg-white);
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-gray);
+        }
+        
+        .search-bar {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        
+        .search-input {
+            padding-left: 40px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--light-gray);
+        }
+        
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .bulk-actions {
+            background: var(--bg-white);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-gray);
+            display: none;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .bulk-actions.show {
+            display: flex;
+        }
+        
+        .bulk-actions-text {
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+        
+        .checkbox-cell input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: var(--bg-white);
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--border-gray);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--light-gray);
+        }
+        
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 24px;
+            background: var(--bg-white);
+            border: 1px solid var(--border-gray);
+        }
+        
+        .workflow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--border-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--light-gray);
+            background: var(--bg-white);
+        }
+        
+        .step-circle.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        
+        .step-circle.completed {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+        
+        .step-label {
+            font-size: 0.875rem;
+            color: var(--light-gray);
+        }
+        
+        @media (max-width: 768px) {
+            .content-header {
+                padding: 16px;
+            }
+            
+            .content-body {
+                padding: 16px;
+            }
+            
+            .form-container {
+                padding: 24px 16px;
+            }
+            
+            .form-row.cols-2,
+            .form-row.cols-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-with-button {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .workflow-steps {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border-gray);
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="light">
+    <button class="nav-toggle" id="navToggle" data-action="toggle-sidebar" aria-label="Toggle navigation">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
+    <div class="app-container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-text">SilentStacks</div>
+            </div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+                <button class="nav-tab" data-tab="add-request">Add Request</button>
+                <button class="nav-tab" data-tab="manage-requests">Manage Requests</button>
+                <button class="nav-tab" data-tab="bulk-operations">Bulk Operations</button>
+                <button class="nav-tab" data-tab="settings">Settings</button>
+                <button class="nav-tab" data-tab="help">Help</button>
+            </div>
+            <div class="sidebar-footer">
+                <div>SilentStacks v2.0</div>
+                <div id="networkStatus">● Online</div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="sr-only" id="ss-live" aria-live="polite"></div>
+
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboard">
+                <div class="content-header">
+                    <h1 class="page-title">Dashboard</h1>
+                    <div class="content-actions">
+                        <button class="btn" data-tab="add-request">New Request</button>
+                    </div>
+                </div>
+                <div class="content-body">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalRequests">0</div>
+                            <div class="stat-label">Total Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="pendingRequests">0</div>
+                            <div class="stat-label">Pending Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="inProgressRequests">0</div>
+                            <div class="stat-label">In Progress Requests</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="completedRequests">0</div>
+                            <div class="stat-label">Completed Requests</div>
+                        </div>
+                    </div>
+                    <div class="form-container">
+                        <h2>Recent Requests</h2>
+                        <div id="recentRequests">
+                            <p style="color: var(--light-gray);">No recent requests</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Request Tab -->
+            <div class="tab-content" id="add-request">
+                <div class="content-header">
+                    <h1 class="page-title">Add New Request</h1>
+                </div>
+                <div class="content-body">
+                    <div class="workflow-steps">
+                        <div class="workflow-step">
+                            <div class="step-circle active">1</div>
+                            <div class="step-label">Order</div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">Received</div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">Processing</div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-circle">4</div>
+                            <div class="step-label">Completed</div>
+                        </div>
+                    </div>
+
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Research Intelligence Lookup</h2>
+                            <div class="form-row cols-3">
+                                <div class="form-group">
+                                    <label for="pmid">PubMed ID</label>
+                                    <div class="input-with-button">
+                                        <input id="pmid" placeholder="Enter PMID" maxlength="9">
+                                        <button class="btn" id="lookup-pmid" type="button">
+                                            <span class="btn-text">Lookup</span>
+                                            <span class="spinner hidden"></span>
+                                        </button>
+                                    </div>
+                                    <div class="status hidden" id="pmid-status"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="doi">DOI</label>
+                                    <div class="input-with-button">
+                                        <input id="doi" placeholder="10.1000/example">
+                                        <button class="btn" id="lookup-doi" type="button">
+                                            <span class="btn-text">Lookup</span>
+                                            <span class="spinner hidden"></span>
+                                        </button>
+                                    </div>
+                                    <div class="status hidden" id="doi-status"></div>
+                                </div>
+                                
+                                    
+                                </div>
+                            </div>
+                            <div class="mesh-container hidden" id="gl-chips"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Publication Details</h2>
+                            <form id="requestForm">
+                                <div class="form-group">
+                                    <label for="title">Title</label>
+                                    <textarea id="title" placeholder="Article title" rows="3" required></textarea>
+                                </div>
+                                <div class="form-row cols-2">
+                                    <div class="form-group">
+                                        <label for="authors">Authors</label>
+                                        <input id="authors" placeholder="Author names">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="journal">Journal</label>
+                                        <input id="journal" placeholder="Journal name">
+                                    </div>
+                                </div>
+                                <div class="form-row cols-3">
+                                    <div class="form-group">
+                                        <label for="year">Year</label>
+                                        <input id="year" placeholder="2024" type="number" max="2030" min="1900">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="volume">Volume</label>
+                                        <input id="volume" placeholder="Volume">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pages">Pages</label>
+                                        <input id="pages" placeholder="Pages">
+                                    </div>
+                                </div>
+                                <div class="form-row cols-2">
+                                    <div class="form-group">
+                                        <label for="patron-email">Patron Email</label>
+                                        <input id="patron-email" placeholder="researcher@university.edu" type="email" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="docline">DOCLINE Number</label>
+                                        <input id="docline" placeholder="DOC123456">
+                                    </div>
+                                </div>
+                                <div class="form-row cols-2">
+                                    <div class="form-group">
+                                        <label for="priority">Urgency</label>
+                                        <select id="priority">
+                                            <option value="low">Low</option>
+                                            <option value="normal" selected>Normal</option>
+                                            <option value="high">High</option>
+                                            <option value="urgent">Urgent</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="status">Fill Status</label>
+                                        <select id="status">
+                                            <option value="order" selected>Order</option>
+                                            <option value="received">Received</option>
+                                            <option value="processing">Processing</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tags">Tags</label>
+                                    <input id="tags" placeholder="Enter tags separated by commas">
+                                </div>
+                                <div class="form-group">
+                                    <label for="notes">Notes</label>
+                                    <textarea id="notes" placeholder="Additional notes..." rows="4"></textarea>
+                                </div>
+                                <div class="form-row cols-2">
+                                    <button class="btn btn-success" type="submit">Save Request</button>
+                                    <button class="btn btn-secondary" id="clearForm" type="button">Clear Form</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage Requests Tab -->
+            <div class="tab-content" id="manage-requests">
+                <div class="content-header">
+                    <h1 class="page-title">Manage Requests</h1>
+                    <div class="content-actions">
+                        <div class="view-toggle">
+                            <button class="active" data-view="table">Table</button>
+                            <button data-view="cards">Cards</button>
+                        </div>
+                        <button class="btn" data-tab="add-request">New Request</button>
+                    </div>
+                </div>
+                <div class="bulk-actions" id="bulkActions">
+                    <span class="bulk-actions-text" id="bulkActionsText">0 selected</span>
+                    <button class="btn btn-secondary btn-sm" id="bulkEdit">Edit Selected</button>
+                    <button class="btn btn-sm btn-danger" id="bulkDelete">Delete Selected</button>
+                    <button class="btn btn-secondary btn-sm" id="bulkCancel">Cancel</button>
+                </div>
+                <div class="content-body">
+                    <div class="search-filters">
+                        <div class="search-bar">
+                            <span class="search-icon">🔍</span>
+                            <input id="searchInput" placeholder="Search requests..." class="search-input">
+                        </div>
+                        <div class="filters-row">
+                            <div class="form-group">
+                                <label>Fill Status</label>
+                                <select id="statusFilter">
+                                    <option value="">All Fill Statuses</option>
+                                    <option value="order">Order</option>
+                                    <option value="received">Received</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Urgency</label>
+                                <select id="priorityFilter">
+                                    <option value="">All Urgency Levels</option>
+                                    <option value="low">Low</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Date From</label>
+                                <input id="dateFrom" type="date">
+                            </div>
+                            <div class="form-group">
+                                <label>Date To</label>
+                                <input id="dateTo" type="date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container" id="tableView">
+                        <table class="table" id="requests-table">
+                            <thead>
+                                <tr>
+                                    <th class="checkbox-cell">
+                                        <input id="selectAll" type="checkbox" data-action="select-all">
+                                    </th>
+                                    <th><button aria-sort="none" data-sort="priority" data-action="sort-table">Urgency <span id="sort-priority">↕️</span></button></th>
+                                    <th><button aria-sort="none" data-sort="docline" data-action="sort-table">DOCLINE # <span id="sort-docline">↕️</span></button></th>
+                                    <th><button aria-sort="none" data-sort="pmid" data-action="sort-table">PMID <span id="sort-pmid">↕️</span></button></th>
+                                    <th><button aria-sort="none" data-sort="title" data-action="sort-table">Citation <span id="sort-title">↕️</span></button></th>
+                                    <th><button aria-sort="none" data-sort="patronEmail" data-action="sort-table">Patron e-mail <span id="sort-patronEmail">↕️</span></button></th>
+                                    <th><button aria-sort="none" data-sort="status" data-action="sort-table">Fill Status <span id="sort-status">↕️</span></button></th>
+                                    <th><button aria-sort="none" data-sort="updated" data-action="sort-table">Last Updated <span id="sort-updated">↕️</span></button></th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="cards-grid hidden" id="cardsView"></div>
+                </div>
+            </div>
+
+            <!-- Bulk Operations Tab -->
+            <div class="tab-content" id="bulk-operations">
+                <div class="content-header">
+                    <h1 class="page-title">Bulk Operations</h1>
+                </div>
+                <div class="content-body">
+                    <div class="form-row cols-2">
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h2>Bulk Import</h2>
+                                <div class="form-group">
+                                    <label for="bulk-paste-data">Paste Identifiers</label>
+                                    <textarea id="bulk-paste-data" placeholder="Paste PMIDs, DOIs, or  (any format)" rows="6"></textarea>
+                                </div>
+                                <button class="btn btn-success" id="bulk-paste-btn" type="button">Process Paste</button>
+                            </div>
+                        </div>
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h2>File Upload</h2>
+                                <div class="form-group">
+                                    <label for="bulk-upload">Upload File</label>
+                                    <input id="bulk-upload" type="file" accept=".txt,.csv,.json">
+                                </div>
+                                <button class="btn btn-success" id="bulk-upload-btn" type="button">Process File</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Export Data</h2>
+                            <div class="form-row cols-3">
+                                <button class="btn btn-secondary" id="exportCSV" type="button">Export CSV</button>
+                                <button class="btn btn-secondary" id="exportJSON" type="button">Export JSON</button>
+                                <button class="btn btn-secondary" id="exportNLM" type="button">Export NLM Citations</button>
+                            </div>
+                            <div class="form-row cols-3" style="margin-top: 16px;">
+                                <button class="btn btn-secondary" id="validateData" type="button">Validate Data Quality</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="settings">
+                <div class="content-header">
+                    <h1 class="page-title">Settings</h1>
+                </div>
+                <div class="content-body">
+                    <div class="form-row cols-2">
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h2>API Configuration</h2>
+                                <form id="settings-form" novalidate>
+                                    <div class="form-group">
+                                        <label for="api-key">NCBI API Key</label>
+                                        <input id="api-key" placeholder="Optional for higher rate limits" type="password">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="crossref-email">CrossRef Email</label>
+                                        <input id="crossref-email" placeholder="your.email@domain.com" type="email">
+                                    </div>
+                                    <button class="btn" id="saveSettings" type="button">Save Settings</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h2>Appearance</h2>
+                                <div class="form-group">
+                                    <label for="themeSelect">Theme</label>
+                                    <select id="themeSelect">
+                                        <option value="light">Light</option>
+                                        <option value="dark">Dark</option>
+                                        <option value="high-contrast">High Contrast</option>
+                                    </select>
+                                </div>
+                                <button class="btn" id="saveAppearance" type="button">Save Appearance</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Data Management</h2>
+                            <div class="form-row cols-3">
+                                <button class="btn btn-secondary" id="backupData" type="button">Backup Data</button>
+                                <button class="btn btn-secondary" id="restoreData" type="button">Restore Data</button>
+                                <button class="btn btn-danger" id="clearData" type="button">Clear All Data</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Tab -->
+            <div class="tab-content" id="help">
+                <div class="content-header">
+                    <h1 class="page-title">Help & Documentation</h1>
+                </div>
+                <div class="content-body">
+                    <div class="form-container">
+                        <div class="form-section">
+                            <h2>Quick Start Guide</h2>
+                            <h3>Getting Started</h3>
+                            <ol>
+                                <li><strong>Add a Request:</strong> Click "New Request" and enter publication details</li>
+                                <li><strong>Use Research Lookup:</strong> Enter PMID, DOI, or  to auto-populate</li>
+                                <li><strong>Manage Workflow:</strong> Track requests through 4-step process</li>
+                                <li><strong>View Data:</strong> Toggle between table and card views</li>
+                                <li><strong>Bulk Operations:</strong> Import/export multiple requests</li>
+                            </ol>
+                            <h3>Demo Data</h3>
+                            <p>Try these test PMIDs to see enrichment:</p>
+                            <ul>
+                                <li><strong>18539917</strong> - ACCORD diabetes trial with </li>
+                                <li><strong>23842776</strong> - Single-cell RNA sequencing</li>
+                            </ul>
+                            <h3>Features</h3>
+                            <ul>
+                                <li><strong>Dashboard:</strong> Overview of all requests and statistics</li>
+                                <li><strong>Add Request:</strong> Create new ILL requests with research intelligence</li>
+                                <li><strong>Manage Requests:</strong> View, edit, delete with table/card views</li>
+                                <li><strong>Bulk Operations:</strong> Import/export multiple requests</li>
+                                <li><strong>Settings:</strong> API configuration and preferences</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script defer src="dependencies.min.js"></script>
+    <script defer src="app.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SilentStacks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0f172a;--panel:#0b1024;--card:#11193a;--muted:#7d9eff;--accent:#3498db;--text:#e5e7eb;--chip:#1e293b}
+    *{box-sizing:border-box} html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0c1229;color:var(--text)}
+    .app{display:grid;grid-template-columns:280px 1fr;gap:16px;padding:16px}
+    @media (max-width:1023px){.app{grid-template-columns:1fr}.sidebar{position:fixed;inset:0 30% 0 0;transform:translateX(-100%);transition:.25s;z-index:1200}.sidebar.open{transform:none}.nav-toggle{position:fixed;top:12px;left:12px;z-index:1300}}
+    .sidebar{background:var(--panel);border:1px solid rgba(125,158,255,.18);border-radius:16px;padding:16px;max-height:calc(100dvh - 32px);overflow:auto}
+    .main{background:var(--panel);border:1px solid rgba(125,158,255,.18);border-radius:16px;padding:16px;min-height:60vh}
+    .sidebar-card{background:var(--card);border:1px solid rgba(125,158,255,.18);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 16px 24px rgba(44,82,130,.14)}
+    .card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .card-icon{height:28px;width:28px;border-radius:8px;display:grid;place-content:center;background:linear-gradient(180deg,#084c95,#04264b);box-shadow:0 8px 12px rgba(45,95,180,.25),inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.5);border:1px solid rgba(125,158,255,.2)}
+    .nav-tab{display:block;width:100%;text-align:left;background:#0e1535;border:1px solid rgba(125,158,255,.18);border-radius:8px;padding:10px 12px;color:var(--text);cursor:pointer;margin-bottom:8px}
+    .nav-tab.active{background:#152050;border-color:#4b86ff}
+    .btn{border:1px solid rgba(125,158,255,.3);background:#122055;color:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
+    .btn-secondary{background:#0f1a44}
+    .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .form-control,.form-select,textarea{background:linear-gradient(180deg,#0a1333,#0c1b47);border:1px solid rgba(125,158,255,.2);border-radius:8px;padding:10px 12px;color:#fff;box-shadow:inset 0 1px 1px rgba(0,0,0,.3)}
+    .grid{display:grid;gap:12px}
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    @media (max-width:800px){.grid.cols-2{grid-template-columns:1fr}}
+    .chip{display:inline-block;padding:6px 8px;border-radius:999px;background:#1e293b;margin:2px;font-size:.8rem}
+    .status{margin:8px 0;padding:8px 10px;border-radius:8px;background:#0f1a44;border:1px solid rgba(125,158,255,.2)} .status.success{border-color:#34d399}
+    .tab-content{display:none} .tab-content.active{display:block}
+    .modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.4);z-index:2000}
+    .modal-dialog{display:flex;min-height:100%;align-items:center;justify-content:center;padding:24px}
+    .modal-card{background:#0b1024;border:1px solid rgba(125,158,255,.25);border-radius:14px;box-shadow:0 20px 40px rgba(0,0,0,.35);max-width:640px;width:100%}
+    .modal-header,.modal-footer{padding:12px 16px;border-bottom:1px solid rgba(125,158,255,.2)} .modal-footer{border-top:1px solid rgba(125,158,255,.2);border-bottom:0}
+    .modal-body{padding:16px}
+    .btn-close{background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:#fff}
+    .toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px}
+  </style>
+</head>
+<body>
+<button id="navToggle" class="btn nav-toggle">☰</button>
+<div class="app">
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-card">
+      <div class="card-header"><div class="card-icon">🧭</div><h3>Navigate</h3></div>
+      <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+      <button class="nav-tab" data-tab="add-request">Add Request</button>
+      <button class="nav-tab" data-tab="manage">Manage Requests</button>
+      <button class="nav-tab" data-tab="bulk">Bulk Operations</button>
+      <button class="nav-tab" data-tab="settings">Settings</button>
+      <button class="nav-tab" data-tab="help">Help</button>
+    </div>
+    <div class="sidebar-card">
+      <div class="card-header"><div class="card-icon">⚙️</div><h3>Settings</h3></div>
+      <div class="form-group">
+        <label for="api-key">NCBI API key</label>
+        <input id="api-key" class="form-control" placeholder="optional"/>
+      </div>
+      <div class="form-group">
+        <label for="crossref-email">CrossRef email</label>
+        <input id="crossref-email" class="form-control" placeholder="you@example.org"/>
+      </div>
+      <button class="btn" id="save-settings">Save</button>
+    </div>
+    <div class="sidebar-card"><div class="card-header"><div class="card-icon">🌐</div><h3>Network</h3></div>
+      <div id="networkStatus">● Online</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="toolbar">
+      <div id="status" class="status">Ready.</div>
+      <div id="ss-live" aria-live="polite" style="position:absolute;left:-9999px"></div>
+    </div>
+
+    <section id="dashboard" class="tab-content active">
+      <h2>Dashboard</h2>
+      <p>Use the sidebar to add a request or run bulk operations. Demo PMIDs: <code>18539917</code>, <code>23842776</code>.</p>
+    </section>
+
+    <section id="add-request" class="tab-content">
+      <h2>Add Request</h2>
+      <form id="paper-form">
+        <div class="grid cols-2">
+          <div class="form-group"><label for="pmid">PMID</label><input id="pmid" class="form-control" placeholder="e.g., 18539917"/></div>
+          <div class="form-group"><label for="doi">DOI</label><input id="doi" class="form-control" placeholder="10.xxxx/xxxx"/></div>
+          <div class="form-group"><label for="title">Title</label><input id="title" class="form-control"/></div>
+          <div class="form-group"><label for="authors">Authors</label><input id="authors" class="form-control"/></div>
+          <div class="form-group"><label for="journal">Journal</label><input id="journal" class="form-control"/></div>
+          <div class="form-group"><label for="year">Year</label><input id="year" class="form-control"/></div>
+          <div class="form-group"><label for="nct">NCT</label><input id="nct" class="form-control" placeholder="NCT00000000"/></div>
+          <div class="form-group"><label for="patron-email">Patron Email</label><input id="patron-email" class="form-control"/></div>
+          <div class="form-group"><label for="status">Status</label>
+            <select id="status-select" class="form-select">
+              <option value="pending">Pending</option>
+              <option value="in-progress">In progress</option>
+              <option value="complete">Complete</option>
+              <option value="hold">On hold</option>
+            </select>
+          </div>
+          <div class="form-group"><label for="priority">Priority</label>
+            <select id="priority" class="form-select">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label for="tags">Tags</label><input id="tags" class="form-control" placeholder="comma-separated"/><div id="tag-chips"></div></div>
+        <div class="form-group"><label for="notes">Notes</label><textarea id="notes" rows="5" class="form-control"></textarea></div>
+        <div class="form-group">
+          <button type="button" id="lookup-pmid" class="btn"><span class="btn-text">Analyze & Enrich</span> <span class="loading-spinner" style="display:none">⏳</span></button>
+          <button type="button" id="save-paper" class="btn btn-secondary">Save</button>
+          <button type="button" id="clear-form" class="btn btn-secondary">Clear</button>
+        </div>
+      </form>
+      <div id="metadata-status"></div>
+      <div id="nct-sidebar" style="display:none"><div id="nct-content"></div></div>
+    </section>
+
+    <section id="manage" class="tab-content">
+      <h2>Manage Requests</h2>
+      <p>(placeholder)</p>
+    </section>
+
+    <section id="bulk" class="tab-content">
+      <h2>Bulk Operations</h2>
+      <p>Paste PMIDs or NCT IDs below (one per line):</p>
+      <textarea rows="6" class="form-control" placeholder="18539917
+23842776
+NCT00048516"></textarea>
+      <div style="margin-top:8px"><button class="btn">Run</button></div>
+    </section>
+
+    <section id="settings" class="tab-content">
+      <h2>Settings</h2>
+      <p>Use the sidebar Settings card.</p>
+    </section>
+
+    <section id="help" class="tab-content">
+      <h2>Help</h2>
+      <p>Need assistance? Use demo PMIDs if your network blocks NCBI/CT.gov.</p>
+    </section>
+  </main>
+</div>
+
+<script src="./dependencies.min.js"></script>
+<script src="./app.min.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+</body>
+</html>

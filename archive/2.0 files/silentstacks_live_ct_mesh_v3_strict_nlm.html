@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SilentStacks – Live Prototype (v3) : Strict NLM Citations</title>
+  <!-- Reddit Sans (Google Fonts) -->
+  <link href="https://fonts.googleapis.com/css2?family=Reddit+Sans:wdth,wght@75..125,100..900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff; --bg-muted: #f6f7f8; --text: #111418; --muted-text: #3a3f45;
+      --surface: #ffffff; --surface-alt: #f2f4f7; --border: #d6dbe1; --focus: #0040ff;
+      --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
+      /* Priority */
+      --prio-high: #8B0A10; --prio-med: #8C5A00; --prio-low: #0B6B2A;
+      /* Tag hues */
+      --tag-research: #0B63B6; --tag-patient: #1C7C54; --tag-regulatory: #5B2E91; --tag-admin: #37474F; --tag-user: #0D7671;
+      /* MeSH */
+      --mesh-major-bg: #12202A; --mesh-minor-br: #1C7C54;
+    }
+    [data-theme="dark"] {
+      --bg:#0b0d10; --bg-muted:#121519; --text:#f5f7fa; --muted-text:#c3c9d0;
+      --surface:#121519; --surface-alt:#171b21; --border:#2a3139; --focus:#7aa2ff;
+      --shadow: 0 1px 2px rgba(0,0,0,.25), 0 10px 28px rgba(0,0,0,.35);
+    }
+    [data-theme="hc"] {
+      --bg:#fff; --bg-muted:#fff; --text:#000; --muted-text:#000; --surface:#fff; --surface-alt:#fff; --border:#000; --focus:#000;
+    }
+    html, body { height:100%; }
+    body { font-family:"Reddit Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); margin:0; }
+    .app { max-width:1200px; margin:0 auto; padding:24px; }
+    header { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center; padding:16px 0 8px; border-bottom:1px solid var(--border); }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .mark { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#0B63B6,#0D7671); box-shadow:var(--shadow); }
+    .toolbar { display:flex; gap:8px; align-items:center; }
+    .seg { display:inline-flex; overflow:hidden; border-radius:10px; }
+    .seg button, .toolbar button { border:1px solid var(--border); background:var(--surface); color:var(--text); padding:8px 12px; border-radius:10px; box-shadow:var(--shadow); cursor:pointer; }
+    .seg button { border-right:1px solid var(--border); background:var(--surface-alt); }
+    .seg button[aria-pressed="true"] { outline:3px solid var(--focus); outline-offset:1px; }
+    .grid { display:grid; grid-template-columns:1fr; gap:16px; margin-top:16px; }
+    @media (min-width:1024px){ .grid { grid-template-columns:1.2fr .8fr; } }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); }
+    .card h2 { font-size:1rem; margin:0; padding:16px; border-bottom:1px solid var(--border); }
+    .content { padding:16px; }
+    .row { display:grid; grid-template-columns:1fr; gap:12px; }
+    @media (min-width:720px){ .row { grid-template-columns:repeat(2,1fr); } }
+    label { display:inline-block; font-weight:600; margin-bottom:6px; }
+    input, select, textarea { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); }
+    textarea { min-height:96px; resize:vertical; }
+    .actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    /* Chips */
+    .chip-row { display:flex; flex-wrap:wrap; gap:8px; }
+    .chip { --chip-bg:var(--surface); --chip-br:var(--border); --chip-fg:var(--text);
+      display:inline-flex; align-items:center; gap:8px; border:1.5px solid var(--chip-br); border-left-width:8px;
+      background:var(--chip-bg); color:var(--chip-fg); padding:6px 10px; border-radius:1000px; font-size:.9rem; line-height:1; }
+    .chip .dot { width:8px; height:8px; border-radius:50%; background:currentColor; }
+    .chip[role="switch"] { cursor:pointer; } .chip[aria-checked="true"]{ outline:3px solid var(--focus); outline-offset:2px; }
+    /* Variants */
+    .prio-high{--chip-br:var(--prio-high);} .prio-med{--chip-br:var(--prio-med);} .prio-low{--chip-br:var(--prio-low);}
+    .tag-research{--chip-br:var(--tag-research);} .tag-patient{--chip-br:var(--tag-patient);} .tag-regulatory{--chip-br:var(--tag-regulatory);} .tag-admin{--chip-br:var(--tag-admin);} .tag-user{--chip-br:var(--tag-user);}
+    .mesh-major{--chip-bg:var(--mesh-major-bg);--chip-br:var(--mesh-major-bg);--chip-fg:#fff;} .mesh-minor{--chip-br:var(--mesh-minor-br);}
+    /* Table */
+    table{width:100%; border-collapse:collapse;} th,td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; } th{ font-size:.9rem; color:var(--muted-text); font-weight:700; } tr:hover td{ background:var(--surface-alt); }
+    .kicker{ font-size:.8rem; color:var(--muted-text); }
+  </style>
+</head>
+<body>
+  <div class="app" id="app" data-theme="light">
+    <header>
+      <div class="brand"><div class="mark" aria-hidden="true"></div><div><h1>SilentStacks <small class="kicker">Live v3 — Strict NLM</small></h1><small class="kicker">Demo lookup for two PMIDs; otherwise manual.</small></div></div>
+      <div class="toolbar" role="toolbar">
+        <div class="seg" role="group" aria-label="Theme">
+          <button type="button" data-theme="light" aria-pressed="true">Light</button>
+          <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
+          <button type="button" data-theme="hc" aria-pressed="false">High Contrast</button>
+        </div>
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" data-view="form" aria-pressed="true">Add Request</button>
+          <button type="button" data-view="cards" aria-pressed="false">Card Grid</button>
+          <button type="button" data-view="table" aria-pressed="false">Table</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="grid">
+        <!-- LEFT: PMID + NCT + Strict NLM fields -->
+        <section class="card" id="view-form">
+          <h2>PMID Data</h2>
+          <div class="content">
+            <div class="row">
+              <div>
+                <label for="pmid">PMID</label>
+                <div class="actions">
+                  <input id="pmid" type="text" placeholder="e.g., 18539917" inputmode="numeric" pattern="\\d{6,9}">
+                  <button id="lookup" class="btn">Lookup (demo)</button>
+                </div>
+                <div class="kicker">Demo supports 18539917 and 23842776.</div>
+              </div>
+              <div>
+                <label for="doi">DOI</label>
+                <input id="doi" type="text" placeholder="10.xxxx/xxxxx">
+              </div>
+            </div>
+            <div class="row">
+              <div><label for="title">Article Title</label><input id="title" type="text" placeholder="Sentence case; we add the period."></div>
+              <div><label for="authors">Authors (Last FM; Last FM; …)</label><input id="authors" type="text" placeholder="Doe JA; Smith BC; …"></div>
+            </div>
+            <div class="row">
+              <div><label for="journalFull">Journal (full)</label><input id="journalFull" type="text" placeholder="New England Journal of Medicine"></div>
+              <div><label for="journalAbbr">Journal (NLM Abbrev.)</label><input id="journalAbbr" type="text" placeholder="N Engl J Med"></div>
+            </div>
+            <div class="row">
+              <div><label for="year">Year</label><input id="year" type="text" inputmode="numeric" placeholder="2008"></div>
+              <div><label for="month">Month (name or 1–12)</label><input id="month" type="text" placeholder="Jan or 1"></div>
+            </div>
+            <div class="row">
+              <div><label for="day">Day</label><input id="day" type="text" inputmode="numeric" placeholder="3"></div>
+              <div><label for="volume">Volume</label><input id="volume" type="text" placeholder="358"></div>
+            </div>
+            <div class="row">
+              <div><label for="issue">Issue</label><input id="issue" type="text" placeholder="1"></div>
+              <div><label for="pages">Pages (start-end)</label><input id="pages" type="text" placeholder="1-10"></div>
+            </div>
+            <div class="row">
+              <div><label for="nct">NCT Number</label><input id="nct" type="text" placeholder="NCT01234567"></div>
+              <div><label for="nctTitle">Clinical Trial Title</label><input id="nctTitle" type="text" placeholder="Auto or manual"></div>
+            </div>
+            <div class="row">
+              <div><label for="nctSponsor">Sponsor</label><input id="nctSponsor" type="text"></div>
+              <div><label for="nctLead">Lead Investigator</label><input id="nctLead" type="text"></div>
+            </div>
+            <div class="row">
+              <div><label for="nctStatus">Overall Status</label><input id="nctStatus" type="text" placeholder="Recruiting / Completed"></div>
+              <div><label for="nctPhase">Phase</label><input id="nctPhase" type="text" placeholder="Phase 2"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT: Request Meta & Unified Tags -->
+        <section class="card">
+          <h2>Request Meta &amp; Tags</h2>
+          <div class="content">
+            <!-- Urgency single horizontal row under heading -->
+            <div class="chip-row" role="group" aria-label="Urgency">
+              <button class="chip prio-high" role="switch" aria-checked="false" data-urgency="High"><span class="dot" style="color:var(--prio-high)"></span>High</button>
+              <button class="chip prio-med" role="switch" aria-checked="true" data-urgency="Medium"><span class="dot" style="color:var(--prio-med)"></span>Medium</button>
+              <button class="chip prio-low" role="switch" aria-checked="false" data-urgency="Low"><span class="dot" style="color:var(--prio-low)"></span>Low</button>
+            </div>
+
+            <!-- Docline + Patron Email single line -->
+            <div class="row" style="margin-top:12px;">
+              <div><label for="docline">Docline Number</label><input id="docline" type="text" inputmode="numeric" placeholder="123456"></div>
+              <div><label for="patronEmail">Patron Email</label><input id="patronEmail" type="email" placeholder="patron@example.org"></div>
+            </div>
+
+            <!-- Notes under fields -->
+            <div class="row">
+              <div><label for="notes">Notes</label><textarea id="notes" placeholder="Special instructions, context, etc."></textarea></div>
+            </div>
+
+            <!-- Unified tags -->
+            <div style="margin-top:12px">
+              <label class="kicker" for="tagInput">Tags (MeSH, CT keywords, &amp; user)</label>
+              <div class="actions">
+                <input id="tagInput" type="text" placeholder="Add a tag and press Enter">
+                <button id="addTag" class="btn">Add</button>
+              </div>
+              <div id="tagRow" class="chip-row" role="group" aria-label="Unified tags"></div>
+            </div>
+
+            <div class="actions" style="margin-top:16px">
+              <button id="addRequest" class="btn" style="background:#0B63B6;color:#fff;border-color:#094a88;">Add to Requests</button>
+              <button id="resetForm" class="btn">Reset</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Cards -->
+      <section class="card" style="margin-top:16px;">
+        <h2>Card Grid — Requests</h2>
+        <div id="cards" class="content" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:16px;"></div>
+      </section>
+
+      <!-- Table -->
+      <section class="card" style="margin-top:16px;">
+        <h2>All Requests — Table</h2>
+        <div class="content">
+          <table>
+            <thead>
+              <tr>
+                <th>Urgency</th><th>Docline #</th><th>PMID</th><th>Citation (NLM)</th><th>Patron Email</th><th>Status</th><th>Tags</th><th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Theme & view toggles
+    (function() {
+      const app = document.getElementById('app');
+      document.querySelectorAll('[data-theme]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-theme]').forEach(b => b.setAttribute('aria-pressed','false'));
+          btn.setAttribute('aria-pressed','true');
+          app.setAttribute('data-theme', btn.dataset.theme);
+        });
+      });
+      document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed','false'));
+          btn.setAttribute('aria-pressed','true');
+          // Scroll to the section rather than hiding; keeps DOM simple for prototype
+          document.getElementById(btn.dataset.view === 'form' ? 'view-form' : (btn.dataset.view === 'cards' ? 'cards' : 'rows')).scrollIntoView({behavior:'smooth'});
+        });
+      });
+    })();
+
+    // Chip switches
+    function setupChipSwitches(root=document) {
+      root.querySelectorAll('.chip[role="switch"]').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const current = chip.getAttribute('aria-checked') === 'true';
+          // If urgency, make it single-select
+          if (chip.hasAttribute('data-urgency')) {
+            root.querySelectorAll('[data-urgency]').forEach(c => c.setAttribute('aria-checked','false'));
+          }
+          chip.setAttribute('aria-checked', String(!current));
+        });
+        chip.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); chip.click(); } });
+        chip.tabIndex = 0;
+      });
+    }
+    setupChipSwitches();
+
+    // Demo dataset (adds strict NLM pieces)
+    const demo = {
+      "18539917": {
+        pmid: "18539917",
+        doi: "10.1056/NEJMoa000000",
+        title: "Randomized trial of something on something else",
+        authors: "Doe JA; Second B; Third C; Fourth D; Fifth E; Sixth F; Seventh G",
+        journalFull: "New England Journal of Medicine",
+        journalAbbr: "N Engl J Med",
+        year: "2008", month: "Jan", day: "3",
+        volume: "358", issue: "1", pages: "1-10",
+        nct: "NCT01234567", nctTitle: "A randomized, double‑blind, placebo‑controlled study of X",
+        sponsor: "NIH / Example Sponsor", lead: "Doe, Jane", status: "Recruiting", phase: "Phase 2",
+        meshMajor: ["Neoplasms"], meshMinor: ["Chemotherapy", "Biomarkers", "Clinical Protocols"], nctKeywords: ["Randomized", "Placebo-Controlled", "Blinded"]
+      },
+      "23842776": {
+        pmid: "23842776",
+        doi: "10.1001/jama.2013.0000",
+        title: "Observational cohort outcomes in oncology",
+        authors: "Smith AB; Lee B; Patel C",
+        journalFull: "Journal of the American Medical Association",
+        journalAbbr: "JAMA",
+        year: "2013", month: "Jul", day: "10",
+        volume: "310", issue: "2", pages: "200-210",
+        nct: "", nctTitle: "", sponsor: "University Health", lead: "Smith, Alex", status: "Completed", phase: "N/A",
+        meshMajor: ["Neoplasms"], meshMinor: ["Cohort Studies", "Prognosis"], nctKeywords: ["Multicenter"]
+      }
+    };
+
+    // Elements
+    const $ = id => document.getElementById(id);
+    const pmid = $('pmid'), doi=$('doi'), title=$('title'), authors=$('authors');
+    const journalFull=$('journalFull'), journalAbbr=$('journalAbbr'), year=$('year'), month=$('month'), day=$('day'), volume=$('volume'), issue=$('issue'), pages=$('pages');
+    const nct=$('nct'), nctTitle=$('nctTitle'), nctSponsor=$('nctSponsor'), nctLead=$('nctLead'), nctStatus=$('nctStatus'), nctPhase=$('nctPhase');
+    const docline=$('docline'), patronEmail=$('patronEmail'), notes=$('notes');
+    const tagInput=$('tagInput'), tagRow=$('tagRow');
+    const addRequest=$('addRequest'), resetForm=$('resetForm'), lookup=$('lookup');
+    const cards=document.getElementById('cards'), rows=document.getElementById('rows');
+
+    // Helpers
+    function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+    function addChip(container, label, classes=[], checked=false) {
+      const chip = document.createElement('button');
+      chip.className = 'chip ' + classes.join(' ');
+      chip.setAttribute('role','switch'); chip.setAttribute('aria-checked', checked?'true':'false');
+      chip.innerHTML = '<span class="dot"></span>' + label;
+      container.appendChild(chip); setupChipSwitches(container); return chip;
+    }
+    function monthAbbrev(m) {
+      if (!m) return '';
+      const map = {jan:'Jan',feb:'Feb',mar:'Mar',apr:'Apr',may:'May',jun:'Jun',jul:'Jul',aug:'Aug',sep:'Sep',sept:'Sep',oct:'Oct',nov:'Nov',dec:'Dec'};
+      const s = String(m).trim().toLowerCase();
+      if (map[s]) return map[s];
+      const n = parseInt(s,10);
+      const byNum = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      if (!isNaN(n) && n>=1 && n<=12) return byNum[n-1];
+      return '';
+    }
+    function initialsFromToken(tok) {
+      // tok like "JA" or "J A" -> "JA"; if full first/middle provided ("John Adam"), -> "JA"
+      if (!tok) return '';
+      const parts = tok.split(/\s+/).filter(Boolean);
+      if (parts.length === 1 && /^[A-Za-z]+$/.test(parts[0]) && parts[0].length <= 3) return parts[0].toUpperCase();
+      return parts.map(p => p[0].toUpperCase()).join('');
+    }
+    function formatAuthorsNLM(raw) {
+      if (!raw) return '';
+      // Expect "Last FM; Last FM; ..." ; support comma variant "Last, First Middle"
+      let items = raw.split(';').map(s => s.trim()).filter(Boolean);
+      if (items.length === 1 && raw.includes(',')) items = raw.split(',').map(s => s.trim()).filter(Boolean); // fallback
+      const formatted = items.map(item => {
+        if (item.includes(',')) {
+          const [last, rest] = item.split(',').map(s=>s.trim());
+          return last + ' ' + initialsFromToken(rest);
+        } else {
+          const parts = item.split(/\s+/).filter(Boolean);
+          const last = parts.shift() || '';
+          const rest = parts.join(' ');
+          return last + ' ' + initialsFromToken(rest);
+        }
+      });
+      const cap = formatted.length > 6 ? 6 : formatted.length;
+      const list = formatted.slice(0, cap).join(', ');
+      return formatted.length > 6 ? list + ', et al' : list;
+    }
+    function ensurePeriod(str) { if (!str) return ''; return /[.?!]$/.test(str.trim()) ? str.trim() : str.trim()+'.'; }
+    function formatNLM(item) {
+      const a = formatAuthorsNLM(item.authors);
+      const t = ensurePeriod(item.title);
+      const j = (item.journalAbbr || item.journalFull || '').trim();
+      const y = (item.year || '').trim();
+      const m = monthAbbrev(item.month);
+      const d = (item.day || '').trim();
+      const vol = (item.volume || '').trim();
+      const iss = (item.issue || '').trim();
+      const pg = (item.pages || '').trim();
+      const datePart = [y, m, d].filter(Boolean).join(' ');
+      let after = '';
+      if (vol && iss) after = `${vol}(${iss})`;
+      else if (vol) after = vol;
+      const citeCore = `${j}. ${datePart}${after ? ';'+after : ''}${pg ? ':'+pg : ''}.`.replace('..','.');
+      const doiPart = item.doi ? ' doi:'+item.doi+'.' : '';
+      const pieces = [];
+      if (a) pieces.push(a+'.');
+      if (t) pieces.push(t);
+      if (citeCore.trim() !== '.') pieces.push(citeCore);
+      if (doiPart) pieces.push(doiPart);
+      return pieces.join(' ').replace(/\s+/g,' ').trim();
+    }
+    function selectedUrgency() {
+      let sel='Medium'; document.querySelectorAll('[data-urgency]').forEach(c => { if (c.getAttribute('aria-checked')==='true') sel=c.dataset.urgency; });
+      return sel;
+    }
+    function urgencyClass(u){ return u==='High'?'prio-high':(u==='Low'?'prio-low':'prio-med'); }
+
+    // Unified tags collection
+    function collectTags() {
+      const out=[];
+      tagRow.querySelectorAll('.chip[role="switch"]').forEach(ch => {
+        if (ch.getAttribute('aria-checked')==='true') {
+          let kind='user';
+          if (ch.classList.contains('mesh-major')) kind='mesh-major';
+          else if (ch.classList.contains('mesh-minor')) kind='mesh-minor';
+          else if (ch.classList.contains('tag-research')) kind='ct';
+          out.push({kind, label: ch.textContent.trim()});
+        }
+      });
+      return out;
+    }
+
+    // Renderers
+    function tagHtml(t){ const cls = t.kind==='mesh-major'?'mesh-major':(t.kind==='mesh-minor'?'mesh-minor':(t.kind==='ct'?'tag-research':'tag-user')); return `<span class="chip ${cls}"><span class="dot"></span>${t.label}</span>`; }
+    function renderCard(item){
+      const card=document.createElement('article'); card.className='card';
+      const citation=formatNLM(item);
+      card.innerHTML = `
+        <div class="content" style="display:grid; gap:10px;">
+          <div class="pill"><strong>PMID</strong> ${item.pmid||'—'} <span class="chip ${item.urgencyClass}" aria-hidden="true" style="margin-left:auto"><span class="dot"></span>${item.urgency}</span></div>
+          <div class="kicker">${citation}</div>
+          <div class="kicker">NCT: ${item.nct||'—'} · ${item.phase||'—'} · ${item.status||'—'}</div>
+          <div class="kicker">Docline: ${item.docline||'—'} · Patron: ${item.patronEmail||'—'}</div>
+          <div class="chip-row">${item.tags.map(tagHtml).join(' ')}</div>
+        </div>`;
+      return card;
+    }
+    function renderRow(item){
+      const tr=document.createElement('tr'); const citation=formatNLM(item);
+      tr.innerHTML = `
+        <td><span class="chip ${item.urgencyClass}"><span class="dot"></span>${item.urgency}</span></td>
+        <td>${item.docline||'—'}</td>
+        <td>${item.pmid||'—'}</td>
+        <td>${citation}</td>
+        <td>${item.patronEmail||'—'}</td>
+        <td>${item.status||'Open'}</td>
+        <td><div class="chip-row">${item.tags.map(tagHtml).join(' ')}</div></td>
+        <td>${item.notes?item.notes.replace(/</g,'&lt;'):'—'}</td>`;
+      return tr;
+    }
+
+    // Add tag from input
+    document.getElementById('addTag').addEventListener('click', () => {
+      const v = tagInput.value.trim(); if (!v) return;
+      addChip(tagRow, v, ['tag-user'], true); tagInput.value=''; tagInput.focus();
+    });
+    tagInput.addEventListener('keydown', e => { if (e.key==='Enter'){ e.preventDefault(); document.getElementById('addTag').click(); } });
+
+    // Demo lookup
+    document.getElementById('lookup').addEventListener('click', () => {
+      const id=pmid.value.trim(); const data=demo[id];
+      if (!data){ alert('Demo supports 18539917 or 23842776.'); return; }
+      doi.value=data.doi||''; title.value=data.title||''; authors.value=data.authors||'';
+      journalFull.value=data.journalFull||''; journalAbbr.value=data.journalAbbr||''; year.value=data.year||''; month.value=data.month||''; day.value=data.day||'';
+      volume.value=data.volume||''; issue.value=data.issue||''; pages.value=data.pages||'';
+      nct.value=data.nct||''; nctTitle.value=data.nctTitle||''; nctSponsor.value=data.sponsor||''; nctLead.value=data.lead||''; nctStatus.value=data.status||''; nctPhase.value=data.phase||'';
+      clear(tagRow);
+      (data.meshMajor||[]).forEach(m=>addChip(tagRow,m,['mesh-major'],true));
+      (data.meshMinor||[]).forEach(m=>addChip(tagRow,m,['mesh-minor'],false));
+      (data.nctKeywords||[]).forEach(k=>addChip(tagRow,k,['tag-research'],true));
+    });
+
+    // Collect & add
+    function collect(){
+      const u=selectedUrgency();
+      return {
+        pmid:pmid.value.trim(), doi:doi.value.trim(), title:title.value.trim(), authors:authors.value.trim(),
+        journalFull:journalFull.value.trim(), journalAbbr:journalAbbr.value.trim(),
+        year:year.value.trim(), month:month.value.trim(), day:day.value.trim(),
+        volume:volume.value.trim(), issue:issue.value.trim(), pages:pages.value.trim(),
+        nct:nct.value.trim(), nctTitle:nctTitle.value.trim(), sponsor:nctSponsor.value.trim(), lead:nctLead.value.trim(), status:nctStatus.value.trim(), phase:nctPhase.value.trim(),
+        urgency:u, urgencyClass: (u==='High'?'prio-high':(u==='Low'?'prio-low':'prio-med')),
+        docline:docline.value.trim(), patronEmail:patronEmail.value.trim(), notes:notes.value.trim(),
+        tags:collectTags()
+      };
+    }
+    document.getElementById('addRequest').addEventListener('click', () => {
+      const item=collect();
+      cards.appendChild(renderCard(item));
+      rows.appendChild(renderRow(item));
+      window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
+    });
+
+    document.getElementById('resetForm').addEventListener('click', () => {
+      [pmid,doi,title,authors,journalFull,journalAbbr,year,month,day,volume,issue,pages,nct,nctTitle,nctSponsor,nctLead,nctStatus,nctPhase,docline,patronEmail,notes,tagInput].forEach(i=>i.value='');
+      document.querySelectorAll('[data-urgency]').forEach(c=>c.setAttribute('aria-checked', c.dataset.urgency==='Medium'?'true':'false'));
+      clear(tagRow);
+    });
+  </script>
+</body>
+</html>
